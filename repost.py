@@ -1031,6 +1031,25 @@ def handle_update(cfg, net, state, u):
         tell(net, owner, status_text(cfg, state), MENU_KB)
 
 
+def heartbeat(cfg, net, state):
+    """Once a day (after 10:00 Iran time) tell the owner the bot is alive."""
+    owner = owner_of(cfg, state)
+    if not owner:
+        return
+    now = time.time()
+    lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
+    day = "%04d-%02d-%02d" % (lt.tm_year, lt.tm_mon, lt.tm_mday)
+    if lt.tm_hour < 10 or state.get("hb_day") == day:
+        return
+    log_ = [t for t in state.get("posted_log", []) if now - t < 86400]
+    txt = "🟢 ربات زنده است.\n"
+    txt += "وضعیت: " + ("⏸ خاموش (با دکمه‌ی شما)" if state.get("paused") else "روشن") + "\n"
+    txt += "پست‌های ارسال‌شده در ۲۴ ساعت گذشته: %d" % len(log_)
+    if tell(net, owner, txt, MENU_KB) is not None:
+        state["hb_day"] = day
+
+
+
 def review_worthy(cfg, reason):
     if not cfg["review_suspicious"] or not reason:
         return False
@@ -1090,6 +1109,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     now = time.time()
     if not dry:
         process_updates(cfg, net, state, state_path)
+        heartbeat(cfg, net, state)
+        state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
         if state.get("paused"):
             log.info("switched OFF from the bot - nothing is posted")
             return
@@ -1185,6 +1206,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             deliver(net, cfg, p, text)
             log.info("[%s] posted", tag)
             hist.append(dict(fp, t=int(time.time())))
+            state.setdefault("posted_log", []).append(int(time.time()))
             posted += 1
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
