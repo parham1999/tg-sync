@@ -389,6 +389,7 @@ MENTION_RE = re.compile(r"(?<![\w@./])@([A-Za-z][A-Za-z0-9_]{3,31})(?!\w)")
 
 
 SRC = "\ue000"            # placeholder for "the source channel's ID/link" while converting
+CTA_RE = re.compile(r"join|follow|subscribe|عضو|دنبال|فالو|کانال\s*(?:ما|رسمی)|ما\s*را|ارتباط|پیج|ادمین|admin", re.I)
 KEEP_END = ".:؟?!،,)»\"'"
 
 
@@ -411,7 +412,16 @@ def drop_source_lines(t, own):
             continue
         pre_plain = re.sub(r"<[^>]+>", "", pre)
         if not re.search(r"\w", pre_plain):   # nothing but decoration before the ID: drop the line
+            k = len(out)
+            while k and not out[k - 1].strip():
+                k -= 1
+            if k:                              # ... and a short "Join Us"-style line just above it
+                prev = re.sub(r"<[^>]+>", "", out[k - 1])
+                if CTA_RE.search(prev) and len(re.findall(r"\w+", prev)) <= 6:
+                    del out[k - 1:]
             continue
+        if CTA_RE.search(pre_plain) or (len(re.findall(r"\w+", pre_plain)) <= 3 and any(x.strip() for x in out)):
+            continue                           # "Join Us @source", "عضو شوید @source": a footer line
         # glued to a sentence: keep the sentence, drop trailing emoji/symbols but keep . : ! ? etc.
         keep = pre
         while keep and not re.search(r"[\w" + re.escape(KEEP_END) + r">]$", keep):
@@ -1192,12 +1202,14 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         log.info("round finished: %d posted, next round in %d-%d min or later", posted, a, b)
 
 
-def dump(cfg, net, rules, n):
-    """TEST ONLY: send the last n posts of every source to the test channel, each with a
-    header line saying which source/post it is and what the program would do with it."""
+def dump(cfg, net, rules, n, state=None):
+    """TEST ONLY: send the last n posts of every source to the test channel exactly as they
+    would be published (clean - no notes inside the channel). What was skipped and why goes
+    to the owner's private chat with the bot."""
     if not cfg.get("_test_mode"):
         die("--dump works only in TEST MODE (target_override.txt must exist) so it can never "
             "flood your real channel.")
+    owner = owner_of(cfg, state or {})
     seen = []
     for si, name in enumerate(cfg["sources"], 1):
         try:
@@ -1205,28 +1217,34 @@ def dump(cfg, net, rules, n):
         except NetError as e:
             log.warning("[source %d] cannot open: %s", si, e)
             continue
-        log.info("[source %d] sending %d posts", si, len(posts))
+        log.info("[source %d] %d posts", si, len(posts))
+        report = ["📋 %s" % name]
         for p in posts:
             reason = skip_reason(cfg, p)
             text = build_text(cfg, rules, p["text_html"])
             fp = text_fp(norm_for_dedupe(text, rules.own))
             fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
             dup = None if reason else find_dup(fp, [e for e, _ in seen])
+            snippet = plain(p["text_html"]).replace("\n", " ")[:40]
             if reason:
-                status = "SKIP: " + reason
-            elif dup:
-                status = "DUPLICATE of " + [t for e, t in seen if e is dup][0]
-            else:
-                status = "OK"
-                seen.append((fp, "%s #%d" % (name, p["id"])))
-            full = "<b>[%s #%d] %s</b>\n%s" % (name, p["id"], html.escape(status), text)
+                report.append("⛔ #%d رد شد: %s | %s" % (p["id"], reason, snippet))
+                continue
+            if dup:
+                report.append("♻️ #%d تکراری (مثل %s) | %s" % (
+                    p["id"], [t for e, t in seen if e is dup][0], snippet))
+                continue
+            seen.append((fp, "%s #%d" % (name, p["id"])))
             try:
-                deliver(net, cfg, p, full.strip())
+                deliver(net, cfg, p, text)
+                report.append("✅ #%d ارسال شد | %s" % (p["id"], snippet))
             except (Skip, ApiError) as e:
                 log.warning("[source %d/%d] not sent: %s", si, p["id"], getattr(e, "desc", e))
+                report.append("⚠️ #%d ارسال نشد: %s" % (p["id"], getattr(e, "desc", e)))
             except NetError as e:
                 log.warning("[source %d/%d] network problem: %s", si, p["id"], e)
             time.sleep(3.5)
+        if owner:
+            tell(net, owner, "\n".join(report)[:4000])
     log.info("dump finished")
 
 
@@ -1330,7 +1348,7 @@ def main():
         sys.exit(0 if check(cfg, net) else 1)
     rules = Rules(cfg)
     if args.dump:
-        dump(cfg, net, rules, args.dump)
+        dump(cfg, net, rules, args.dump, load_state(args.state))
         return
     state = load_state(args.state)
     force = args.force or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
