@@ -638,9 +638,20 @@ def check(cfg, net):
             ok = False
             print("PROBLEM: [%s] no posts found - wrong username or the channel is not public" % name)
             continue
-        skipped = sum(1 for p in posts if skip_reason(cfg, p))
+        reasons = {}
+        for p in posts:
+            r = skip_reason(cfg, p)
+            if r:
+                if IN_CLOUD:  # keep details (site names, words) out of public logs
+                    r = re.sub(r"\s*\(.*?\)|\s*'.*?'", "", r)
+                reasons[r] = reasons.get(r, 0) + 1
+        skipped = sum(reasons.values())
         print("OK: [%s] %d recent posts visible, %d of them would be skipped (ads/unsupported)"
               % (name, len(posts), skipped))
+        for r, c in sorted(reasons.items(), key=lambda x: -x[1]):
+            print("   skipped %d x: %s" % (c, r))
+        print("   with media: %d, text only: %d" % (
+            sum(1 for p in posts if p["media"]), sum(1 for p in posts if not p["media"])))
         if skipped == len(posts) and len(posts) > 3:
             print("   WARNING: everything is being skipped - run  python repost.py --dry-run  to see why")
     print("\n" + ("ALL GOOD - you can start run.bat" if ok else "Fix the problems above, then run check again"))
