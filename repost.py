@@ -249,6 +249,17 @@ class Net:
             raise NetError(str(e))
         return data if binary else data.decode("utf-8", "replace")
 
+    sent = []
+
+    def forget_and_delete_sent(self):
+        """Delete everything of the current post that already reached the channel."""
+        for chat, mid in self.sent:
+            try:
+                self.api("deleteMessage", {"chat_id": chat, "message_id": mid})
+            except (ApiError, NetError) as e:
+                log.warning("could not delete a half-sent message: %s", getattr(e, "desc", e))
+        self.sent = []
+
     def get_range(self, url, nbytes):
         """First nbytes of a file plus its total size (for duplicate detection)."""
         req = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-%d" % (nbytes - 1)})
@@ -286,7 +297,12 @@ class Net:
                 time.sleep(5 * (attempt + 1))
                 continue
             if data.get("ok"):
-                return data.get("result")
+                res = data.get("result")
+                if method.startswith("send") and payload and "chat_id" in payload:
+                    for r in (res if isinstance(res, list) else [res]):
+                        if isinstance(r, dict) and r.get("message_id"):
+                            self.sent.append((payload["chat_id"], r["message_id"]))
+                return res
             ra = (data.get("parameters") or {}).get("retry_after", 0)
             if data.get("error_code") == 429 and attempt < 3:
                 log.info("Telegram asked to slow down, waiting %ss", ra + 1)
@@ -710,6 +726,8 @@ def send_single(net, cfg, kind, url, caption):
 
 
 def send_group(net, cfg, media, caption):
+    """Albums are always uploaded as files and sent as ONE album - never split into single
+    messages (Telegram refuses video links, so the files are downloaded first)."""
     for i in range(0, len(media), 10):
         chunk = media[i:i + 10]
         cap = caption if i == 0 else ""
@@ -718,12 +736,15 @@ def send_group(net, cfg, media, caption):
             continue
         items, files = [], {}
         for j, (kind, url) in enumerate(chunk):
-            it = {"type": kind, "media": url}
-            if kind == "photo":
-                data = marked_photo(net, cfg, url)
-                if data:
-                    files["p%d" % j] = ("photo%d.jpg" % j, data, "image/jpeg")
-                    it["media"] = "attach://p%d" % j
+            data = marked_photo(net, cfg, url) if kind == "photo" else None
+            if data is None:
+                data = net.get(url, binary=True, timeout=180)
+            if len(data) > MAX_UPLOAD:
+                raise ApiError("file is bigger than the 50 MB bot limit")
+            name = "m%d" % j
+            files[name] = (name + (".jpg" if kind == "photo" else ".mp4"), data,
+                           "image/jpeg" if kind == "photo" else "video/mp4")
+            it = {"type": kind, "media": "attach://" + name}
             if kind == "video":
                 it["supports_streaming"] = True
             if cap and j == 0:
@@ -731,15 +752,30 @@ def send_group(net, cfg, media, caption):
                 it["parse_mode"] = "HTML"
             items.append(it)
         try:
-            net.api("sendMediaGroup", {"chat_id": cfg["target_channel"], "media": items}, files or None)
+            net.api("sendMediaGroup", {"chat_id": cfg["target_channel"], "media": items}, files)
         except ApiError as e:
-            log.info("album by link failed (%s) - sending items one by one", e.desc)
-            for j, (kind, url) in enumerate(chunk):
-                send_single(net, cfg, kind, url, cap if j == 0 else "")
+            if "parse entities" in e.desc.lower() and cap:
+                for it in items:
+                    it.pop("parse_mode", None)
+                    if "caption" in it:
+                        it["caption"] = plain(it["caption"])
+                net.api("sendMediaGroup", {"chat_id": cfg["target_channel"], "media": items}, files)
+            else:
+                raise
         time.sleep(1)
 
 
 def deliver(net, cfg, post, text):
+    net.sent = []
+    try:
+        _deliver(net, cfg, post, text)
+    except BaseException:
+        net.forget_and_delete_sent()      # never leave half of a post in the channel
+        raise
+    net.sent = []
+
+
+def _deliver(net, cfg, post, text):
     media = post["media"]
     if not media:
         if not text:
