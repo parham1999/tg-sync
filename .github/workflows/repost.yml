@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 358
     steps:
+      - name: Queue the next run right now (it starts the moment this one ends, even if this one crashes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          date +%s > /tmp/started
+          gh workflow run repost.yml --repo "${{ github.repository }}" || true
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -38,8 +44,8 @@ jobs:
             git commit -m "update state"
             git push || (git pull --rebase --autostash && git push)
           fi
-      - name: Start the next run
+      - name: If this run died quickly, wait a little so a broken run cannot loop too fast
         if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run repost.yml --repo "${{ github.repository }}"
+        run: |
+          s=$(cat /tmp/started 2>/dev/null || date +%s)
+          if [ $(( $(date +%s) - s )) -lt 300 ]; then sleep 300; fi
