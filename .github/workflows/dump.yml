@@ -1,0 +1,24 @@
+name: dump
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: repost
+  cancel-in-progress: false
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow
+      - name: Send the last 20 posts of every source to the TEST channel
+        env:
+          CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
+          SETTINGS_JSON: ${{ secrets.SETTINGS_JSON }}
+        run: python repost.py --dump 20
