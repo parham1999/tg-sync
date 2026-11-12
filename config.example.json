@@ -1,0 +1,15 @@
+{
+  "bot_token": "PASTE_BOT_TOKEN_HERE",
+  "target_channel": "@YOUR_CHANNEL",
+  "sources": ["source_channel_1", "source_channel_2"],
+
+  "replacements": [],
+  "keep_mentions": [],
+  "add_footer": true,
+  "skip_posts_with_links": true,
+  "allowed_domains": ["telegra.ph", "youtube.com", "youtu.be"],
+  "extra_ad_keywords": [],
+  "skip_forwarded": false,
+  "incomplete_post": "skip",
+  "initial_posts": 0
+}
