@@ -1032,17 +1032,17 @@ def handle_update(cfg, net, state, u):
 
 
 def heartbeat(cfg, net, state):
-    """Once a day (after 10:00 Iran time) tell the owner the bot is alive."""
+    """Once a day (after 07:30 Iran time) tell the owner the bot is alive."""
     owner = owner_of(cfg, state)
     if not owner:
         return
     now = time.time()
     lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
     day = "%04d-%02d-%02d" % (lt.tm_year, lt.tm_mon, lt.tm_mday)
-    if lt.tm_hour < 10 or state.get("hb_day") == day:
+    if (lt.tm_hour, lt.tm_min) < (7, 30) or state.get("hb_day") == day:
         return
     log_ = [t for t in state.get("posted_log", []) if now - t < 86400]
-    txt = "🟢 ربات زنده است.\n"
+    txt = "🟢 ربات از سمت گیت‌هاب فعال است.\n"
     txt += "وضعیت: " + ("⏸ خاموش (با دکمه‌ی شما)" if state.get("paused") else "روشن") + "\n"
     txt += "پست‌های ارسال‌شده در ۲۴ ساعت گذشته: %d" % len(log_)
     if tell(net, owner, txt, MENU_KB) is not None:
