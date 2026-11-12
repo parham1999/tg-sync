@@ -22,6 +22,7 @@ import html
 import json
 import logging
 import os
+import random
 import re
 import sys
 import time
@@ -40,6 +41,11 @@ DEFAULTS = {
     "target_channel": "",
     "sources": [],
     "check_every_seconds": 300,
+    # Only the NEWEST post of each source is considered every time the program runs
+    # (older ones are never copied). Source order is shuffled and posts are spaced out.
+    "latest_only": True,
+    "random_delay_seconds": [15, 60],   # random pause between two posts of one run
+    "max_posts_per_run": 0,             # 0 = no limit; N = pick at most N sources at random
     "initial_posts": 0,            # how many old posts to publish on the very first run
     "delay_between_posts": 3,
     "replacements": [],            # [["old text", "new text"], ...]
@@ -641,6 +647,69 @@ def run_cycle(cfg, net, rules, state, state_path, dry):
 
 run_cycle.fails = {}
 
+def run_cycle_latest(cfg, net, rules, state, state_path, dry):
+    """Newest post of every source, if it is new and not an ad; random order and spacing."""
+    names = list(cfg["sources"])
+    random.shuffle(names)
+    cands = []
+    for name in names:
+        key = hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
+        label = key if IN_CLOUD else name
+        try:
+            posts = parse_page(net.get(cfg["web_base"] + name))
+        except NetError as e:
+            log.warning("[%s] cannot open channel page: %s", label, e)
+            continue
+        if not posts:
+            log.warning("[%s] no posts found - is the username right and the channel public?", label)
+            continue
+        newest = posts[-1]
+        st = state["channels"].setdefault(key, {})
+        if "last_id" not in st:
+            st["last_id"] = newest["id"] - 1      # first run: the newest post counts too
+        if newest["id"] <= st["last_id"]:
+            log.info("[%s] nothing new", label)
+            continue
+        reason = skip_reason(cfg, newest)
+        if reason:
+            log.info("[%s/%d] skipped: %s", label, newest["id"], reason)
+            if not dry:
+                st["last_id"] = newest["id"]
+                save_state(state_path, state)
+            continue
+        cands.append((label, st, newest))
+    limit = int(cfg["max_posts_per_run"])
+    if limit > 0 and len(cands) > limit:
+        for label, st, p in cands[limit:]:
+            log.info("[%s/%d] not chosen this time", label, p["id"])
+            if not dry:
+                st["last_id"] = p["id"]
+        cands = cands[:limit]
+        if not dry:
+            save_state(state_path, state)
+    lo, hi = cfg["random_delay_seconds"]
+    for i, (label, st, p) in enumerate(cands):
+        tag = "%s/%d" % (label, p["id"])
+        text = build_text(cfg, rules, p["text_html"])
+        if dry:
+            log.info("[%s] WOULD POST (%d media):\n%s\n----", tag, len(p["media"]), text)
+            continue
+        try:
+            deliver(net, cfg, p, text)
+            log.info("[%s] posted", tag)
+        except Skip as e:
+            log.warning("[%s] skipped: %s", tag, e)
+        except NetError as e:
+            log.warning("[%s] network problem, will retry next time: %s", tag, e)
+            continue
+        except ApiError as e:
+            log.error("[%s] Telegram refused: %s", tag, e.desc)
+        st["last_id"] = p["id"]
+        save_state(state_path, state)
+        if i < len(cands) - 1:
+            time.sleep(random.uniform(float(lo), float(hi)))
+
+
 
 def check(cfg, net):
     ok = True
@@ -743,7 +812,8 @@ def main():
              "your channel" if IN_CLOUD else cfg["target_channel"])
     while True:
         try:
-            run_cycle(cfg, net, rules, state, args.state, args.dry_run)
+            (run_cycle_latest if cfg["latest_only"] else run_cycle)(
+                cfg, net, rules, state, args.state, args.dry_run)
         except Exception:
             log.exception("cycle failed (will try again)")
         if args.once or args.dry_run:
