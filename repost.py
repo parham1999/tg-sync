@@ -19,6 +19,7 @@ Usage:
 import argparse
 import hashlib
 import html
+import io
 import json
 import logging
 import os
@@ -30,6 +31,11 @@ import urllib.error
 import urllib.request
 import uuid
 from html.parser import HTMLParser
+
+try:                                  # optional: used only to put your ID on photos
+    from PIL import Image, ImageDraw, ImageFont
+except Exception:                     # pragma: no cover
+    Image = None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -45,7 +51,18 @@ DEFAULTS = {
     # (older ones are never copied). Source order is shuffled and posts are spaced out.
     "latest_only": True,
     "random_delay_seconds": [15, 60],   # random pause between two posts of one run
-    "max_posts_per_run": 0,             # 0 = no limit; N = pick at most N sources at random
+    "max_posts_per_run": 6,             # at most this many posts per round (0 = no limit)
+    "interval_minutes": [30, 40],       # minimum gap between two posting rounds
+    "utc_offset_minutes": 210,          # Iran time (UTC+3:30)
+    "night_hours": [1, 6],              # from 01:00 until 05:59 ...
+    "night_max_posts": 1,               # ... only this many posts per round ...
+    "night_interval_minutes": [60, 70], # ... and one round per hour
+    "watermark": True,                  # small ID in the corner of photos (never on videos)
+    "watermark_text": "",               # empty = your channel ID
+    "owner_id": 0,                      # filled automatically when you press Start in the bot
+    "review_suspicious": True,          # send suspected ads to you with Send / Reject buttons
+    "review_keyword_ads": False,        # also review posts with obvious betting words (noisy)
+    "review_max_per_round": 3,
     "initial_posts": 0,            # how many old posts to publish on the very first run
     "delay_between_posts": 3,
     "replacements": [],            # [["old text", "new text"], ...]
@@ -138,6 +155,12 @@ def load_config(path):
         die("the config has a typing mistake (quotes/commas): %s" % e)
     cfg = dict(DEFAULTS)
     cfg.update(raw)
+    extra = os.environ.get("SETTINGS_JSON", "").strip()   # optional second secret (no token inside)
+    if extra:
+        try:
+            cfg.update(json.loads(extra))
+        except ValueError as e:
+            die("SETTINGS_JSON has a typing mistake (quotes/commas): %s" % e)
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip() or str(cfg["bot_token"]).strip()
     if not token or "PASTE" in token.upper():
         die("bot_token is empty in config.json - paste the token you got from @BotFather.")
@@ -153,6 +176,7 @@ def load_config(path):
             for l in lines[1:]:
                 if l.startswith("initial_posts="):
                     cfg["initial_posts"] = int(l.split("=", 1)[1])
+            cfg["_test_mode"] = True
             print("*** TEST MODE: posting to the test channel from target_override.txt ***")
     tgt = str(cfg["target_channel"]).strip()
     if not tgt.startswith("@"):
@@ -224,6 +248,19 @@ class Net:
         except (urllib.error.URLError, OSError) as e:
             raise NetError(str(e))
         return data if binary else data.decode("utf-8", "replace")
+
+    def get_range(self, url, nbytes):
+        """First nbytes of a file plus its total size (for duplicate detection)."""
+        req = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-%d" % (nbytes - 1)})
+        try:
+            with self.opener.open(req, timeout=40) as r:
+                data = r.read(nbytes)
+                cr = r.headers.get("Content-Range", "")
+                total = int(cr.rsplit("/", 1)[1]) if "/" in cr and cr.rsplit("/", 1)[1].isdigit() \
+                    else int(r.headers.get("Content-Length", len(data)))
+        except (urllib.error.URLError, OSError) as e:
+            raise NetError(str(e))
+        return data, total
 
     def api(self, method, payload=None, files=None):
         url = "%s/bot%s/%s" % (self.api_base, self.token, method)
@@ -409,6 +446,8 @@ def build_text(cfg, rules, raw_html):
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
     own = re.escape(rules.own)
     t = re.sub(r"(%s)(?:[\s|\-–•·,،/]*%s)+" % (own, own), rules.own, t, flags=re.I)
+    # "@yourchannel | Source Name"  ->  "@yourchannel"  (the old channel's display name)
+    t = re.sub(r"(%s)[ \t]*[|•·–—][ \t]*[^\n<]*(?=\n|<|$)" % own, rules.own, t, flags=re.I)
     if cfg["add_footer"] and rules.own.lower() not in plain(t).lower():
         t = (t + "\n\n" + rules.own) if t else rules.own
     return t
@@ -429,6 +468,61 @@ def other_channels(cfg, post):
         for m in re.finditer(r"(?<![\w.])(?:https?://)?(?:www\.)?(?:t|telegram)\.me/([A-Za-z0-9_]{4,})", src, re.I):
             found.add(m.group(1).lower())
     return sorted(u for u in found if u not in allowed and u not in ("s", "joinchat"))
+
+
+# --------------------------------------------------------------------------- #
+# duplicate detection (the source channels copy from each other)
+# --------------------------------------------------------------------------- #
+def norm_for_dedupe(text_html, own):
+    t = plain(text_html).lower().replace(own.lower(), " ")
+    t = re.sub(r"https?://\S+", " ", t)
+    t = re.sub(r"@\w+", " ", t)
+    t = t.replace("ي", "ی").replace("ك", "ک").replace("ة", "ه").replace("\u200c", " ").replace("\u200f", " ")
+    t = re.sub(r"[\u064b-\u065f\u0670\u0640]", "", t)
+    t = re.sub(r"[^\w\s]|_", " ", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def text_fp(norm):
+    words = norm.split()
+    fp = {}
+    if len(norm) >= 25:
+        fp["x"] = hashlib.sha1(norm.encode("utf-8")).hexdigest()[:12]
+    if len(words) >= 8:
+        sh = {hashlib.sha1(" ".join(words[i:i + 3]).encode("utf-8")).hexdigest()[:8]
+              for i in range(len(words) - 2)}
+        fp["h"] = sorted(sh)[:80]
+    return fp
+
+
+def jaccard(a, b):
+    a, b = set(a), set(b)
+    return len(a & b) / float(len(a | b)) if a and b else 0.0
+
+
+def find_dup(fp, entries):
+    for e in entries:
+        if fp.get("x") and fp["x"] == e.get("x"):
+            return e
+        if fp.get("h") and e.get("h") and jaccard(fp["h"], e["h"]) >= 0.8:
+            return e
+        if fp.get("m") and set(fp["m"]) & set(e.get("m", [])):
+            return e
+    return None
+
+
+def media_hashes(net, media):
+    out = []
+    for kind, url in media[:3]:
+        try:
+            if kind == "photo":
+                out.append(hashlib.sha1(net.get(url, binary=True, timeout=30)).hexdigest()[:12])
+            else:
+                data, total = net.get_range(url, 262144)
+                out.append(hashlib.sha1(data + str(total).encode()).hexdigest()[:12])
+        except Exception:
+            pass
+    return out
 
 
 def skip_reason(cfg, post):
@@ -519,6 +613,65 @@ def send_text(net, cfg, t):
         time.sleep(1)
 
 
+def wm_text(cfg):
+    return cfg.get("watermark_text") or cfg["target_channel"]
+
+
+def wm_on(cfg):
+    return bool(cfg.get("watermark")) and Image is not None and not cfg.get("_no_wm")
+
+
+def _font(size):
+    for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+              "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+              "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+              "DejaVuSans-Bold.ttf", "arialbd.ttf"):
+        try:
+            return ImageFont.truetype(p, size)
+        except Exception:
+            pass
+    try:
+        return ImageFont.load_default(size)
+    except Exception:
+        return ImageFont.load_default()
+
+
+def watermark_photo(data, text):
+    """Small readable ID in the bottom-right corner (semi-transparent dark pill, white text)."""
+    im = Image.open(io.BytesIO(data))
+    im.load()
+    im = im.convert("RGBA")
+    w, h = im.size
+    if min(w, h) < 200:
+        return data
+    size = max(13, int(min(w, h) * 0.034))
+    font = _font(size)
+    ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov)
+    b = d.textbbox((0, 0), text, font=font)
+    tw, th = b[2] - b[0], b[3] - b[1]
+    padx, pady, m = int(size * 0.55), int(size * 0.35), int(size * 0.7)
+    x1, y1 = w - m, h - m
+    x0, y0 = x1 - tw - 2 * padx, y1 - th - 2 * pady
+    d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 120))
+    d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 235))
+    out = Image.alpha_composite(im, ov).convert("RGB")
+    buf = io.BytesIO()
+    out.save(buf, "JPEG", quality=92, optimize=True)
+    return buf.getvalue()
+
+
+def marked_photo(net, cfg, url):
+    """Download a photo and return its watermarked bytes, or None if that is not possible."""
+    if not wm_on(cfg):
+        return None
+    try:
+        return watermark_photo(net.get(url, binary=True, timeout=60), wm_text(cfg))
+    except Exception as e:
+        log.info("could not put the ID on a photo (%s) - sending it as it is", e)
+        return None
+
+
 def send_single(net, cfg, kind, url, caption):
     method = "sendPhoto" if kind == "photo" else "sendVideo"
     payload = {"chat_id": cfg["target_channel"], kind: url}
@@ -527,6 +680,15 @@ def send_single(net, cfg, kind, url, caption):
     if caption:
         payload["caption"] = caption
         payload["parse_mode"] = "HTML"
+    if kind == "photo":
+        data = marked_photo(net, cfg, url)
+        if data:
+            payload.pop(kind)
+            try:
+                return call_html(net, method, payload, files={kind: ("photo.jpg", data, "image/jpeg")})
+            except ApiError as e:
+                log.info("marked photo refused (%s) - sending the original", e.desc)
+                payload[kind] = url
     try:
         return call_html(net, method, payload)
     except ApiError as e:
@@ -546,9 +708,14 @@ def send_group(net, cfg, media, caption):
         if len(chunk) == 1:
             send_single(net, cfg, chunk[0][0], chunk[0][1], cap)
             continue
-        items = []
+        items, files = [], {}
         for j, (kind, url) in enumerate(chunk):
             it = {"type": kind, "media": url}
+            if kind == "photo":
+                data = marked_photo(net, cfg, url)
+                if data:
+                    files["p%d" % j] = ("photo%d.jpg" % j, data, "image/jpeg")
+                    it["media"] = "attach://p%d" % j
             if kind == "video":
                 it["supports_streaming"] = True
             if cap and j == 0:
@@ -556,7 +723,7 @@ def send_group(net, cfg, media, caption):
                 it["parse_mode"] = "HTML"
             items.append(it)
         try:
-            net.api("sendMediaGroup", {"chat_id": cfg["target_channel"], "media": items})
+            net.api("sendMediaGroup", {"chat_id": cfg["target_channel"], "media": items}, files or None)
         except ApiError as e:
             log.info("album by link failed (%s) - sending items one by one", e.desc)
             for j, (kind, url) in enumerate(chunk):
@@ -647,11 +814,195 @@ def run_cycle(cfg, net, rules, state, state_path, dry):
 
 run_cycle.fails = {}
 
-def run_cycle_latest(cfg, net, rules, state, state_path, dry):
-    """Newest post of every source, if it is new and not an ad; random order and spacing."""
+# --------------------------------------------------------------------------- #
+# control from inside Telegram (on/off, review of suspected ads)
+# --------------------------------------------------------------------------- #
+BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش کردن", "▶️ روشن کردن", "📊 وضعیت", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
+MENU_KB = {"keyboard": [[{"text": BTN_OFF}, {"text": BTN_ON}], [{"text": BTN_STATUS}],
+                        [{"text": BTN_REVIEW}]], "resize_keyboard": True, "is_persistent": True}
+
+
+def tell(net, chat, text, markup=None):
+    p = {"chat_id": chat, "text": text, "disable_web_page_preview": True}
+    if markup:
+        p["reply_markup"] = markup
+    try:
+        return net.api("sendMessage", p)
+    except (ApiError, NetError) as e:
+        log.warning("could not message the owner: %s", getattr(e, "desc", e))
+
+
+def owner_of(cfg, state):
+    return int(cfg.get("owner_id") or state.get("owner_id") or 0)
+
+
+def status_text(cfg, state):
+    on = not state.get("paused")
+    lines = ["وضعیت ربات: " + ("🟢 روشن" if on else "🔴 خاموش")]
+    nxt = state.get("next_run_ts", 0) - time.time()
+    if on:
+        lines.append("دور بعدی ارسال: " + ("به‌زودی" if nxt <= 0 else "حدود %d دقیقه دیگر" % (nxt // 60 + 1)))
+    lines.append("پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
+    lines.append("تاییدشده و منتظر ارسال: %d" % len(state.get("approved", [])))
+    lines.append("بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+    return "\n".join(lines)
+
+
+def reseed(cfg, net, state):
+    """After switching on: everything posted while off counts as seen, only newer posts are used."""
+    for name in cfg["sources"]:
+        key = hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
+        try:
+            posts = parse_page(net.get(cfg["web_base"] + name))
+        except NetError:
+            continue
+        if posts:
+            state["channels"].setdefault(key, {})["last_id"] = posts[-1]["id"]
+
+
+def process_updates(cfg, net, state, state_path):
+    try:
+        ups = net.api("getUpdates", {"offset": state.get("update_offset", 0), "timeout": 0,
+                                     "allowed_updates": ["message", "callback_query"]})
+    except (ApiError, NetError) as e:
+        log.warning("cannot read bot messages: %s", getattr(e, "desc", e))
+        return
+    for u in ups or []:
+        state["update_offset"] = u["update_id"] + 1
+        try:
+            handle_update(cfg, net, state, u)
+        except Exception:
+            log.exception("could not handle a bot message")
+    if ups:
+        save_state(state_path, state)
+
+
+def handle_update(cfg, net, state, u):
+    cb = u.get("callback_query")
+    if cb:
+        if cb["from"]["id"] != owner_of(cfg, state):
+            return
+        act, _, pid = (cb.get("data") or "").partition(":")
+        pend = state.setdefault("pending", {}).pop(pid, None)
+        if pend is None:
+            net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": "این مورد منقضی شده"})
+            return
+        if act == "ok":
+            pend["t"] = int(time.time())
+            state.setdefault("approved", []).append(pend)
+            note = "✅ تایید شد؛ در دور بعدی ارسال می‌شود"
+        else:
+            note = "❌ رد شد"
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note})
+        m = cb.get("message") or {}
+        try:
+            net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"],
+                                        "text": (m.get("text") or "") + "\n\n" + note})
+        except (ApiError, KeyError):
+            pass
+        return
+    m = u.get("message")
+    if not m or (m.get("chat") or {}).get("type") != "private":
+        return
+    uid, text = m["from"]["id"], (m.get("text") or "").strip()
+    owner = owner_of(cfg, state)
+    if not owner:
+        if not text.startswith("/start"):
+            return
+        state["owner_id"] = owner = uid          # the first person who presses Start is the owner
+        log.info("owner registered")
+    if uid != owner:
+        return
+    if BTN_REVIEW in text or text.startswith("/review"):
+        state["review_off"] = not state.get("review_off")
+        tell(net, owner, "بررسی پست‌های مشکوک: " + ("خاموش شد" if state["review_off"] else "روشن شد"), MENU_KB)
+    elif "خاموش" in text or text.startswith("/stop") or text.startswith("/off"):
+        state["paused"] = True
+        tell(net, owner, "🔴 ارسال خاموش شد. هر وقت خواستید «روشن کردن» را بزنید.", MENU_KB)
+    elif "روشن" in text or text.startswith("/on"):
+        reseed(cfg, net, state)
+        state["paused"] = False
+        state["next_run_ts"] = 0
+        tell(net, owner, "🟢 ارسال روشن شد. فقط پست‌هایی که از حالا منتشر شوند بررسی می‌شوند.", MENU_KB)
+    else:
+        tell(net, owner, status_text(cfg, state), MENU_KB)
+
+
+def review_worthy(cfg, reason):
+    if not cfg["review_suspicious"] or not reason:
+        return False
+    if reason.startswith("ad keyword"):
+        return bool(cfg["review_keyword_ads"])
+    return reason.startswith(("ad word", "contains a link", "mentions another", "contains a channel invite"))
+
+
+def send_for_review(net, cfg, state, tag, src, p, text, reason):
+    owner = owner_of(cfg, state)
+    pid = hashlib.sha1(("%s/%s" % (tag, p["id"])).encode()).hexdigest()[:8]
+    ocfg = dict(cfg, target_channel=owner, _no_wm=True)
+    try:
+        deliver(net, ocfg, p, text)
+    except (Skip, ApiError, NetError) as e:
+        log.warning("[%s] could not show it to the owner: %s", tag, getattr(e, "desc", e))
+        return False
+    state.setdefault("pending", {})[pid] = {
+        "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time())}
+    tell(net, owner, "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟" % (reason, src), {
+        "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
+                             {"text": "❌ رد", "callback_data": "no:" + pid}]]})
+    return True
+
+
+def pick_and_order(items, limit):
+    """Take up to `limit` items (random order already) and arrange them so that no two
+    text-only posts (no photo/video) are next to each other."""
+    media = [i for i in items if i[1]["media"]]
+    texts = [i for i in items if not i[1]["media"]]
+    pick = []
+    for i in items:                               # fair: first come in the random order
+        if len(pick) >= limit:
+            break
+        pick.append(i)
+    pm = [i for i in pick if i[1]["media"]]
+    pt = [i for i in pick if not i[1]["media"]]
+    spare = [i for i in media if i not in pick]
+    while len(pt) > len(pm) + 1:                  # too many text posts to separate
+        pt.pop()
+        if spare:
+            pm.append(spare.pop(0))
+    # alternate, starting with whichever group is bigger (media first on a tie)
+    out = []
+    a, b = (pt, pm) if len(pt) > len(pm) else (pm, pt)
+    while a or b:
+        if a:
+            out.append(a.pop(0))
+        if b:
+            out.append(b.pop(0))
+    return out
+
+
+def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
+    """One posting round: newest post of every source (if new and not an ad), duplicates
+    removed, random order, at most max_posts_per_run posts, then a 30-40 minute pause."""
+    now = time.time()
+    if not dry:
+        process_updates(cfg, net, state, state_path)
+        if state.get("paused"):
+            log.info("switched OFF from the bot - nothing is posted")
+            return
+    nxt = state.get("next_run_ts", 0)
+    if not force and not dry and now < nxt:
+        log.info("waiting - next posting round in about %d min", int((nxt - now) / 60) + 1)
+        return
+    hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
+    n0, n1 = cfg["night_hours"]
+    night = n0 <= hour < n1
+    if night:
+        log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
     names = list(cfg["sources"])
     random.shuffle(names)
     cands = []
+    reviewed = 0
     for name in names:
         key = hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
         label = key if IN_CLOUD else name
@@ -675,40 +1026,115 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry):
             log.info("[%s/%d] skipped: %s", label, newest["id"], reason)
             if not dry:
                 st["last_id"] = newest["id"]
-                save_state(state_path, state)
+                if (owner_of(cfg, state) and not state.get("review_off") and review_worthy(cfg, reason)
+                        and reviewed < int(cfg["review_max_per_round"])):
+                    txt = build_text(cfg, rules, newest["text_html"])
+                    if send_for_review(net, cfg, state, label, name, newest, txt, reason):
+                        reviewed += 1
+                        time.sleep(2)
             continue
         cands.append((label, st, newest))
-    limit = int(cfg["max_posts_per_run"])
-    if limit > 0 and len(cands) > limit:
-        for label, st, p in cands[limit:]:
-            log.info("[%s/%d] not chosen this time", label, p["id"])
-            if not dry:
-                st["last_id"] = p["id"]
-        cands = cands[:limit]
-        if not dry:
-            save_state(state_path, state)
-    lo, hi = cfg["random_delay_seconds"]
-    for i, (label, st, p) in enumerate(cands):
+    hist = state.setdefault("fp", [])
+    hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
+    limit = int(cfg["max_posts_per_run"]) or len(cands)
+    if night:
+        limit = min(limit, int(cfg["night_max_posts"])) if limit else int(cfg["night_max_posts"])
+    eligible = []
+    appr = state.get("approved", [])
+    state["approved"] = []
+    for a in appr:                                # posts you approved in the bot go first
+        if now - a.get("t", 0) > 2 * 86400:
+            continue
+        fp = text_fp(norm_for_dedupe(a["text"], rules.own))
+        fp["m"] = []
+        if find_dup(fp, hist):
+            continue
+        eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
+                         {"id": 0, "media": a["media"]}, a["text"], fp, None))
+    for k in [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > 86400]:
+        state["pending"].pop(k)
+    for label, st, p in cands:                    # candidates are already in random order
         tag = "%s/%d" % (label, p["id"])
+        if not dry:
+            st["last_id"] = p["id"]               # whatever happens, this post is never reconsidered
         text = build_text(cfg, rules, p["text_html"])
+        fp = text_fp(norm_for_dedupe(text, rules.own))
+        fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
+        if find_dup(fp, hist + [c[3] for c in eligible]):
+            log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
+            continue
+        eligible.append((tag, p, text, fp, st))
+    chosen = pick_and_order(eligible, limit)
+    for item in eligible:
+        if item not in chosen:
+            log.info("[%s] not chosen this time", item[0])
+            if item[0].startswith("approved/"):   # approved by you: keep it for the next round
+                state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
+    if not dry:
+        save_state(state_path, state)
+    lo, hi = cfg["random_delay_seconds"]
+    posted = 0
+    for i, (tag, p, text, fp, st) in enumerate(chosen):
         if dry:
             log.info("[%s] WOULD POST (%d media):\n%s\n----", tag, len(p["media"]), text)
             continue
         try:
             deliver(net, cfg, p, text)
             log.info("[%s] posted", tag)
+            hist.append(dict(fp, t=int(time.time())))
+            posted += 1
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
         except NetError as e:
-            log.warning("[%s] network problem, will retry next time: %s", tag, e)
-            continue
+            log.warning("[%s] network problem: %s", tag, e)
         except ApiError as e:
             log.error("[%s] Telegram refused: %s", tag, e.desc)
-        st["last_id"] = p["id"]
         save_state(state_path, state)
-        if i < len(cands) - 1:
+        if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
+    if posted and not dry:
+        a, b = cfg["night_interval_minutes"] if night else cfg["interval_minutes"]
+        state["next_run_ts"] = time.time() + random.uniform(float(a), float(b)) * 60
+        save_state(state_path, state)
+        log.info("round finished: %d posted, next round in %d-%d min or later", posted, a, b)
 
+
+def dump(cfg, net, rules, n):
+    """TEST ONLY: send the last n posts of every source to the test channel, each with a
+    header line saying which source/post it is and what the program would do with it."""
+    if not cfg.get("_test_mode"):
+        die("--dump works only in TEST MODE (target_override.txt must exist) so it can never "
+            "flood your real channel.")
+    seen = []
+    for si, name in enumerate(cfg["sources"], 1):
+        try:
+            posts = parse_page(net.get(cfg["web_base"] + name))[-n:]
+        except NetError as e:
+            log.warning("[source %d] cannot open: %s", si, e)
+            continue
+        log.info("[source %d] sending %d posts", si, len(posts))
+        for p in posts:
+            reason = skip_reason(cfg, p)
+            text = build_text(cfg, rules, p["text_html"])
+            fp = text_fp(norm_for_dedupe(text, rules.own))
+            fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
+            dup = None if reason else find_dup(fp, [e for e, _ in seen])
+            if reason:
+                status = "SKIP: " + reason
+            elif dup:
+                status = "DUPLICATE of " + [t for e, t in seen if e is dup][0]
+            else:
+                status = "OK"
+                seen.append((fp, "%s #%d" % (name, p["id"])))
+            full = "<b>[%s #%d] %s</b>\n%s" % (name, p["id"], html.escape(status), text)
+            try:
+                deliver(net, cfg, p, full.strip())
+            except (Skip, ApiError) as e:
+                log.warning("[source %d/%d] not sent: %s", si, p["id"], getattr(e, "desc", e))
+            except NetError as e:
+                log.warning("[source %d/%d] network problem: %s", si, p["id"], e)
+            time.sleep(3.5)
+    log.info("dump finished")
 
 
 def check(cfg, net):
@@ -790,6 +1216,9 @@ def main():
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--force", action="store_true", help="ignore the pause between rounds")
+    ap.add_argument("--dump", type=int, default=0, metavar="N",
+                    help="TEST MODE only: send the last N posts of every source")
     args = ap.parse_args()
 
     for s in (sys.stdout, sys.stderr):
@@ -807,13 +1236,19 @@ def main():
     if args.check:
         sys.exit(0 if check(cfg, net) else 1)
     rules = Rules(cfg)
+    if args.dump:
+        dump(cfg, net, rules, args.dump)
+        return
     state = load_state(args.state)
+    force = args.force or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
              "your channel" if IN_CLOUD else cfg["target_channel"])
     while True:
         try:
-            (run_cycle_latest if cfg["latest_only"] else run_cycle)(
-                cfg, net, rules, state, args.state, args.dry_run)
+            if cfg["latest_only"]:
+                run_cycle_latest(cfg, net, rules, state, args.state, args.dry_run, force)
+            else:
+                run_cycle(cfg, net, rules, state, args.state, args.dry_run)
         except Exception:
             log.exception("cycle failed (will try again)")
         if args.once or args.dry_run:
