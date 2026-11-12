@@ -78,7 +78,7 @@ DEFAULTS = {
         "#تبلیغ", "#تبلیغات", "تبلیغات", "رزرو تبلیغ", "سفارش تبلیغ", "جهت تبلیغ",
         "#ad", "#ads", "sponsored", "#sponsored", "advertisement",
         "شرط بندی", "شرط‌بندی", "شرطبندی", "شرط بند", "کازینو", "پوکر", "اسلات",
-        "رولت", "بونوس", "بونس", "کد معرف", "ثبت نام و دریافت", "ثبت‌نام و دریافت",
+        "رولت", "بونوس", "بونس", "تخفیف", "کد معرف", "ثبت نام و دریافت", "ثبت‌نام و دریافت",
         "betting", "casino", "poker", "1xbet", "bet365", "bonus", "jackpot", "slot",
     ],
     # whole words only (so "بت" matches the word "بت" but not "ثبت")
@@ -388,6 +388,58 @@ TME_HREF_RE = re.compile(r"^(?:https?:)?//(?:www\.)?(?:t|telegram)\.me/", re.I)
 MENTION_RE = re.compile(r"(?<![\w@./])@([A-Za-z][A-Za-z0-9_]{3,31})(?!\w)")
 
 
+SRC = "\ue000"            # placeholder for "the source channel's ID/link" while converting
+KEEP_END = ".:؟?!،,)»\"'"
+
+
+def drop_source_lines(t, own):
+    """The source channel's ID is removed together with the decoration around it:
+    a line that is only an ID footer (emoji, '| name', ...) disappears completely; an ID glued
+    to the end of a real sentence is cut off and the sentence stays. Your ID is added by the
+    caller on its own line."""
+    out = []
+    for line in t.split("\n"):
+        if SRC not in line:
+            out.append(line)
+            continue
+        pre, _, post = line.partition(SRC)
+        post_plain = post.replace(SRC, "")
+        post_words = re.search(r"\w", re.sub(r"<[^>]+>", "", post_plain))
+        starts_sep = re.match(r"\s*(?:<[^>]+>)*\s*[|•·–—\-/]", post_plain)
+        if post_words and not starts_sep:      # real text follows: ID in the middle of a sentence
+            out.append(line.replace(SRC, own))
+            continue
+        pre_plain = re.sub(r"<[^>]+>", "", pre)
+        if not re.search(r"\w", pre_plain):   # nothing but decoration before the ID: drop the line
+            continue
+        # glued to a sentence: keep the sentence, drop trailing emoji/symbols but keep . : ! ? etc.
+        keep = pre
+        while keep and not re.search(r"[\w" + re.escape(KEEP_END) + r">]$", keep):
+            keep = keep[:-1]
+        out.append(keep.rstrip())
+    return "\n".join(out)
+
+
+def balance_tags(t):
+    stack, out = [], []
+    for m in re.finditer(r"<(/?)([a-z-]+)([^>]*)>|[^<]+|<", t):
+        if m.group(2) is None:
+            out.append(m.group(0))
+            continue
+        close, name = m.group(1), m.group(2)
+        if not close:
+            stack.append(name)
+            out.append(m.group(0))
+        elif name in stack:
+            while stack and stack[-1] != name:
+                out.append("</%s>" % stack.pop())
+            stack.pop()
+            out.append(m.group(0))
+    while stack:
+        out.append("</%s>" % stack.pop())
+    return "".join(out)
+
+
 class Rules:
     def __init__(self, cfg):
         self.own = cfg["target_channel"]
@@ -400,13 +452,13 @@ class Rules:
     def text(self, s):
         for a, b in self.repl:
             s = s.replace(a, b)
-        s = TME_RE.sub(self.own, s)
+        s = TME_RE.sub(SRC, s)
         return MENTION_RE.sub(
-            lambda m: m.group(0) if m.group(0).lower() in self.keep else self.own, s)
+            lambda m: m.group(0) if m.group(0).lower() in self.keep else SRC, s)
 
     def link(self, href, inner):
         if TME_HREF_RE.match(href):
-            return self.own
+            return SRC
         if self.strip_links or not re.match(r"https?://", href, re.I):
             return inner
         return '<a href="%s">%s</a>' % (html.escape(href, quote=True), inner)
@@ -466,12 +518,9 @@ def build_text(cfg, rules, raw_html):
     conv.feed(raw_html)
     conv.close()
     t = conv.result()
+    t = balance_tags(drop_source_lines(t, rules.own))
     t = re.sub(r"[ \t]+\n", "\n", t)
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
-    own = re.escape(rules.own)
-    t = re.sub(r"(%s)(?:[\s|\-–•·,،/]*%s)+" % (own, own), rules.own, t, flags=re.I)
-    # "@yourchannel | Source Name"  ->  "@yourchannel"  (the old channel's display name)
-    t = re.sub(r"(%s)[ \t]*[|•·–—][ \t]*[^\n<]*(?=\n|<|$)" % own, rules.own, t, flags=re.I)
     if cfg["add_footer"] and rules.own.lower() not in plain(t).lower():
         t = (t + "\n\n" + rules.own) if t else rules.own
     return t
@@ -638,7 +687,7 @@ def send_text(net, cfg, t):
 
 
 def wm_text(cfg):
-    return cfg.get("watermark_text") or cfg["target_channel"]
+    return cfg.get("watermark_text") or "t.me/" + cfg["target_channel"].lstrip("@")
 
 
 def wm_on(cfg):
@@ -661,7 +710,7 @@ def _font(size):
 
 
 def watermark_photo(data, text):
-    """Small readable ID in the bottom-right corner (semi-transparent dark pill, white text)."""
+    """Small readable link in the bottom-left corner (semi-transparent dark pill, white text)."""
     im = Image.open(io.BytesIO(data))
     im.load()
     im = im.convert("RGBA")
@@ -675,8 +724,8 @@ def watermark_photo(data, text):
     b = d.textbbox((0, 0), text, font=font)
     tw, th = b[2] - b[0], b[3] - b[1]
     padx, pady, m = int(size * 0.55), int(size * 0.35), int(size * 0.7)
-    x1, y1 = w - m, h - m
-    x0, y0 = x1 - tw - 2 * padx, y1 - th - 2 * pady
+    x0, y1 = m, h - m                              # bottom-left corner
+    x1, y0 = x0 + tw + 2 * padx, y1 - th - 2 * pady
     d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 120))
     d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 235))
     out = Image.alpha_composite(im, ov).convert("RGB")
