@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pillow
-      - name: Send the last 20 posts of every source to the TEST channel
+      - name: Send the last 3 posts of every source to the TEST channel
         env:
           CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
           SETTINGS_JSON: ${{ secrets.SETTINGS_JSON }}
-        run: python repost.py --dump 20
+        run: python repost.py --dump 3
