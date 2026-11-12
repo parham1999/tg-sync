@@ -1195,6 +1195,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         save_state(state_path, state)
         if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
+    if not posted and not dry:
+        state["next_run_ts"] = max(state.get("next_run_ts", 0), time.time() + 120)
+        save_state(state_path, state)
     if posted and not dry:
         a, b = cfg["night_interval_minutes"] if night else cfg["interval_minutes"]
         state["next_run_ts"] = time.time() + random.uniform(float(a), float(b)) * 60
@@ -1320,6 +1323,30 @@ def check(cfg, net):
     return ok
 
 
+def state_digest(state):
+    """What matters for saving: everything except the bot-message counter."""
+    d = dict(state)
+    d.pop("update_offset", None)
+    return hashlib.sha1(json.dumps(d, sort_keys=True).encode()).hexdigest()
+
+
+def git_push_state(path):
+    """Cloud only: keep state.json safe in the repository while the long run is still alive."""
+    import subprocess
+    try:
+        run = lambda *a: subprocess.run(a, check=False, capture_output=True, timeout=120)
+        run("git", "config", "user.name", "repost-bot")
+        run("git", "config", "user.email", "repost-bot@users.noreply.github.com")
+        run("git", "add", path)
+        if run("git", "diff", "--cached", "--quiet").returncode != 0:
+            run("git", "commit", "-m", "update state")
+            if run("git", "push").returncode != 0:
+                run("git", "pull", "--rebase", "--autostash")
+                run("git", "push")
+    except Exception as e:
+        log.warning("could not save state to the repository yet: %s", e)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=os.path.join(BASE_DIR, "config.json"))
@@ -1327,6 +1354,8 @@ def main():
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--serve", type=int, default=0, metavar="MINUTES",
+                    help="stay alive this many minutes: answer bot buttons every ~20 s, post rounds on schedule")
     ap.add_argument("--force", action="store_true", help="ignore the pause between rounds")
     ap.add_argument("--dump", type=int, default=0, metavar="N",
                     help="TEST MODE only: send the last N posts of every source")
@@ -1351,17 +1380,30 @@ def main():
         dump(cfg, net, rules, args.dump, load_state(args.state))
         return
     state = load_state(args.state)
-    force = args.force or os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+    force = args.force
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
              "your channel" if IN_CLOUD else cfg["target_channel"])
+    deadline = time.time() + args.serve * 60
+    saved = state_digest(state)
+    first = True
     while True:
         try:
             if cfg["latest_only"]:
-                run_cycle_latest(cfg, net, rules, state, args.state, args.dry_run, force)
+                run_cycle_latest(cfg, net, rules, state, args.state, args.dry_run, force and first)
             else:
                 run_cycle(cfg, net, rules, state, args.state, args.dry_run)
         except Exception:
             log.exception("cycle failed (will try again)")
+        first = False
+        if args.serve:
+            d = state_digest(state)
+            if d != saved and IN_CLOUD:
+                git_push_state(args.state)
+                saved = d
+            if time.time() + 20 < deadline:
+                time.sleep(20)
+                continue
+            break
         if args.once or args.dry_run:
             break
         time.sleep(max(60, int(cfg["check_every_seconds"])))
