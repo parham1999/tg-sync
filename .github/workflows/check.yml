@@ -15,4 +15,5 @@ jobs:
       - name: Check bot, channel and sources
         env:
           CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
+          SETTINGS_JSON: ${{ secrets.SETTINGS_JSON }}
         run: python repost.py --check
