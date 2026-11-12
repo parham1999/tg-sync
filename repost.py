@@ -47,7 +47,7 @@ DEFAULTS = {
     "add_footer": True,            # add your @channel at the end if it is missing
     "strip_all_links": False,      # True = remove every link, keep only the text
     "link_previews": False,
-    "skip_forwarded": False,
+    "skip_forwarded": True,        # forwarded posts are never copied
     "skip_replies": True,
     "skip_invite_links": True,     # posts that contain t.me/+xxx or joinchat links
     # any of these pieces of text anywhere in the post => treated as an ad
@@ -63,6 +63,7 @@ DEFAULTS = {
     # ads almost always carry a link to a site/app: skip every post that has a
     # link to anything other than Telegram (links to the domains below are allowed)
     "extra_ad_keywords": [],      # your own additional ad words (added to ad_keywords)
+    "skip_other_mentions": True,   # skip posts that mention/link ANOTHER channel or bot
     "skip_posts_with_links": True,
     "allowed_domains": ["telegra.ph", "youtube.com", "youtu.be"],
     "blocked_domains": [],
@@ -135,6 +136,18 @@ def load_config(path):
     if not token or "PASTE" in token.upper():
         die("bot_token is empty in config.json - paste the token you got from @BotFather.")
     cfg["bot_token"] = token
+    # Optional test mode: a file named target_override.txt next to this script
+    # (line 1 = "@test_channel", optional line "initial_posts=5") replaces the target.
+    ov = os.path.join(BASE_DIR, "target_override.txt")
+    if os.path.exists(ov):
+        with open(ov, "r", encoding="utf-8-sig") as f:
+            lines = [l.strip() for l in f.read().splitlines() if l.strip()]
+        if lines and lines[0].startswith("@"):
+            cfg["target_channel"] = lines[0]
+            for l in lines[1:]:
+                if l.startswith("initial_posts="):
+                    cfg["initial_posts"] = int(l.split("=", 1)[1])
+            print("*** TEST MODE: posting to the test channel from target_override.txt ***")
     tgt = str(cfg["target_channel"]).strip()
     if not tgt.startswith("@"):
         die('target_channel must look like "@YOUR_CHANNEL" (with the @).')
@@ -395,6 +408,23 @@ def build_text(cfg, rules, raw_html):
     return t
 
 
+def other_channels(cfg, post):
+    """Usernames mentioned in the post (as @name or t.me/name) that are neither the
+    source channel(s) being copied, nor your channel, nor listed in keep_mentions."""
+    allowed = {cfg["target_channel"].lstrip("@").lower()}
+    allowed |= {x.lower() for x in cfg["sources"]}
+    allowed |= {str(k).lstrip("@").lower() for k in cfg["keep_mentions"]}
+    found = set()
+    raw = post["text_html"]
+    text = plain(raw)
+    for m in MENTION_RE.finditer(text):
+        found.add(m.group(1).lower())
+    for src in [text] + [html.unescape(h) for h in re.findall(r'href="([^"]+)"', raw)]:
+        for m in re.finditer(r"(?<![\w.])(?:https?://)?(?:www\.)?(?:t|telegram)\.me/([A-Za-z0-9_]{4,})", src, re.I):
+            found.add(m.group(1).lower())
+    return sorted(u for u in found if u not in allowed and u not in ("s", "joinchat"))
+
+
 def skip_reason(cfg, post):
     text = plain(post["text_html"]).lower()
     if post["reply"] and cfg["skip_replies"]:
@@ -424,6 +454,10 @@ def skip_reason(cfg, post):
         for h in hosts:
             if not any(h == d or h.endswith("." + d) for d in cfg["allowed_domains"]):
                 return "contains a link to a site/app (%s)" % h
+    if cfg["skip_other_mentions"]:
+        others = other_channels(cfg, post)
+        if others:
+            return "mentions another channel/bot (@%s)" % others[0]
     if cfg["skip_invite_links"] and INVITE_RE.search(post["text_html"]):
         return "contains a channel invite link"
     if post["unsupported"] and cfg["incomplete_post"] == "skip":
@@ -621,14 +655,26 @@ def check(cfg, net):
         return False
     try:
         chat = net.api("getChat", {"chat_id": cfg["target_channel"]})
-        mem = net.api("getChatMember", {"chat_id": chat["id"], "user_id": me["id"]})
-        if mem.get("status") == "creator" or (
-                mem.get("status") == "administrator" and mem.get("can_post_messages", True)):
-            print("OK: the bot is an admin of %s and can post" % shown)
+        can_post = None
+        try:
+            mem = net.api("getChatMember", {"chat_id": chat["id"], "user_id": me["id"]})
+            can_post = mem.get("status") == "creator" or (
+                mem.get("status") == "administrator" and mem.get("can_post_messages", True))
+        except ApiError as e:
+            # Telegram sometimes refuses this call; try an invisible probe instead
+            print("   (member lookup said: %s - trying a direct test)" % e.desc)
+            try:
+                net.api("sendChatAction", {"chat_id": chat["id"], "action": "typing"})
+                can_post = True
+            except ApiError as e2:
+                print("   (direct test said: %s)" % e2.desc)
+                can_post = False
+        if can_post:
+            print("OK: the bot can post in %s" % shown)
         else:
             ok = False
-            print("PROBLEM: the bot is not an admin with 'Post messages' permission in %s"
-                  % shown)
+            print("PROBLEM: this bot (@%s) cannot post in %s. Add exactly this bot as an"
+                  " admin with 'Post messages' permission." % (me.get("username"), shown))
     except ApiError as e:
         ok = False
         print("PROBLEM: %s -> check target_channel spelling and add the bot as admin." % e.desc)
