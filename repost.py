@@ -249,8 +249,8 @@ TEXT_RE = re.compile(
     r'<div class="tgme_widget_message_text js-message_text[^"]*"[^>]*>(.*?)</div>', re.S)
 MEDIA_RE = re.compile(
     r'tgme_widget_message_photo_wrap[^>]*?style="[^"]*?background-image:\s*url\(\s*[\'"]?([^\'")]+)[\'"]?\s*\)'
-    r'|<video\b[^>]*?\bsrc="([^"]+)"', re.S)
-UNSUPPORTED = ("message_media_not_supported", "tgme_widget_message_poll",
+    r'|(<video\b[^>]*>)', re.S)
+UNSUPPORTED = ("tgme_widget_message_poll",
                "tgme_widget_message_voice", "tgme_widget_message_document_wrap",
                "tgme_widget_message_sticker", "tgme_widget_message_tgsticker",
                "tgme_widget_message_location", "tgme_widget_message_contact",
@@ -271,7 +271,13 @@ def parse_page(page):
             if mm.group(1):
                 media.append(("photo", html.unescape(mm.group(1))))
             elif mm.group(2):
-                media.append(("video", html.unescape(mm.group(2))))
+                tag = mm.group(2)
+                cm = re.search(r'\bclass="([^"]*)"', tag)
+                sm = re.search(r'\bsrc="([^"]+)"', tag)
+                cls = cm.group(1) if cm else ""
+                # real post video only: not the blurred copy, not animated custom emoji
+                if sm and "js-message_video" in cls and "blured" not in cls:
+                    media.append(("video", html.unescape(sm.group(1))))
         seen, uniq = set(), []
         for item in media:
             if item[1] not in seen:
@@ -283,7 +289,11 @@ def parse_page(page):
             "media": uniq,
             "forwarded": "tgme_widget_message_forwarded_from" in chunk,
             "reply": "tgme_widget_message_reply" in chunk,
-            "unsupported": any(u in chunk for u in UNSUPPORTED),
+            "unsupported": any(u in chunk for u in UNSUPPORTED) or (
+                ("tgme_widget_message_video_wrap" in chunk
+                 and not any(k == "video" for k, _ in uniq))
+                or ("tgme_widget_message_photo_wrap" in chunk
+                    and not any(k == "photo" for k, _ in uniq))),
         })
     posts.sort(key=lambda p: p["id"])
     return posts
