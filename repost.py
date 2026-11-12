@@ -315,6 +315,14 @@ EMOJI_RE = re.compile(r'<i class="emoji"[^>]*>\s*<b>(.*?)</b>\s*</i>', re.S)
 INVITE_RE = re.compile(r"(?:t|telegram)\.me/(?:\+|joinchat/)", re.I)
 
 
+PROXY_RE = re.compile(r'(?:[ \t]*[|•·–—][ \t]*)?<a\b[^>]*href="https?://t\.me/(?:proxy|socks)\?[^"]*"[^>]*>.*?</a>', re.S | re.I)
+
+
+def strip_proxy_links(t):
+    """Telegram proxy links ('| پروکسی' in footers) are not channels and not ads: drop them."""
+    return PROXY_RE.sub("", t)
+
+
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
@@ -341,7 +349,7 @@ def parse_page(page):
                 uniq.append(item)
         posts.append({
             "id": int(m.group(1)),
-            "text_html": tm.group(1) if tm else "",
+            "text_html": strip_proxy_links(tm.group(1)) if tm else "",
             "media": uniq,
             "forwarded": "tgme_widget_message_forwarded_from" in chunk,
             "reply": "tgme_widget_message_reply" in chunk,
@@ -467,7 +475,7 @@ def other_channels(cfg, post):
     for src in [text] + [html.unescape(h) for h in re.findall(r'href="([^"]+)"', raw)]:
         for m in re.finditer(r"(?<![\w.])(?:https?://)?(?:www\.)?(?:t|telegram)\.me/([A-Za-z0-9_]{4,})", src, re.I):
             found.add(m.group(1).lower())
-    return sorted(u for u in found if u not in allowed and u not in ("s", "joinchat"))
+    return sorted(u for u in found if u not in allowed and u not in ("s", "joinchat", "proxy", "socks"))
 
 
 # --------------------------------------------------------------------------- #
