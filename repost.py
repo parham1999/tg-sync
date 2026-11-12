@@ -600,6 +600,7 @@ run_cycle.fails = {}
 
 def check(cfg, net):
     ok = True
+    shown = "your channel" if IN_CLOUD else cfg["target_channel"]  # cloud logs are public
     print("\n--- Checking bot and your channel ---")
     try:
         me = net.api("getMe")
@@ -613,11 +614,11 @@ def check(cfg, net):
         mem = net.api("getChatMember", {"chat_id": chat["id"], "user_id": me["id"]})
         if mem.get("status") == "creator" or (
                 mem.get("status") == "administrator" and mem.get("can_post_messages", True)):
-            print("OK: the bot is an admin of %s and can post" % cfg["target_channel"])
+            print("OK: the bot is an admin of %s and can post" % shown)
         else:
             ok = False
             print("PROBLEM: the bot is not an admin with 'Post messages' permission in %s"
-                  % cfg["target_channel"])
+                  % shown)
     except ApiError as e:
         ok = False
         print("PROBLEM: %s -> check target_channel spelling and add the bot as admin." % e.desc)
@@ -671,7 +672,8 @@ def main():
         sys.exit(0 if check(cfg, net) else 1)
     rules = Rules(cfg)
     state = load_state(args.state)
-    log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]), cfg["target_channel"])
+    log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
+             "your channel" if IN_CLOUD else cfg["target_channel"])
     while True:
         try:
             run_cycle(cfg, net, rules, state, args.state, args.dry_run)
