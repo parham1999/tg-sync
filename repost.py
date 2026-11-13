@@ -727,7 +727,7 @@ def watermark_photo(data, text):
     w, h = im.size
     if min(w, h) < 200:
         return data
-    size = max(13, int(min(w, h) * 0.034))
+    size = max(11, int(min(w, h) * 0.027))
     font = _font(size)
     ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(ov)
@@ -736,8 +736,8 @@ def watermark_photo(data, text):
     padx, pady, m = int(size * 0.55), int(size * 0.35), int(size * 0.7)
     x0, y1 = m, h - m                              # bottom-left corner
     x1, y0 = x0 + tw + 2 * padx, y1 - th - 2 * pady
-    d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 120))
-    d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 235))
+    d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 70))
+    d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 175))
     out = Image.alpha_composite(im, ov).convert("RGB")
     buf = io.BytesIO()
     out.save(buf, "JPEG", quality=92, optimize=True)
@@ -963,9 +963,10 @@ def reseed(cfg, net, state):
             state["channels"].setdefault(key, {})["last_id"] = posts[-1]["id"]
 
 
-def process_updates(cfg, net, state, state_path):
+def process_updates(cfg, net, state, state_path, wait=0):
+    """wait > 0 = long polling: Telegram holds the request and answers the moment you press a button."""
     try:
-        ups = net.api("getUpdates", {"offset": state.get("update_offset", 0), "timeout": 0,
+        ups = net.api("getUpdates", {"offset": state.get("update_offset", 0), "timeout": int(wait),
                                      "allowed_updates": ["message", "callback_query"]})
     except (ApiError, NetError) as e:
         log.warning("cannot read bot messages: %s", getattr(e, "desc", e))
@@ -988,7 +989,10 @@ def handle_update(cfg, net, state, u):
         act, _, pid = (cb.get("data") or "").partition(":")
         pend = state.setdefault("pending", {}).pop(pid, None)
         if pend is None:
-            net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": "این مورد منقضی شده"})
+            try:
+                net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": "این مورد منقضی شده"})
+            except (ApiError, NetError):
+                pass
             return
         if act == "ok":
             pend["t"] = int(time.time())
@@ -996,12 +1000,15 @@ def handle_update(cfg, net, state, u):
             note = "✅ تایید شد؛ در دور بعدی ارسال می‌شود"
         else:
             note = "❌ رد شد"
-        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note})
         m = cb.get("message") or {}
-        try:
+        try:                                       # first: update the message (works even when late)
             net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"],
                                         "text": (m.get("text") or "") + "\n\n" + note})
-        except (ApiError, KeyError):
+        except (ApiError, NetError, KeyError):
+            pass
+        try:                                       # Telegram refuses this one if we are too slow
+            net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note})
+        except (ApiError, NetError):
             pass
         return
     m = u.get("message")
@@ -1423,7 +1430,15 @@ def main():
                 git_push_state(args.state)
                 saved = d
             if time.time() + 20 < deadline:
-                time.sleep(20)
+                end = time.time() + 20             # wait for bot buttons with long polling = instant
+                while time.time() < end:
+                    t0 = time.time()
+                    try:
+                        process_updates(cfg, net, state, args.state, wait=max(1, min(15, end - t0)))
+                    except Exception:
+                        log.exception("bot check failed (will try again)")
+                    if time.time() - t0 < 1:       # never spin faster than once a second
+                        time.sleep(1)
                 continue
             break
         if args.once or args.dry_run:
