@@ -63,6 +63,17 @@ DEFAULTS = {
     "review_suspicious": True,          # send suspected ads to you with Send / Reject buttons
     "review_keyword_ads": False,        # also review posts with obvious betting words (noisy)
     "review_max_per_round": 3,
+    # crisis mode: a sudden flood of posts (war, disaster ...)
+    "crisis_interval_minutes": [10, 15],   # rounds are this far apart while it is on
+    "crisis_posts_per_channel": 3,         # latest N new posts of every source (normally only 1)
+    "crisis_max_posts": 15,                # at most this many posts per round
+    "crisis_delay_seconds": [5, 15],       # pause between two posts
+    "crisis_on_rate": 24,                  # auto-on: this many new posts (all sources) within 30 min ...
+    "crisis_on_channels": 3,               # ... or this many sources with ...
+    "crisis_channel_rate": 5,              # ... at least this many new posts each within 30 min
+    "crisis_off_rate": 14,                 # auto-off: below this many per 30 min for 20 minutes
+    "crisis_max_hours": 8,                 # auto mode never stays on longer than this
+    "report_time": [23, 30],               # daily report to the bot chat (Iran time)
     "initial_posts": 0,            # how many old posts to publish on the very first run
     "delay_between_posts": 3,
     "replacements": [],            # [["old text", "new text"], ...]
@@ -575,6 +586,9 @@ def text_fp(norm):
         sh = {hashlib.sha1(" ".join(words[i:i + 3]).encode("utf-8")).hexdigest()[:8]
               for i in range(len(words) - 2)}
         fp["h"] = sorted(sh)[:80]
+    cw = {w for w in words if len(w) >= 3}          # content words, order ignored (same news, other wording)
+    if len(cw) >= 7:
+        fp["w"] = sorted(hashlib.sha1(w.encode("utf-8")).hexdigest()[:8] for w in cw)[:80]
     return fp
 
 
@@ -589,6 +603,12 @@ def find_dup(fp, entries):
             return e
         if fp.get("h") and e.get("h") and jaccard(fp["h"], e["h"]) >= 0.8:
             return e
+        if fp.get("w") and e.get("w"):
+            a, b = set(fp["w"]), set(e["w"])
+            inter = len(a & b)
+            if inter >= 6 and (inter / float(len(a | b)) >= 0.55
+                               or (min(len(a), len(b)) >= 8 and inter / float(min(len(a), len(b))) >= 0.85)):
+                return e
         if fp.get("m") and set(fp["m"]) & set(e.get("m", [])):
             return e
     return None
@@ -921,7 +941,9 @@ run_cycle.fails = {}
 # control from inside Telegram (on/off, review of suspected ads)
 # --------------------------------------------------------------------------- #
 BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش کردن", "▶️ روشن کردن", "📊 وضعیت", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
+BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران: روشن", "🛑 بحران: خاموش", "🤖 بحران: خودکار"
 MENU_KB = {"keyboard": [[{"text": BTN_OFF}, {"text": BTN_ON}], [{"text": BTN_STATUS}],
+                        [{"text": BTN_CR_ON}, {"text": BTN_CR_OFF}], [{"text": BTN_CR_AUTO}],
                         [{"text": BTN_REVIEW}]], "resize_keyboard": True, "is_persistent": True}
 
 
@@ -948,6 +970,9 @@ def status_text(cfg, state):
     lines.append("پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
     lines.append("تاییدشده و منتظر ارسال: %d" % len(state.get("approved", [])))
     lines.append("بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+    mode = state.get("crisis_mode", "auto")
+    lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
+        mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
     return "\n".join(lines)
 
 
@@ -1022,7 +1047,21 @@ def handle_update(cfg, net, state, u):
         log.info("owner registered")
     if uid != owner:
         return
-    if BTN_REVIEW in text or text.startswith("/review"):
+    if text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
+        if text == BTN_CR_ON or text.startswith("/crisis_on"):
+            state["crisis_mode"] = "on"
+            state["next_run_ts"] = 0
+            msg = "🚨 حالت بحران روشن شد (دستی). تا وقتی خاموش یا خودکار نکنید می‌ماند. لیبل عکس‌ها غیرفعال است."
+        elif text == BTN_CR_OFF or text.startswith("/crisis_off"):
+            state["crisis_mode"] = "off"
+            msg = "🛑 حالت بحران خاموش شد (دستی). حتی اگر پست‌ها زیاد شوند، فعال نمی‌شود."
+        else:
+            state["crisis_mode"] = "auto"
+            msg = "🤖 حالت بحران روی خودکار است: با هجوم پست‌ها روشن و با آرام شدن خاموش می‌شود."
+        state["crisis_auto"] = 0
+        state.pop("crisis_calm_since", None)
+        tell(net, owner, msg, MENU_KB)
+    elif BTN_REVIEW in text or text.startswith("/review"):
         state["review_off"] = not state.get("review_off")
         tell(net, owner, "بررسی پست‌های مشکوک: " + ("خاموش شد" if state["review_off"] else "روشن شد"), MENU_KB)
     elif "خاموش" in text or text.startswith("/stop") or text.startswith("/off"):
@@ -1109,13 +1148,128 @@ def pick_and_order(items, limit):
     return out
 
 
+SKIP_GROUPS = (("ad ", "تبلیغ"), ("link to blocked", "لینک/سایت"), ("contains a link", "لینک/سایت"),
+               ("mentions another", "کانال یا ربات دیگر"), ("contains a channel invite", "کانال یا ربات دیگر"),
+               ("it is forwarded", "فوروارد"), ("it is a reply", "ریپلای"), ("media type", "رسانه‌ی نامناسب"))
+
+
+def iran_day(cfg, now):
+    lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
+    return "%04d-%02d-%02d" % (lt.tm_year, lt.tm_mon, lt.tm_mday), lt
+
+
+def src_key(name):
+    return hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
+
+
+def stat_add(state, cfg, what, key=None, n=1):
+    """Counters for the daily report: what = 'posted' | 'dup' | 'crisis' | a skip reason text."""
+    day = iran_day(cfg, time.time())[0]
+    st = state.get("stats")
+    if not isinstance(st, dict) or st.get("day") != day:
+        return                                   # daily_report() starts a fresh day
+    if what == "posted":
+        st["posted"] = st.get("posted", 0) + n
+        if key:
+            by = st.setdefault("by_src", {})
+            by[key] = by.get(key, 0) + n
+    elif what == "crisis":
+        st["crisis"] = st.get("crisis", 0) + n
+    else:
+        grp = "تکراری" if what == "dup" else next((g for p, g in SKIP_GROUPS if what.startswith(p)), "سایر")
+        sk = st.setdefault("skip", {})
+        sk[grp] = sk.get(grp, 0) + n
+
+
+def report_text(cfg, st):
+    names = {src_key(n): n for n in cfg["sources"]}
+    lines = ["📊 گزارش روز %s" % st["day"], "✅ ارسال‌شده: %d" % st.get("posted", 0)]
+    by = sorted(st.get("by_src", {}).items(), key=lambda x: -x[1])
+    if by:
+        lines.append("منبع‌ها: " + "، ".join("%s %d" % (names.get(k, "؟"), v) for k, v in by))
+    sk = st.get("skip", {})
+    lines.append("⛔ ردشده: " + ("، ".join("%s %d" % (g, v) for g, v in sorted(sk.items(), key=lambda x: -x[1])) or "هیچ"))
+    if st.get("crisis"):
+        lines.append("🚨 حالت بحران %d بار خودکار فعال شد" % st["crisis"])
+    return "\n".join(lines)
+
+
+def daily_report(cfg, net, state, now):
+    """One short summary per day in the bot chat (default 23:30 Iran time)."""
+    owner = owner_of(cfg, state)
+    day, lt = iran_day(cfg, now)
+    st = state.get("stats")
+    if not isinstance(st, dict) or "day" not in st:
+        state["stats"] = {"day": day, "posted": 0}
+        return
+    if st["day"] != day:                          # a new day began: close the old one first
+        if owner and state.get("rep_day") != st["day"]:
+            tell(net, owner, report_text(cfg, st), MENU_KB)
+        state["stats"] = {"day": day, "posted": 0}
+        return
+    h, m = cfg["report_time"]
+    if owner and state.get("rep_day") != day and (lt.tm_hour, lt.tm_min) >= (int(h), int(m)):
+        if tell(net, owner, report_text(cfg, st), MENU_KB) is not None:
+            state["rep_day"] = day
+
+
+def crisis_eval(cfg, net, state, now, counts):
+    """Count the new posts of this scan, switch auto crisis on/off, return True while crisis is active."""
+    arr = state.setdefault("arrivals", [])
+    gap = now - state.get("last_scan_ts", now)
+    state["last_scan_ts"] = int(now)
+    if gap > 90 * 60:                              # the bot was away: that is catching up, not a burst
+        counts = {}
+    total_now = sum(counts.values())
+    if total_now:
+        arr.append([int(now), total_now, counts])
+    arr[:] = [a for a in arr if now - a[0] < 3600]
+    win = [a for a in arr if now - a[0] <= 1800]
+    total = sum(a[1] for a in win)
+    per = {}
+    for a in win:
+        for k, n in a[2].items():
+            per[k] = per.get(k, 0) + n
+    hot = sum(1 for n in per.values() if n >= int(cfg["crisis_channel_rate"]))
+    mode = state.get("crisis_mode", "auto")
+    owner = owner_of(cfg, state)
+    if mode == "auto":
+        if not state.get("crisis_auto"):
+            if total >= int(cfg["crisis_on_rate"]) or hot >= int(cfg["crisis_on_channels"]):
+                state["crisis_auto"] = int(now)
+                state.pop("crisis_calm_since", None)
+                stat_add(state, cfg, "crisis")
+                log.info("crisis mode switched ON automatically (%d new posts in 30 min)", total)
+                if owner:
+                    tell(net, owner, "🚨 تعداد پست‌ها ناگهان بالا رفت (%d پست تازه در ۳۰ دقیقه). حالت بحران "
+                         "خودکار روشن شد. دورها کوتاه‌تر، تا ۳ پست آخر هر کانال و لیبل عکس‌ها غیرفعال. "
+                         "با دکمه‌ی «بحران: خاموش» می‌توانید خاموشش کنید." % total, MENU_KB)
+        else:
+            off = False
+            if total < int(cfg["crisis_off_rate"]):
+                since = state.setdefault("crisis_calm_since", int(now))
+                off = now - since >= 20 * 60
+            else:
+                state.pop("crisis_calm_since", None)
+            if now - state["crisis_auto"] > float(cfg["crisis_max_hours"]) * 3600:
+                off = True
+            if off:
+                state["crisis_auto"] = 0
+                state.pop("crisis_calm_since", None)
+                log.info("crisis mode switched OFF automatically")
+                if owner:
+                    tell(net, owner, "✅ اوضاع آرام شد؛ حالت بحران خودکار خاموش شد و ربات به حالت عادی برگشت.", MENU_KB)
+    return mode == "on" or (mode == "auto" and bool(state.get("crisis_auto")))
+
+
 def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
-    """One posting round: newest post of every source (if new and not an ad), duplicates
-    removed, random order, at most max_posts_per_run posts, then a 30-40 minute pause."""
+    """One posting round: the newest post of every source (in crisis mode the newest few), if new and
+    not an ad, duplicates removed, random order, at most max_posts_per_run posts, then a pause."""
     now = time.time()
     if not dry:
         process_updates(cfg, net, state, state_path)
         heartbeat(cfg, net, state)
+        daily_report(cfg, net, state, now)
         state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
         if state.get("paused"):
             log.info("switched OFF from the bot - nothing is posted")
@@ -1124,17 +1278,12 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     if not force and not dry and now < nxt:
         log.info("waiting - next posting round in about %d min", int((nxt - now) / 60) + 1)
         return
-    hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
-    n0, n1 = cfg["night_hours"]
-    night = n0 <= hour < n1
-    if night:
-        log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
+    # --- 1. read every source page, count what is new ---
     names = list(cfg["sources"])
     random.shuffle(names)
-    cands = []
-    reviewed = 0
+    pages, counts = [], {}
     for name in names:
-        key = hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
+        key = src_key(name)
         label = key if IN_CLOUD else name
         try:
             posts = parse_page(net.get(cfg["web_base"] + name))
@@ -1144,31 +1293,54 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         if not posts:
             log.warning("[%s] no posts found - is the username right and the channel public?", label)
             continue
-        newest = posts[-1]
         st = state["channels"].setdefault(key, {})
         if "last_id" not in st:
-            st["last_id"] = newest["id"] - 1      # first run: the newest post counts too
-        if newest["id"] <= st["last_id"]:
+            st["last_id"] = posts[-1]["id"] - 1   # first run: the newest post counts too
+        new = [p for p in posts if p["id"] > st["last_id"]]
+        if new:
+            counts[key] = len(new)
+        pages.append((name, key, label, st, new))
+    crisis = False if dry else crisis_eval(cfg, net, state, now, counts)
+    if crisis:
+        log.info("CRISIS MODE is active: up to %d newest posts per source, short rounds, no photo label",
+                 int(cfg["crisis_posts_per_channel"]))
+    hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
+    n0, n1 = cfg["night_hours"]
+    night = n0 <= hour < n1 and not crisis
+    if night:
+        log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
+    # --- 2. choose candidates ---
+    cands = []
+    reviewed = 0
+    take = int(cfg["crisis_posts_per_channel"]) if crisis else 1
+    for name, key, label, st, new in pages:
+        if not new:
             log.info("[%s] nothing new", label)
             continue
-        reason = skip_reason(cfg, newest)
-        if reason:
-            log.info("[%s/%d] skipped: %s", label, newest["id"], reason)
-            if not dry:
-                st["last_id"] = newest["id"]
-                if (owner_of(cfg, state) and not state.get("review_off") and review_worthy(cfg, reason)
-                        and reviewed < int(cfg["review_max_per_round"])):
-                    txt = build_text(cfg, rules, newest["text_html"])
-                    if send_for_review(net, cfg, state, label, name, newest, txt, reason):
-                        reviewed += 1
-                        time.sleep(2)
-            continue
-        cands.append((label, st, newest))
+        if not dry:
+            st["last_id"] = new[-1]["id"]         # whatever happens, these are never reconsidered
+        for p in new[-take:]:
+            reason = skip_reason(cfg, p)
+            if reason:
+                log.info("[%s/%d] skipped: %s", label, p["id"], reason)
+                if not dry:
+                    stat_add(state, cfg, reason)
+                    if (owner_of(cfg, state) and not state.get("review_off") and review_worthy(cfg, reason)
+                            and reviewed < int(cfg["review_max_per_round"])):
+                        txt = build_text(cfg, rules, p["text_html"])
+                        if send_for_review(net, cfg, state, label, name, p, txt, reason):
+                            reviewed += 1
+                            time.sleep(2)
+                continue
+            cands.append((label, st, p))
     hist = state.setdefault("fp", [])
     hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
-    limit = int(cfg["max_posts_per_run"]) or len(cands)
-    if night:
-        limit = min(limit, int(cfg["night_max_posts"])) if limit else int(cfg["night_max_posts"])
+    if crisis:
+        limit = int(cfg["crisis_max_posts"])
+    else:
+        limit = int(cfg["max_posts_per_run"]) or len(cands)
+        if night:
+            limit = min(limit, int(cfg["night_max_posts"])) if limit else int(cfg["night_max_posts"])
     eligible = []
     appr = state.get("approved", [])
     state["approved"] = []
@@ -1185,13 +1357,13 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         state["pending"].pop(k)
     for label, st, p in cands:                    # candidates are already in random order
         tag = "%s/%d" % (label, p["id"])
-        if not dry:
-            st["last_id"] = p["id"]               # whatever happens, this post is never reconsidered
         text = build_text(cfg, rules, p["text_html"])
         fp = text_fp(norm_for_dedupe(text, rules.own))
         fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
         if find_dup(fp, hist + [c[3] for c in eligible]):
             log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
+            if not dry:
+                stat_add(state, cfg, "dup")
             continue
         eligible.append((tag, p, text, fp, st))
     chosen = pick_and_order(eligible, limit)
@@ -1202,17 +1374,20 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
     if not dry:
         save_state(state_path, state)
-    lo, hi = cfg["random_delay_seconds"]
+    lo, hi = cfg["crisis_delay_seconds"] if crisis else cfg["random_delay_seconds"]
+    dcfg = dict(cfg, _no_wm=True) if crisis else cfg      # no ID label on photos during a crisis
+    keys = {src_key(n): n for n in cfg["sources"]}
     posted = 0
     for i, (tag, p, text, fp, st) in enumerate(chosen):
         if dry:
             log.info("[%s] WOULD POST (%d media):\n%s\n----", tag, len(p["media"]), text)
             continue
         try:
-            deliver(net, cfg, p, text)
+            deliver(net, dcfg, p, text)
             log.info("[%s] posted", tag)
             hist.append(dict(fp, t=int(time.time())))
             state.setdefault("posted_log", []).append(int(time.time()))
+            stat_add(state, cfg, "posted", tag.split("/")[0] if tag.split("/")[0] in keys else None)
             posted += 1
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
@@ -1227,7 +1402,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         state["next_run_ts"] = max(state.get("next_run_ts", 0), time.time() + 120)
         save_state(state_path, state)
     if posted and not dry:
-        a, b = cfg["night_interval_minutes"] if night else cfg["interval_minutes"]
+        a, b = (cfg["crisis_interval_minutes"] if crisis
+                else cfg["night_interval_minutes"] if night else cfg["interval_minutes"])
         state["next_run_ts"] = time.time() + random.uniform(float(a), float(b)) * 60
         save_state(state_path, state)
         log.info("round finished: %d posted, next round in %d-%d min or later", posted, a, b)
