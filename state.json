@@ -23,9 +23,12 @@
   },
   "f20a53f3a3": {
    "last_id": 16841
+  },
+  "a198fa18c9": {
+   "last_id": 20625
   }
  },
- "update_offset": 774951566,
+ "update_offset": 774951567,
  "owner_id": 138180578,
  "fp": [
   {
@@ -1896,6 +1899,7 @@
  },
  "src_del": [],
  "src_add": [
-  "CloseFriend3"
+  "CloseFriend3",
+  "dodollism"
  ]
 }
