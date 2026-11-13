@@ -879,24 +879,27 @@ def _font(size):
 
 
 def watermark_photo(data, text):
-    """Small readable link in the bottom-left corner (semi-transparent dark pill, white text)."""
+    """Small faint link on a random spot (4 corners, top-middle, bottom-middle): semi-transparent dark pill, white text."""
     im = Image.open(io.BytesIO(data))
     im.load()
     im = im.convert("RGBA")
     w, h = im.size
     if min(w, h) < 200:
         return data
-    size = max(11, int(min(w, h) * 0.027))
+    size = max(10, int(min(w, h) * 0.022))
     font = _font(size)
     ov = Image.new("RGBA", im.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(ov)
     b = d.textbbox((0, 0), text, font=font)
     tw, th = b[2] - b[0], b[3] - b[1]
     padx, pady, m = int(size * 0.55), int(size * 0.35), int(size * 0.7)
-    x0, y1 = m, h - m                              # bottom-left corner
-    x1, y0 = x0 + tw + 2 * padx, y1 - th - 2 * pady
-    d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 70))
-    d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 175))
+    bw, bh = tw + 2 * padx, th + 2 * pady
+    where = random.choice(["tl", "tc", "tr", "bl", "bc", "br"])
+    x0 = m if where[1] == "l" else (w - m - bw if where[1] == "r" else (w - bw) // 2)
+    y0 = m if where[0] == "t" else h - m - bh
+    x1, y1 = x0 + bw, y0 + bh
+    d.rounded_rectangle([x0, y0, x1, y1], radius=int(size * 0.5), fill=(0, 0, 0, 50))
+    d.text((x0 + padx - b[0], y0 + pady - b[1]), text, font=font, fill=(255, 255, 255, 150))
     out = Image.alpha_composite(im, ov).convert("RGB")
     buf = io.BytesIO()
     out.save(buf, "JPEG", quality=92, optimize=True)
