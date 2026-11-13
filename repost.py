@@ -618,6 +618,8 @@ def build_text(cfg, rules, raw_html):
     t = balance_tags(drop_source_lines(t, rules.own))
     t = re.sub(r"[ \t]+\n", "\n", t)
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
+    # some sources start every post with a red dot: drop it (also when it sits inside a leading <b>/<i> tag)
+    t = re.sub(r"^((?:<[^>]+>\s*)*)(?:\U0001F534\ufe0f?[ \t\u200c\u200f]*)+", r"\1", t).strip()
     if cfg["add_footer"] and rules.own.lower() not in plain(t).lower():
         t = (t + "\n\n" + rules.own) if t else rules.own
     return t
