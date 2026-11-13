@@ -1160,7 +1160,7 @@ MENU_KB = {"keyboard": [[btn(BTN_OFF), btn(BTN_ON), btn(BTN_STATUS)],
                         [btn(BTN_SP_NORMAL), btn(BTN_SP_BOOST)],
                         [btn(BTN_CR_ON), btn(BTN_CR_OFF), btn(BTN_CR_AUTO)],
                         [btn(BTN_SRC), btn(BTN_BAN), btn(BTN_HOURS)]],
-           "resize_keyboard": True, "is_persistent": True}
+           "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
 
 
 def hours_update(cfg, net, state, now):
@@ -1392,6 +1392,7 @@ def manage_command(cfg, net, state, text):
     return None
 
 
+SHOW_KB = [False]      # the menu keyboard is attached to an answer only when this is set (/start, one-time refresh)
 REPLY_TO = [None]      # id of the owner's message the bot is answering right now: the answer quotes it
 
 
@@ -1400,6 +1401,8 @@ def tell(net, chat, text, markup=None):
     if REPLY_TO[0]:
         p["reply_to_message_id"] = REPLY_TO[0]
         p["allow_sending_without_reply"] = True
+    if markup is MENU_KB and not SHOW_KB[0]:
+        markup = None                              # Telegram keeps the keyboard on screen; re-sending it would pop it open again
     if markup:
         p["reply_markup"] = markup
     try:
@@ -1498,11 +1501,21 @@ def process_updates(cfg, net, state, state_path, wait=0):
     for u in ups or []:
         state["update_offset"] = u["update_id"] + 1
         REPLY_TO[0] = None
+        SHOW_KB[0] = False
         try:
             handle_update(cfg, net, state, u)
         except Exception:
             log.exception("could not handle a bot message")
         REPLY_TO[0] = None
+        SHOW_KB[0] = False
+    ow = owner_of(cfg, state)
+    if ow and state.get("kb_v") != 2:             # one time: replace the old always-open keyboard with a hideable one
+        SHOW_KB[0] = True
+        if tell(net, ow, "⌨️ منوی ربات به‌روز شد. حالا با آیکن کیبورد کنار کادر پیام می‌توانید دکمه‌ها را ببندید و "
+                "دوباره باز کنید (یا /menu بفرستید).", MENU_KB) is not None:
+            state["kb_v"] = 2
+            save_state(state_path, state)
+        SHOW_KB[0] = False
     if flush_forwards(cfg, net, state) or ups:
         save_state(state_path, state)
 
@@ -1556,6 +1569,7 @@ def handle_update(cfg, net, state, u):
     if uid != owner:
         return
     REPLY_TO[0] = m.get("message_id")             # every answer below quotes this message
+    SHOW_KB[0] = text.startswith("/start") or text.startswith("/menu")
     if is_forward_or_media(m):                    # a post you forwarded / sent: process it and publish now
         gid = m.get("media_group_id")
         if gid:
