@@ -480,6 +480,15 @@ CTA_RE = re.compile(r"join|follow|subscribe|عضو|دنبال|فالو|کانا�
 KEEP_END = ".:؟?!،,)»\"'"
 
 
+HASHTAG_LINE = re.compile(r"^[\s\u200c\u200f]*(?:#[\w\u200c]+[\s\u200c\u200f]*)+$")
+
+
+def drop_hashtag_lines(t):
+    """A line that is nothing but hashtags (#Meti) says nothing without its channel: remove it.
+    Hashtags inside a real sentence stay."""
+    return "\n".join(l for l in t.split("\n") if not HASHTAG_LINE.match(re.sub(r"<[^>]+>", "", l)))
+
+
 def drop_source_lines(t, own):
     """The source channel's ID is removed together with the decoration around it:
     a line that is only an ID footer (emoji, '| name', ...) disappears completely; an ID glued
@@ -615,7 +624,7 @@ def build_text(cfg, rules, raw_html):
     conv.feed(raw_html)
     conv.close()
     t = conv.result()
-    t = balance_tags(drop_source_lines(t, rules.own))
+    t = balance_tags(drop_hashtag_lines(drop_source_lines(t, rules.own)))
     t = re.sub(r"[ \t]+\n", "\n", t)
     t = re.sub(r"\n{3,}", "\n\n", t).strip()
     # some sources start every post with a red dot: drop it (also when it sits inside a leading <b>/<i> tag)
