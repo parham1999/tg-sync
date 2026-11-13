@@ -1334,7 +1334,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         log.info("round finished: %d posted, next round in %d-%d min or later", posted, a, b)
 
 
-def dump(cfg, net, rules, n, state=None):
+def dump(cfg, net, rules, n, state=None, total=0):
     """TEST ONLY: send the last n posts of every source to the test channel exactly as they
     would be published (clean - no notes inside the channel). What was skipped and why goes
     to the owner's private chat with the bot."""
@@ -1343,7 +1343,13 @@ def dump(cfg, net, rules, n, state=None):
             "flood your real channel.")
     owner = owner_of(cfg, state or {})
     seen = []
-    for si, name in enumerate(cfg["sources"], 1):
+    sent_n = 0
+    order = list(enumerate(cfg["sources"], 1))
+    if total:
+        random.shuffle(order)                      # fair: every source has the same chance
+    for si, name in order:
+        if total and sent_n >= total:
+            break
         try:
             posts = parse_page(net.get(cfg["web_base"] + name))[-n:]
         except NetError as e:
@@ -1352,6 +1358,8 @@ def dump(cfg, net, rules, n, state=None):
         log.info("[source %d] %d posts", si, len(posts))
         report = ["📋 %s" % name]
         for p in posts:
+            if total and sent_n >= total:
+                break
             reason = skip_reason(cfg, p)
             text = build_text(cfg, rules, p["text_html"])
             fp = text_fp(norm_for_dedupe(text, rules.own))
@@ -1368,6 +1376,7 @@ def dump(cfg, net, rules, n, state=None):
             seen.append((fp, "%s #%d" % (name, p["id"])))
             try:
                 deliver(net, cfg, p, text)
+                sent_n += 1
                 report.append("✅ #%d ارسال شد | %s" % (p["id"], snippet))
             except (Skip, ApiError) as e:
                 log.warning("[source %d/%d] not sent: %s", si, p["id"], getattr(e, "desc", e))
@@ -1488,6 +1497,8 @@ def main():
     ap.add_argument("--force", action="store_true", help="ignore the pause between rounds")
     ap.add_argument("--dump", type=int, default=0, metavar="N",
                     help="TEST MODE only: send the last N posts of every source")
+    ap.add_argument("--dump-total", type=int, default=0, metavar="T",
+                    help="with --dump: stop after T posts in total")
     args = ap.parse_args()
 
     for s in (sys.stdout, sys.stderr):
@@ -1506,7 +1517,7 @@ def main():
         sys.exit(0 if check(cfg, net) else 1)
     rules = Rules(cfg)
     if args.dump:
-        dump(cfg, net, rules, args.dump, load_state(args.state))
+        dump(cfg, net, rules, args.dump, load_state(args.state), args.dump_total)
         return
     state = load_state(args.state)
     force = args.force
