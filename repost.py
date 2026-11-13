@@ -353,6 +353,11 @@ UNSUPPORTED = ("tgme_widget_message_poll",
                "tgme_widget_message_sticker", "tgme_widget_message_tgsticker",
                "tgme_widget_message_location", "tgme_widget_message_contact",
                "tgme_widget_message_roundvideo")
+UKIND = {"tgme_widget_message_poll": "نظرسنجی", "tgme_widget_message_voice": "ویس",
+         "tgme_widget_message_document_wrap": "فایل یا سند (PDF، ZIP، APK و...)",
+         "tgme_widget_message_sticker": "استیکر", "tgme_widget_message_tgsticker": "استیکر",
+         "tgme_widget_message_location": "موقعیت مکانی", "tgme_widget_message_contact": "مخاطب",
+         "tgme_widget_message_roundvideo": "ویدیوی گرد (video note)"}
 EMOJI_RE = re.compile(r'<i class="emoji"[^>]*>\s*<b>(.*?)</b>\s*</i>', re.S)
 INVITE_RE = re.compile(r"(?:t|telegram)\.me/(?:\+|joinchat/)", re.I)
 
@@ -444,6 +449,10 @@ def parse_page(page):
             "media": uniq,
             "forwarded": "tgme_widget_message_forwarded_from" in chunk,
             "reply": "tgme_widget_message_reply" in chunk,
+            "ukind": next((UKIND[u] for u in UNSUPPORTED if u in chunk), None)
+                     or ("ویدیو (لینک مستقیم فایل در صفحه‌ی منبع نبود؛ معمولاً ویدیوی خیلی بزرگ)"
+                         if "tgme_widget_message_video_wrap" in chunk and not any(k == "video" for k, _ in uniq)
+                         else "عکس (لینک مستقیم فایل در صفحه‌ی منبع نبود)"),
             "unsupported": any(u in chunk for u in UNSUPPORTED) or (
                 ("tgme_widget_message_video_wrap" in chunk
                  and not any(k == "video" for k, _ in uniq))
@@ -661,25 +670,57 @@ def jaccard(a, b):
     return len(a & b) / float(len(a | b)) if a and b else 0.0
 
 
-def find_dup(fp, entries):
+def find_dup_why(fp, entries):
+    """(the earlier post it repeats, how we know) or (None, None)."""
     for e in entries:
         if fp.get("x") and fp["x"] == e.get("x"):
-            return e
+            return e, "متن دقیقاً یکسان است"
         if fp.get("h") and e.get("h") and jaccard(fp["h"], e["h"]) >= 0.8:
-            return e
+            return e, "متن تقریباً یکسان است"
         if fp.get("w") and e.get("w"):
             a, b = set(fp["w"]), set(e["w"])
             inter = len(a & b)
             if inter >= 6 and (inter / float(len(a | b)) >= 0.55
                                or (min(len(a), len(b)) >= 8 and inter / float(min(len(a), len(b))) >= 0.85)):
-                return e
+                return e, "همان خبر است با جمله‌بندی دیگر (کلمه‌های اصلی یکی است)"
         if fp.get("m") and set(fp["m"]) & set(e.get("m", [])):
-            return e
+            return e, "همان عکس یا ویدیو است"
         if fp.get("p") and e.get("p") and (fp.get("man") or e.get("man")):
             # a picture you sent by hand: the same picture in another size still counts as a duplicate
             if any(hamming(a, b) <= 3 for a in fp["p"] for b in e["p"]):
-                return e
-    return None
+                return e, "همان عکس است با اندازه‌ی دیگر"
+    return None, None
+
+
+def find_dup(fp, entries):
+    return find_dup_why(fp, entries)[0]
+
+
+def explain_skip(reason, post):
+    """Reason of skip_reason() in plain Persian, as precisely as possible."""
+    m = re.match(r"ad (?:keyword|word) '(.*)'", reason)
+    if m:
+        return "کلمه‌ی تبلیغاتی «%s» دارد (اگر نمی‌خواهی جلویش را بگیرد: /unban %s)" % (m.group(1), m.group(1))
+    m = re.match(r"link to blocked site (.*)", reason)
+    if m:
+        return "لینک سایت ممنوع‌شده دارد: %s" % m.group(1)
+    m = re.match(r"contains a link to a site/app \((.*)\)", reason)
+    if m:
+        return "آدرس سایت یا اپ دارد: %s (پست‌های دارای آدرس سایت ارسال نمی‌شوند)" % m.group(1)
+    m = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
+    if m:
+        return "به کانال یا ربات دیگری اشاره می‌کند: @%s" % m.group(1)
+    if reason.startswith("contains a channel invite"):
+        return "لینک دعوت به کانال یا گروه دارد"
+    if reason == "it is a reply":
+        return "ریپلای به پست دیگری است"
+    if reason == "it is forwarded":
+        return "فورواردی از کانال دیگر است"
+    if reason.startswith("media type"):
+        return "رسانه‌ی غیرقابل‌کپی دارد: %s" % (post.get("ukind") or "نامشخص")
+    if reason == "empty":
+        return "پست خالی است (نه متن دارد نه عکس و ویدیو)"
+    return reason
 
 
 def dhash(data):
@@ -1401,6 +1442,19 @@ def round_text(cfg, r, title):
             out.append("  %s %s: %d ← %d" % ("✅" if sent else "▫️", names.get(key, "(کانال حذف‌شده)"), new, sent))
     if r.get("appr"):
         out.append("  + %d پست تاییدشده‌ی شما" % r["appr"])
+    why = r.get("why") or []
+    ign = r.get("ign") or {}
+    if why or ign:
+        out.append("\n🔎 علت هر پستی که نرفت:")
+        for n, (key, pid, text) in enumerate(why[:12], 1):
+            name = names.get(key)
+            out.append("%d) %s\n    %s" % (n, ("t.me/%s/%s" % (name, pid)) if name and pid else
+                                              (name or "کانال نامشخص"), text))
+        if len(why) > 12:
+            out.append("... و %d مورد دیگر" % (len(why) - 12))
+        if ign:
+            out.append("• پست‌های قدیمی‌تر که نادیده ماندند (فقط تازه‌ترینِ هر کانال بررسی می‌شود): " + "، ".join(
+                "%s %d" % (names.get(k, "؟"), v) for k, v in ign.items()))
     return "\n".join(out)
 
 
@@ -1981,7 +2035,12 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
     # --- 2. choose candidates ---
     rec = {"found": sum(len(p[4]) for p in pages), "considered": 0, "posted": 0, "over": 0, "appr": 0,
-           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis)}
+           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis),
+           "why": [], "ign": {}}
+
+    def note(key, pid, text):
+        if len(rec["why"]) < 40:
+            rec["why"].append([key, pid, text])
     lab2key = {p[2]: p[1] for p in pages}
     cands = []
     reviewed = 0
@@ -1992,12 +2051,15 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         if not dry:
             st["last_id"] = new[-1]["id"]         # whatever happens, these are never reconsidered
+        if len(new) > take:
+            rec["ign"][key] = len(new) - take
         for p in new[-take:]:
             rec["considered"] += 1
             reason = skip_reason(cfg, p)
             if reason:
                 g = skip_group(reason)
                 rec["rej"][g] = rec["rej"].get(g, 0) + 1
+                why = explain_skip(reason, p)
                 log.info("[%s/%d] skipped: %s", label, p["id"], reason)
                 if not dry:
                     stat_add(state, cfg, reason)
@@ -2006,7 +2068,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                         txt = build_text(cfg, rules, p["text_html"])
                         if send_for_review(net, cfg, state, label, name, p, txt, reason):
                             reviewed += 1
+                            why += " ← برای تأیید شما فرستاده شد (پیام جدا با دکمه‌ی ارسال/رد)"
                             time.sleep(2)
+                note(src_key(name), p["id"], why)
                 continue
             cands.append((label, st, p))
     hist = state.setdefault("fp", [])
@@ -2038,9 +2102,13 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         fp["m"], look = media_info(net, p["media"]) if p["media"] else ([], [])
         if look:
             fp["p"] = look
-        if find_dup(fp, hist + [c[3] for c in eligible]):
+        d, dwhy = find_dup_why(fp, hist + [c[3] for c in eligible])
+        if d:
             log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
             rec["rej"]["تکراری"] = rec["rej"].get("تکراری", 0) + 1
+            note(lab2key.get(label, ""), p["id"], "تکراری: %s؛ %s" % (
+                dwhy, ("مشابهش %s پیش در کانال گذاشته شده بود" % hours_ago(d["t"])) if d.get("t") else
+                "در همین دور از کانال دیگری هم رسید و همان یکی ارسال شد"))
             if not dry:
                 stat_add(state, cfg, "dup")
             continue
@@ -2051,6 +2119,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             log.info("[%s] not chosen this time", item[0])
             if not item[0].startswith("approved/"):
                 rec["over"] += 1
+                note(lab2key.get(item[0].split("/")[0], ""), item[1]["id"],
+                     ("جا نشد: سقف %d پست در این دور پر شده بود" % limit) if len(chosen) >= limit else
+                     "کنار گذاشته شد تا دو پست فقط‌متنی پشت‌سرهم نیایند")
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
                 state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
     if not dry:
@@ -2076,10 +2147,13 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 rec["appr"] += 1
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
+            note(lab2key.get(tag.split("/")[0], ""), p["id"], "ارسال نشد: %s" % e)
         except NetError as e:
             log.warning("[%s] network problem: %s", tag, e)
+            note(lab2key.get(tag.split("/")[0], ""), p["id"], "ارسال نشد: مشکل شبکه (%s)" % e)
         except ApiError as e:
             log.error("[%s] Telegram refused: %s", tag, e.desc)
+            note(lab2key.get(tag.split("/")[0], ""), p["id"], "ارسال نشد: تلگرام نپذیرفت (%s)" % e.desc)
         save_state(state_path, state)
         if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
