@@ -20,9 +20,12 @@
   },
   "ef680edcd0": {
    "last_id": 18662
+  },
+  "f20a53f3a3": {
+   "last_id": 16841
   }
  },
- "update_offset": 774951561,
+ "update_offset": 774951566,
  "owner_id": 138180578,
  "fp": [
   {
@@ -1890,5 +1893,9 @@
    ],
    "t": 1794550816
   }
- }
+ },
+ "src_del": [],
+ "src_add": [
+  "CloseFriend3"
+ ]
 }
