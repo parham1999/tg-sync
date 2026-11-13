@@ -10,7 +10,7 @@
    "last_id": 9492
   },
   "46bd0c92df": {
-   "last_id": 122902
+   "last_id": 122903
   },
   "2201e87742": {
    "last_id": 72623
@@ -26,9 +26,12 @@
   },
   "a198fa18c9": {
    "last_id": 20625
+  },
+  "3ea375f9c9": {
+   "last_id": 17836
   }
  },
- "update_offset": 774951567,
+ "update_offset": 774951569,
  "owner_id": 138180578,
  "fp": [
   {
@@ -1794,7 +1797,7 @@
   }
  ],
  "approved": [],
- "next_run_ts": 1794551026.8279212,
+ "next_run_ts": 1794551161.6839352,
  "review_off": false,
  "pending": {},
  "posted_log": [
@@ -1824,6 +1827,9 @@
    "ee6c8e519c": 1,
    "1c1cb821b4": 1,
    "7f69010262": 1
+  },
+  "skip": {
+   "\u062a\u06a9\u0631\u0627\u0631\u06cc": 1
   }
  },
  "arrivals": [
@@ -1850,9 +1856,16 @@
     "7f69010262": 1,
     "b2a6a8ff4b": 1
    }
+  ],
+  [
+   1794551035,
+   1,
+   {
+    "46bd0c92df": 1
+   }
   ]
  ],
- "last_scan_ts": 1794550623,
+ "last_scan_ts": 1794551035,
  "hv_ts": 1794548886,
  "hv": {},
  "hv_seen": [],
@@ -1900,6 +1913,7 @@
  "src_del": [],
  "src_add": [
   "CloseFriend3",
-  "dodollism"
+  "dodollism",
+  "ParsTwt"
  ]
 }
