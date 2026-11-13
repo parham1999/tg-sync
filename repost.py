@@ -1140,8 +1140,16 @@ def source_button(cfg, net, state, cb):
 
 def manage_command(cfg, net, state, text):
     """Returns (reply, markup) when the text is a source / banned-word command, else None."""
-    cmd, _, arg = text.partition(" ")
-    cmd, arg = cmd.split("@")[0].lower(), arg.strip()
+    # forgiving format: "/add name", "add name", "add/name", "/add/name", "اضافه name"
+    fm = re.match(r"^/?(add|del|mute|unmute|ban|unban|اضافه|حذف)(?:@\w+)?(?:[\s/:：]+(.*))?$", text, re.S | re.I)
+    if fm and (fm.group(2) or text.startswith("/") or fm.group(1).lower() in ("add", "del", "mute", "unmute", "ban", "unban")):
+        w = fm.group(1).lower()
+        cmd, arg = "/" + {"اضافه": "add", "حذف": "del"}.get(w, w), (fm.group(2) or "").strip()
+        if cmd in ("/add", "/del") and not arg:
+            return ("مثال: %s آیدی_کانال   یا   %s https://t.me/name" % (cmd, cmd)), None
+    else:
+        cmd, _, arg = text.partition(" ")
+        cmd, arg = cmd.split("@")[0].lower(), arg.strip()
     if text == BTN_SRC or cmd == "/sources":
         return sources_view(cfg, state)
     if text == BTN_HOURS or cmd == "/hours":
@@ -1326,7 +1334,10 @@ def handle_update(cfg, net, state, u):
         state["next_run_ts"] = 0
         tell(net, owner, "🟢 ارسال روشن شد. فقط پست‌هایی که از حالا منتشر شوند بررسی می‌شوند.", MENU_KB)
     else:
-        tell(net, owner, status_text(cfg, state), MENU_KB)
+        extra = ""
+        if text and text != BTN_STATUS and not text.startswith(("/start", "/status", "/help")):
+            extra = "متوجه این پیام نشدم.\nاضافه کردن منبع: /add آیدی (یا لینک کانال)\nحذف: /del آیدی\nکلمه ممنوع: /ban کلمه\n\n"
+        tell(net, owner, extra + status_text(cfg, state), MENU_KB)
 
 
 def heartbeat(cfg, net, state):
