@@ -1384,8 +1384,14 @@ def manage_command(cfg, net, state, text):
     return None
 
 
+REPLY_TO = [None]      # id of the owner's message the bot is answering right now: the answer quotes it
+
+
 def tell(net, chat, text, markup=None):
     p = {"chat_id": chat, "text": text, "disable_web_page_preview": True}
+    if REPLY_TO[0]:
+        p["reply_to_message_id"] = REPLY_TO[0]
+        p["allow_sending_without_reply"] = True
     if markup:
         p["reply_markup"] = markup
     try:
@@ -1481,10 +1487,12 @@ def process_updates(cfg, net, state, state_path, wait=0):
         return
     for u in ups or []:
         state["update_offset"] = u["update_id"] + 1
+        REPLY_TO[0] = None
         try:
             handle_update(cfg, net, state, u)
         except Exception:
             log.exception("could not handle a bot message")
+        REPLY_TO[0] = None
     if flush_forwards(cfg, net, state) or ups:
         save_state(state_path, state)
 
@@ -1537,6 +1545,7 @@ def handle_update(cfg, net, state, u):
         log.info("owner registered")
     if uid != owner:
         return
+    REPLY_TO[0] = m.get("message_id")             # every answer below quotes this message
     if is_forward_or_media(m):                    # a post you forwarded / sent: process it and publish now
         gid = m.get("media_group_id")
         if gid:
@@ -1694,6 +1703,14 @@ def publish_forward(cfg, net, state, owner, ttext, media, fp, pid):
 
 def handle_forward(cfg, net, state, owner, msgs):
     msgs = sorted(msgs, key=lambda x: x.get("message_id", 0))
+    REPLY_TO[0] = msgs[0].get("message_id") if msgs else None
+    try:
+        _handle_forward(cfg, net, state, owner, msgs)
+    finally:
+        REPLY_TO[0] = None
+
+
+def _handle_forward(cfg, net, state, owner, msgs):
     media, text, ents = [], "", []
     for m in msgs:
         if any(m.get(k) for k in FWD_BAD):
@@ -1726,7 +1743,8 @@ def handle_forward(cfg, net, state, owner, msgs):
     dup = find_dup(fp, hist)
     if dup:
         fw = state.setdefault("fwd", {})
-        fw[pid] = {"text": ttext, "media": [list(x) for x in media], "fp": fp, "t": int(now)}
+        fw[pid] = {"text": ttext, "media": [list(x) for x in media], "fp": fp, "t": int(now),
+                   "mid": msgs[0].get("message_id")}
         for k in [k for k, v in fw.items() if now - v.get("t", 0) > 86400]:
             fw.pop(k)
         tell(net, owner, "⛔ تکراری است: مشابه همین پست قبلاً در کانال گذاشته شده (%s پیش). نفرستادم.\n"
@@ -1756,11 +1774,13 @@ def forward_button(cfg, net, state, cb, act, pid):
     if act == "fw":
         item = (state.get("fwd") or {}).pop(pid, None)
         if item:
+            REPLY_TO[0] = item.get("mid")
             msg, kb = publish_forward(cfg, net, state, owner, item["text"],
                                       [tuple(x) for x in item["media"]], item.get("fp") or {}, pid)
             note = msg
             if kb:
                 tell(net, owner, msg, kb)
+            REPLY_TO[0] = None
     else:
         item = (state.get("undo") or {}).pop(pid, None)
         if item:
