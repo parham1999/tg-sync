@@ -17,4 +17,4 @@ jobs:
         env:
           CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
           SETTINGS_JSON: ${{ secrets.SETTINGS_JSON }}
-        run: python repost.py --dump 3
+        run: python repost.py --dump 3 --dump-total 10
