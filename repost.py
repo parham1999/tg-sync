@@ -51,7 +51,7 @@ DEFAULTS = {
     # (older ones are never copied). Source order is shuffled and posts are spaced out.
     "latest_only": True,
     "random_delay_seconds": [15, 60],   # random pause between two posts of one run
-    "max_posts_per_run": 6,             # at most this many posts per round (0 = no limit)
+    "max_posts_per_run": 10,            # at most this many posts per round (0 = no limit)
     "interval_minutes": [30, 40],       # minimum gap between two posting rounds
     "utc_offset_minutes": 210,          # Iran time (UTC+3:30)
     "night_hours": [1, 6],              # from 01:00 until 05:59 ...
@@ -63,6 +63,10 @@ DEFAULTS = {
     "review_suspicious": True,          # send suspected ads to you with Send / Reject buttons
     "review_keyword_ads": False,        # also review posts with obvious betting words (noisy)
     "review_max_per_round": 3,
+    "top_posts_per_run": 3,        # of the posts per round, up to this many are "best recent" posts
+    "top_min_age_hours": 2,        # a post must be at least this old (views settle) ...
+    "top_max_age_hours": 24,       # ... and at most this old
+    "top_min_score": 1.5,          # views must be this many times the usual views of a post of the same age
     "initial_posts": 0,            # how many old posts to publish on the very first run
     "delay_between_posts": 3,
     "replacements": [],            # [["old text", "new text"], ...]
@@ -339,6 +343,64 @@ def strip_proxy_links(t):
     return PROXY_RE.sub("", t)
 
 
+def parse_views(chunk):
+    m = re.search(r'tgme_widget_message_views">\s*([\d.,]+)\s*([KkMm]?)\s*<', chunk)
+    if not m:
+        return 0
+    try:
+        v = float(m.group(1).replace(",", ""))
+    except ValueError:
+        return 0
+    return int(v * {"": 1, "k": 1000, "m": 1000000}[m.group(2).lower()])
+
+
+def parse_ts(chunk):
+    """Publishing time (unix seconds) from <time datetime="...">, 0 if unknown."""
+    m = re.search(r'<time[^>]*datetime="([^"]+)"', chunk)
+    if not m:
+        return 0
+    try:
+        import datetime as _dt
+        d = _dt.datetime.fromisoformat(m.group(1))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=_dt.timezone.utc)
+        return int(d.timestamp())
+    except ValueError:
+        return 0
+
+
+def top_scores(cfg, posts, now):
+    """[(score, post)] best first. A post's score = its views divided by the usual views of the
+    channel's posts of a similar age (so old posts do not win just because they had more time)."""
+    lo, hi = float(cfg["top_min_age_hours"]) * 3600, float(cfg["top_max_age_hours"]) * 3600
+    pts = [(now - p["ts"], p["views"]) for p in posts if p.get("ts") and p.get("views")]
+    out = []
+    for p in posts:
+        if not p.get("ts") or not p.get("views"):
+            continue
+        age = now - p["ts"]
+        if age < lo or age > hi:
+            continue
+        near = sorted(v for a, v in pts if 0.5 * age <= a <= 2 * age and v != p["views"])
+        if len(near) < 3:
+            near = sorted(v for a, v in pts if a >= lo and v != p["views"])
+        if len(near) < 3:
+            continue
+        expected = near[len(near) // 2]
+        if expected <= 0:
+            continue
+        out.append((p["views"] / expected, p))
+    out.sort(key=lambda x: -x[0])
+    return [x for x in out if x[0] >= float(cfg["top_min_score"])]
+
+
+def mark_done(st, pid):
+    d = st.setdefault("done", [])
+    if pid not in d:
+        d.append(pid)
+    del d[:-300]
+
+
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
@@ -367,6 +429,8 @@ def parse_page(page):
             "id": int(m.group(1)),
             "text_html": strip_proxy_links(tm.group(1)) if tm else "",
             "media": uniq,
+            "views": parse_views(chunk),
+            "ts": parse_ts(chunk),
             "forwarded": "tgme_widget_message_forwarded_from" in chunk,
             "reply": "tgme_widget_message_reply" in chunk,
             "unsupported": any(u in chunk for u in UNSUPPORTED) or (
@@ -960,7 +1024,10 @@ def reseed(cfg, net, state):
         except NetError:
             continue
         if posts:
-            state["channels"].setdefault(key, {})["last_id"] = posts[-1]["id"]
+            st = state["channels"].setdefault(key, {})
+            st["last_id"] = posts[-1]["id"]
+            for p in posts:
+                mark_done(st, p["id"])
 
 
 def process_updates(cfg, net, state, state_path, wait=0):
@@ -1133,6 +1200,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     names = list(cfg["sources"])
     random.shuffle(names)
     cands = []
+    pool = []                                     # (label, channel state, all posts on its page)
     reviewed = 0
     for name in names:
         key = hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
@@ -1147,6 +1215,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         newest = posts[-1]
         st = state["channels"].setdefault(key, {})
+        pool.append((label, st, posts))
         if "last_id" not in st:
             st["last_id"] = newest["id"] - 1      # first run: the newest post counts too
         if newest["id"] <= st["last_id"]:
@@ -1157,6 +1226,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             log.info("[%s/%d] skipped: %s", label, newest["id"], reason)
             if not dry:
                 st["last_id"] = newest["id"]
+                mark_done(st, newest["id"])
                 if (owner_of(cfg, state) and not state.get("review_off") and review_worthy(cfg, reason)
                         and reviewed < int(cfg["review_max_per_round"])):
                     txt = build_text(cfg, rules, newest["text_html"])
@@ -1188,6 +1258,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         tag = "%s/%d" % (label, p["id"])
         if not dry:
             st["last_id"] = p["id"]               # whatever happens, this post is never reconsidered
+            mark_done(st, p["id"])
         text = build_text(cfg, rules, p["text_html"])
         fp = text_fp(norm_for_dedupe(text, rules.own))
         fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
@@ -1195,8 +1266,35 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
             continue
         eligible.append((tag, p, text, fp, st))
-    chosen = pick_and_order(eligible, limit)
-    for item in eligible:
+    tops = []
+    n_top_cfg = 0 if night else int(cfg["top_posts_per_run"])
+    if n_top_cfg > 0 and limit > 0:
+        best = []                                  # best not-yet-used post of every channel
+        for label, st, posts in pool:
+            done = set(st.get("done", []))
+            for score, p in top_scores(cfg, posts, now):
+                if p["id"] in done or p["id"] <= 0 or skip_reason(cfg, p):
+                    continue
+                best.append((score, label, st, p))
+                break
+        best.sort(key=lambda x: -x[0])
+        for score, label, st, p in best[:max(n_top_cfg * 2, 4)]:
+            tag = "%s/%d/top" % (label, p["id"])
+            text = build_text(cfg, rules, p["text_html"])
+            fp = text_fp(norm_for_dedupe(text, rules.own))
+            fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
+            if find_dup(fp, hist + [c[3] for c in eligible] + [t[3] for t in tops]):
+                log.info("[%s] best-post candidate skipped: duplicate", tag)
+                if not dry:
+                    mark_done(st, p["id"])
+                continue
+            log.info("[%s] best-post candidate: %d views, %.1fx the usual", tag, p["views"], score)
+            tops.append((tag, p, text, fp, st))
+    n_top = min(len(tops), max(n_top_cfg, limit - len(eligible))) if tops else 0
+    n_top = min(n_top, limit)
+    combined = eligible[:max(limit - n_top, 0)] + tops[:n_top]
+    chosen = pick_and_order(combined, limit)
+    for item in combined:
         if item not in chosen:
             log.info("[%s] not chosen this time", item[0])
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
@@ -1212,6 +1310,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         try:
             deliver(net, cfg, p, text)
             log.info("[%s] posted", tag)
+            if st is not None:
+                mark_done(st, p["id"])
             hist.append(dict(fp, t=int(time.time())))
             state.setdefault("posted_log", []).append(int(time.time()))
             posted += 1
