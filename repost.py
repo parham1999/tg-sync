@@ -1369,7 +1369,39 @@ def status_text(cfg, state):
     mode = state.get("crisis_mode", "auto")
     lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
         mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
+    lr, lm = state.get("last_round"), state.get("last_manual")
+    if lr:
+        lines.append("\n" + round_text(cfg, lr, "آخرین دور ارسال"))
+    if lm and (not lr or lm.get("t", 0) > lr.get("t", 0)):
+        lines.append("\n" + round_text(cfg, lm, "آخرین ارسال فوری (⚡)"))
+    if not lr and not lm:
+        lines.append("\nهنوز دوری با پست تازه انجام نشده.")
     return "\n".join(lines)
+
+
+def round_text(cfg, r, title):
+    tm = time.gmtime(r["t"] + int(cfg["utc_offset_minutes"]) * 60)
+    ago = max(0, int((time.time() - r["t"]) / 60))
+    when = "%d دقیقه پیش" % ago if ago < 60 else "%d ساعت و %d دقیقه پیش" % (ago // 60, ago % 60)
+    names = {src_key(n): n for n in cfg["sources"]}
+    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else ""),
+           "• پست تازه پیدا شد: %d" % r["found"]]
+    ignored = r["found"] - r.get("considered", r["found"])
+    if ignored > 0:
+        out.append("• نادیده (فقط تازه‌ترین پست هر کانال بررسی می‌شود): %d" % ignored)
+    if r.get("rej"):
+        out.append("• ردشده: %d (%s)" % (sum(r["rej"].values()), "، ".join("%s %d" % kv for kv in sorted(r["rej"].items()))))
+    if r.get("over"):
+        out.append("• جا نشد (سقف پست در هر دور): %d" % r["over"])
+    out.append("• ریپوست شد: %d" % r.get("posted", 0))
+    rows = sorted(r.get("src", {}).items(), key=lambda kv: (-kv[1][1], -kv[1][0]))
+    if rows:
+        out.append("سهم کانال‌ها (تازه ← ریپوست):")
+        for key, (new, sent) in rows:
+            out.append("  %s %s: %d ← %d" % ("✅" if sent else "▫️", names.get(key, "(کانال حذف‌شده)"), new, sent))
+    if r.get("appr"):
+        out.append("  + %d پست تاییدشده‌ی شما" % r["appr"])
+    return "\n".join(out)
 
 
 def reseed(cfg, net, state):
@@ -1784,6 +1816,10 @@ def src_key(name):
     return hashlib.sha1(name.lower().encode("utf-8")).hexdigest()[:10]
 
 
+def skip_group(what):
+    return "تکراری" if what == "dup" else next((g for p, g in SKIP_GROUPS if what.startswith(p)), "سایر")
+
+
 def stat_add(state, cfg, what, key=None, n=1):
     """Counters for the daily report: what = 'posted' | 'dup' | 'crisis' | a skip reason text."""
     day = iran_day(cfg, time.time())[0]
@@ -1798,7 +1834,7 @@ def stat_add(state, cfg, what, key=None, n=1):
     elif what == "crisis":
         st["crisis"] = st.get("crisis", 0) + n
     else:
-        grp = "تکراری" if what == "dup" else next((g for p, g in SKIP_GROUPS if what.startswith(p)), "سایر")
+        grp = skip_group(what)
         sk = st.setdefault("skip", {})
         sk[grp] = sk.get(grp, 0) + n
 
@@ -1944,6 +1980,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     if night:
         log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
     # --- 2. choose candidates ---
+    rec = {"found": sum(len(p[4]) for p in pages), "considered": 0, "posted": 0, "over": 0, "appr": 0,
+           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis)}
+    lab2key = {p[2]: p[1] for p in pages}
     cands = []
     reviewed = 0
     take = int(cfg["crisis_posts_per_channel"]) if crisis else 1
@@ -1954,8 +1993,11 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         if not dry:
             st["last_id"] = new[-1]["id"]         # whatever happens, these are never reconsidered
         for p in new[-take:]:
+            rec["considered"] += 1
             reason = skip_reason(cfg, p)
             if reason:
+                g = skip_group(reason)
+                rec["rej"][g] = rec["rej"].get(g, 0) + 1
                 log.info("[%s/%d] skipped: %s", label, p["id"], reason)
                 if not dry:
                     stat_add(state, cfg, reason)
@@ -1998,6 +2040,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             fp["p"] = look
         if find_dup(fp, hist + [c[3] for c in eligible]):
             log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
+            rec["rej"]["تکراری"] = rec["rej"].get("تکراری", 0) + 1
             if not dry:
                 stat_add(state, cfg, "dup")
             continue
@@ -2006,6 +2049,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     for item in eligible:
         if item not in chosen:
             log.info("[%s] not chosen this time", item[0])
+            if not item[0].startswith("approved/"):
+                rec["over"] += 1
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
                 state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
     if not dry:
@@ -2025,6 +2070,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             state.setdefault("posted_log", []).append(int(time.time()))
             stat_add(state, cfg, "posted", tag.split("/")[0] if tag.split("/")[0] in keys else None)
             posted += 1
+            if tag.split("/")[0] in lab2key:
+                rec["src"].setdefault(lab2key[tag.split("/")[0]], [0, 0])[1] += 1
+            else:
+                rec["appr"] += 1
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
         except NetError as e:
@@ -2034,6 +2083,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         save_state(state_path, state)
         if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
+    if not dry and rec["found"]:                  # what the bot's "status" button shows
+        rec.update(t=int(time.time()), posted=posted)
+        state["last_manual" if manual else "last_round"] = rec
     if not posted and not dry and not manual:
         state["next_run_ts"] = max(state.get("next_run_ts", 0), time.time() + 120)
         save_state(state_path, state)
