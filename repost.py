@@ -252,7 +252,18 @@ class Net:
         self.token = cfg["bot_token"]
         self.api_base = cfg["api_base"].rstrip("/")
 
+    def tg_url(self, url):
+        """tgfile:<file_id> = a file of a message sent to the bot -> its download link."""
+        if not url.startswith("tgfile:"):
+            return url
+        try:
+            info = self.api("getFile", {"file_id": url[7:]})
+        except ApiError as e:
+            raise NetError("Telegram will not give this file (%s)" % e.desc)
+        return "%s/file/bot%s/%s" % (self.api_base, self.token, info["file_path"])
+
     def get(self, url, binary=False, timeout=40):
+        url = self.tg_url(url)
         req = urllib.request.Request(url, headers={"User-Agent": UA})
         try:
             with self.opener.open(req, timeout=timeout) as r:
@@ -274,6 +285,9 @@ class Net:
 
     def get_range(self, url, nbytes):
         """First nbytes of a file plus its total size (for duplicate detection)."""
+        if url.startswith("tgfile:"):
+            data = self.get(url, binary=True, timeout=180)
+            return data[:nbytes], len(data)
         req = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-%d" % (nbytes - 1)})
         try:
             with self.opener.open(req, timeout=40) as r:
@@ -634,21 +648,52 @@ def find_dup(fp, entries):
                 return e
         if fp.get("m") and set(fp["m"]) & set(e.get("m", [])):
             return e
+        if fp.get("p") and e.get("p") and (fp.get("man") or e.get("man")):
+            # a picture you sent by hand: the same picture in another size still counts as a duplicate
+            if any(hamming(a, b) <= 3 for a in fp["p"] for b in e["p"]):
+                return e
     return None
 
 
-def media_hashes(net, media):
-    out = []
+def dhash(data):
+    """64-bit 'looks like' hash: the same picture in another size/quality gives (almost) the same value."""
+    im = Image.open(io.BytesIO(data))
+    im.load()
+    im = im.convert("L").resize((9, 8))
+    px = list(im.getdata())
+    bits = 0
+    for r in range(8):
+        for c in range(8):
+            bits = (bits << 1) | (1 if px[r * 9 + c] > px[r * 9 + c + 1] else 0)
+    return "%016x" % bits
+
+
+def hamming(a, b):
+    return bin(int(a, 16) ^ int(b, 16)).count("1")
+
+
+def media_info(net, media):
+    """(exact file hashes, look-alike hashes of the photos) of the first 3 media files."""
+    exact, look = [], []
     for kind, url in media[:3]:
         try:
             if kind == "photo":
-                out.append(hashlib.sha1(net.get(url, binary=True, timeout=30)).hexdigest()[:12])
+                data = net.get(url, binary=True, timeout=30)
+                exact.append(hashlib.sha1(data).hexdigest()[:12])
+                try:
+                    look.append(dhash(data))
+                except Exception:
+                    pass
             else:
                 data, total = net.get_range(url, 262144)
-                out.append(hashlib.sha1(data + str(total).encode()).hexdigest()[:12])
+                exact.append(hashlib.sha1(data + str(total).encode()).hexdigest()[:12])
         except Exception:
             pass
-    return out
+    return exact, look
+
+
+def media_hashes(net, media):
+    return media_info(net, media)[0]
 
 
 def skip_reason(cfg, post):
@@ -800,7 +845,8 @@ def marked_photo(net, cfg, url):
 
 def send_single(net, cfg, kind, url, caption):
     method = "sendPhoto" if kind == "photo" else "sendVideo"
-    payload = {"chat_id": cfg["target_channel"], kind: url}
+    ref = url[7:] if url.startswith("tgfile:") else url      # a file id is sent as it is, no download
+    payload = {"chat_id": cfg["target_channel"], kind: ref}
     if kind == "video":
         payload["supports_streaming"] = True
     if caption:
@@ -814,7 +860,7 @@ def send_single(net, cfg, kind, url, caption):
                 return call_html(net, method, payload, files={kind: ("photo.jpg", data, "image/jpeg")})
             except ApiError as e:
                 log.info("marked photo refused (%s) - sending the original", e.desc)
-                payload[kind] = url
+                payload[kind] = ref
     try:
         return call_html(net, method, payload)
     except ApiError as e:
@@ -838,6 +884,13 @@ def send_group(net, cfg, media, caption):
             continue
         items, files = [], {}
         for j, (kind, url) in enumerate(chunk):
+            if kind == "video" and url.startswith("tgfile:"):     # a video you sent: use its file id
+                it = {"type": "video", "media": url[7:], "supports_streaming": True}
+                if cap and j == 0:
+                    it["caption"] = cap
+                    it["parse_mode"] = "HTML"
+                items.append(it)
+                continue
             data = marked_photo(net, cfg, url) if kind == "photo" else None
             if data is None:
                 data = net.get(url, binary=True, timeout=180)
@@ -874,6 +927,7 @@ def deliver(net, cfg, post, text):
     except BaseException:
         net.forget_and_delete_sent()      # never leave half of a post in the channel
         raise
+    net.last_sent = list(net.sent)
     net.sent = []
 
 
@@ -963,13 +1017,23 @@ run_cycle.fails = {}
 # --------------------------------------------------------------------------- #
 # control from inside Telegram (on/off, review of suspected ads)
 # --------------------------------------------------------------------------- #
-BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش کردن", "▶️ روشن کردن", "📊 وضعیت", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
-BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران: روشن", "🛑 بحران: خاموش", "🤖 بحران: خودکار"
-BTN_SRC, BTN_BAN, BTN_HOURS = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌های پربازدید"
-MENU_KB = {"keyboard": [[{"text": BTN_OFF}, {"text": BTN_ON}], [{"text": BTN_STATUS}],
-                        [{"text": BTN_CR_ON}, {"text": BTN_CR_OFF}], [{"text": BTN_CR_AUTO}],
-                        [{"text": BTN_SRC}, {"text": BTN_BAN}], [{"text": BTN_HOURS}],
-                        [{"text": BTN_REVIEW}]], "resize_keyboard": True, "is_persistent": True}
+BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش", "▶️ روشن", "📊 وضعیت", "🔍 مشکوک‌ها"
+BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران روشن", "🛑 بحران خاموش", "🤖 بحران خودکار"
+BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌ها", "⚡ ارسال همین الان"
+# texts of older keyboards still work until the phone refreshes its buttons
+OLD_CR = {"🚨 بحران: روشن": BTN_CR_ON, "🛑 بحران: خاموش": BTN_CR_OFF, "🤖 بحران: خودکار": BTN_CR_AUTO}
+OLD_HOURS, OLD_REVIEW = "⏰ ساعت‌های پربازدید", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
+
+
+def btn(t):
+    return {"text": t}
+
+
+MENU_KB = {"keyboard": [[btn(BTN_OFF), btn(BTN_ON), btn(BTN_STATUS)],
+                        [btn(BTN_NOW), btn(BTN_REVIEW)],
+                        [btn(BTN_CR_ON), btn(BTN_CR_OFF), btn(BTN_CR_AUTO)],
+                        [btn(BTN_SRC), btn(BTN_BAN), btn(BTN_HOURS)]],
+           "resize_keyboard": True, "is_persistent": True}
 
 
 def hours_update(cfg, net, state, now):
@@ -1152,7 +1216,7 @@ def manage_command(cfg, net, state, text):
         cmd, arg = cmd.split("@")[0].lower(), arg.strip()
     if text == BTN_SRC or cmd == "/sources":
         return sources_view(cfg, state)
-    if text == BTN_HOURS or cmd == "/hours":
+    if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
         return hours_text(state), None
     if text == BTN_BAN or cmd == "/bans":
         return bans_text(cfg, state), None
@@ -1243,6 +1307,8 @@ def reseed(cfg, net, state):
 
 def process_updates(cfg, net, state, state_path, wait=0):
     """wait > 0 = long polling: Telegram holds the request and answers the moment you press a button."""
+    if FWD_BUF and wait:
+        wait = min(wait, 2)                         # collecting album parts: look again in 2 s
     try:
         ups = net.api("getUpdates", {"offset": state.get("update_offset", 0), "timeout": int(wait),
                                      "allowed_updates": ["message", "callback_query"]})
@@ -1255,7 +1321,7 @@ def process_updates(cfg, net, state, state_path, wait=0):
             handle_update(cfg, net, state, u)
         except Exception:
             log.exception("could not handle a bot message")
-    if ups:
+    if flush_forwards(cfg, net, state) or ups:
         save_state(state_path, state)
 
 
@@ -1267,6 +1333,9 @@ def handle_update(cfg, net, state, u):
         act, _, pid = (cb.get("data") or "").partition(":")
         if act in ("mt", "dl"):
             source_button(cfg, net, state, cb)
+            return
+        if act in ("fw", "rm"):
+            forward_button(cfg, net, state, cb, act, pid)
             return
         pend = state.setdefault("pending", {}).pop(pid, None)
         if pend is None:
@@ -1304,9 +1373,28 @@ def handle_update(cfg, net, state, u):
         log.info("owner registered")
     if uid != owner:
         return
+    if is_forward_or_media(m):                    # a post you forwarded / sent: process it and publish now
+        gid = m.get("media_group_id")
+        if gid:
+            b = FWD_BUF.setdefault(gid, {"msgs": [], "t": 0})
+            b["msgs"].append(m)
+            b["t"] = time.time()
+        else:
+            handle_forward(cfg, net, state, owner, [m])
+        return
     managed = manage_command(cfg, net, state, text)
     if managed:
         tell(net, owner, managed[0], managed[1] or MENU_KB)
+        return
+    text = OLD_CR.get(text, text)
+    if text in (OLD_REVIEW,):
+        text = BTN_REVIEW
+    if text == BTN_NOW or text.startswith("/now"):
+        if state.get("paused"):
+            tell(net, owner, "🔴 ربات خاموش است. اول «▶️ روشن» را بزنید.", MENU_KB)
+        else:
+            state["run_now"] = int(time.time())
+            tell(net, owner, "⚡ دور فوری شروع شد؛ نتیجه را همین‌جا می‌فرستم. دور عادی سر وقت خودش اجرا می‌شود.", MENU_KB)
         return
     if text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
         if text == BTN_CR_ON or text.startswith("/crisis_on"):
@@ -1322,7 +1410,7 @@ def handle_update(cfg, net, state, u):
         state["crisis_auto"] = 0
         state.pop("crisis_calm_since", None)
         tell(net, owner, msg, MENU_KB)
-    elif BTN_REVIEW in text or text.startswith("/review"):
+    elif text == BTN_REVIEW or text.startswith("/review"):
         state["review_off"] = not state.get("review_off")
         tell(net, owner, "بررسی پست‌های مشکوک: " + ("خاموش شد" if state["review_off"] else "روشن شد"), MENU_KB)
     elif "خاموش" in text or text.startswith("/stop") or text.startswith("/off"):
@@ -1336,8 +1424,200 @@ def handle_update(cfg, net, state, u):
     else:
         extra = ""
         if text and text != BTN_STATUS and not text.startswith(("/start", "/status", "/help")):
-            extra = "متوجه این پیام نشدم.\n" + "اضافه کردن منبع (هر کدام از این شکل‌ها درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr\n\nحذف: /del besnr\nبی‌صدا برای ۳ روز: /mute besnr 3   (برگرداندن: /unmute besnr)\nکلمه ممنوع: /ban کلمه   (برداشتن: /unban کلمه)" + "\n\n"
+            extra = "متوجه این پیام نشدم. برای فرستادن یک پست به کانال، همان پست را برای من فوروارد کنید.\n\n" + "اضافه کردن منبع (هر کدام از این شکل‌ها درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr\n\nحذف: /del besnr\nبی‌صدا برای ۳ روز: /mute besnr 3   (برگرداندن: /unmute besnr)\nکلمه ممنوع: /ban کلمه   (برداشتن: /unban کلمه)" + "\n\n"
         tell(net, owner, extra + status_text(cfg, state), MENU_KB)
+
+
+# ---- posts you forward (or send) to the bot: processed like any other post, published at once ----
+FWD_BUF = {}                                     # album parts arrive as separate messages: collect them
+FWD_KEYS = ("forward_origin", "forward_from_chat", "forward_from", "forward_date", "forward_sender_name")
+FWD_BAD = ("document", "voice", "audio", "sticker", "animation", "video_note", "poll", "location", "contact")
+
+
+def is_forward_or_media(m):
+    return any(k in m for k in FWD_KEYS) or bool(m.get("photo") or m.get("video") or m.get("animation")
+                                                 or m.get("document") or m.get("voice") or m.get("sticker"))
+
+
+def entities_to_html(text, ents):
+    """Telegram message text + entities -> HTML (offsets are in UTF-16 units)."""
+    u = text.encode("utf-16-le")
+    n = len(u) // 2
+
+    def seg(a, b):
+        return html.escape(u[a * 2:b * 2].decode("utf-16-le", "replace"), quote=False)
+
+    tags = []
+    for e in ents or []:
+        try:
+            o, ln, t = int(e["offset"]), int(e["length"]), e.get("type")
+        except (KeyError, TypeError, ValueError):
+            continue
+        if o < 0 or ln <= 0 or o + ln > n:
+            continue
+        simple = {"bold": "b", "italic": "i", "underline": "u", "strikethrough": "s", "code": "code",
+                  "pre": "pre", "spoiler": "tg-spoiler"}
+        if t in simple:
+            tags.append((o, o + ln, "<%s>" % simple[t], "</%s>" % simple[t]))
+        elif t == "text_link" and e.get("url"):
+            tags.append((o, o + ln, '<a href="%s">' % html.escape(e["url"], quote=True), "</a>"))
+        elif t == "url":
+            link = u[o * 2:(o + ln) * 2].decode("utf-16-le", "replace")
+            if not re.match(r"[a-z]+://", link, re.I):
+                link = "http://" + link
+            tags.append((o, o + ln, '<a href="%s">' % html.escape(link, quote=True), "</a>"))
+    tags.sort(key=lambda x: (x[0], -x[1]))
+
+    def build(a, b, items):
+        out, pos, i = [], a, 0
+        while i < len(items):
+            st, en, op, cl = items[i]
+            if st < pos:
+                i += 1
+                continue
+            out.append(seg(pos, st))
+            j, kids = i + 1, []
+            while j < len(items) and items[j][0] < en:
+                if items[j][1] <= en:
+                    kids.append(items[j])
+                j += 1
+            out.append(op + build(st, en, kids) + cl)
+            pos, i = en, j
+        out.append(seg(pos, b))
+        return "".join(out)
+
+    return build(0, n, tags)
+
+
+def crisis_active(state):
+    mode = state.get("crisis_mode", "auto")
+    return mode == "on" or (mode == "auto" and bool(state.get("crisis_auto")))
+
+
+def forward_kb(pid, kind):
+    return {"inline_keyboard": [[{"text": "🔁 ارسال به‌هرحال" if kind == "fw" else "🗑 حذف از کانال",
+                                  "callback_data": "%s:%s" % (kind, pid)}]]}
+
+
+def hours_ago(t):
+    h = max(0, (time.time() - t) / 3600.0)
+    return "کمتر از ۱ ساعت" if h < 1 else "حدود %d ساعت" % round(h) if h < 48 else "%d روز" % round(h / 24)
+
+
+def publish_forward(cfg, net, state, owner, ttext, media, fp, pid):
+    """Send it to the channel now, remember it (so no later post repeats it), offer an undo button."""
+    now = int(time.time())
+    dcfg = dict(cfg, _no_wm=True) if crisis_active(state) else cfg
+    net.last_sent = []
+    try:
+        deliver(net, dcfg, {"id": 0, "media": media}, ttext)
+    except Skip as e:
+        return "⚠️ ارسال نشد: %s" % e, None
+    except ApiError as e:
+        return "⚠️ تلگرام این پست را نپذیرفت: %s" % e.desc, None
+    except NetError as e:
+        return "⚠️ مشکل شبکه، ارسال نشد: %s" % e, None
+    hist = state.setdefault("fp", [])
+    hist.append(dict(fp, t=now, man=True, pid=pid))
+    state.setdefault("posted_log", []).append(now)
+    stat_add(state, cfg, "posted")
+    und = state.setdefault("undo", {})
+    und[pid] = {"ids": [list(x) for x in getattr(net, "last_sent", [])], "t": now}
+    for k in [k for k, v in und.items() if now - v.get("t", 0) > 2 * 86400]:
+        und.pop(k)
+    return "✅ در کانال گذاشته شد.", forward_kb(pid, "rm")
+
+
+def handle_forward(cfg, net, state, owner, msgs):
+    msgs = sorted(msgs, key=lambda x: x.get("message_id", 0))
+    media, text, ents = [], "", []
+    for m in msgs:
+        if any(m.get(k) for k in FWD_BAD):
+            tell(net, owner, "این نوع پیام (ویس، فایل، استیکر، گیف، نظرسنجی...) را نمی‌توانم بفرستم. "
+                 "فقط متن، عکس و ویدیو.", MENU_KB)
+            return
+        if m.get("photo"):
+            media.append(("photo", "tgfile:" + m["photo"][-1]["file_id"]))
+        elif m.get("video"):
+            media.append(("video", "tgfile:" + m["video"]["file_id"]))
+        t = m.get("caption") if (m.get("photo") or m.get("video")) else m.get("text")
+        if t and not text:
+            text = t
+            ents = m.get("caption_entities") or m.get("entities") or []
+    if not text and not media:
+        tell(net, owner, "متن یا عکس و ویدیویی برای ارسال پیدا نشد.", MENU_KB)
+        return
+    rules = Rules(cfg)
+    ttext = build_text(cfg, rules, entities_to_html(text, ents))
+    now = time.time()
+    hist = state.setdefault("fp", [])
+    hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
+    fp = text_fp(norm_for_dedupe(ttext, rules.own))
+    exact, look = media_info(net, media) if media else ([], [])
+    fp["m"] = exact
+    if look:
+        fp["p"] = look
+    fp["man"] = True
+    pid = hashlib.sha1((ttext + repr(media) + str(int(now))).encode("utf-8")).hexdigest()[:8]
+    dup = find_dup(fp, hist)
+    if dup:
+        fw = state.setdefault("fwd", {})
+        fw[pid] = {"text": ttext, "media": [list(x) for x in media], "fp": fp, "t": int(now)}
+        for k in [k for k, v in fw.items() if now - v.get("t", 0) > 86400]:
+            fw.pop(k)
+        tell(net, owner, "⛔ تکراری است: مشابه همین پست قبلاً در کانال گذاشته شده (%s پیش). نفرستادم.\n"
+             "اگر مطمئنید دوباره بفرستد، دکمه‌ی زیر را بزنید." % hours_ago(dup.get("t", now)), forward_kb(pid, "fw"))
+        return
+    msg, kb = publish_forward(cfg, net, state, owner, ttext, media, fp, pid)
+    tell(net, owner, msg, kb or MENU_KB)
+
+
+def flush_forwards(cfg, net, state):
+    """Album parts that stopped arriving (2 s of silence) are published as one post."""
+    done = False
+    for gid in [g for g, b in FWD_BUF.items() if time.time() - b["t"] >= 2.0]:
+        b = FWD_BUF.pop(gid)
+        try:
+            handle_forward(cfg, net, state, owner_of(cfg, state), b["msgs"])
+        except Exception:
+            log.exception("could not process a forwarded album")
+        done = True
+    return done
+
+
+def forward_button(cfg, net, state, cb, act, pid):
+    owner = owner_of(cfg, state)
+    note = "این مورد منقضی شده"
+    m = cb.get("message") or {}
+    if act == "fw":
+        item = (state.get("fwd") or {}).pop(pid, None)
+        if item:
+            msg, kb = publish_forward(cfg, net, state, owner, item["text"],
+                                      [tuple(x) for x in item["media"]], item.get("fp") or {}, pid)
+            note = msg
+            if kb:
+                tell(net, owner, msg, kb)
+    else:
+        item = (state.get("undo") or {}).pop(pid, None)
+        if item:
+            gone = 0
+            for chat, mid in item.get("ids", []):
+                try:
+                    net.api("deleteMessage", {"chat_id": chat, "message_id": mid})
+                    gone += 1
+                except (ApiError, NetError) as e:
+                    log.warning("could not delete a message: %s", getattr(e, "desc", e))
+            state["fp"] = [e for e in state.get("fp", []) if e.get("pid") != pid]
+            note = "🗑 از کانال حذف شد." if gone else "⚠️ حذف نشد (شاید قبلاً حذف شده یا مدتی گذشته)."
+    try:
+        net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"],
+                                    "text": (m.get("text") or "") + "\n\n" + note})
+    except (ApiError, NetError, KeyError):
+        pass
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note[:150]})
+    except (ApiError, NetError):
+        pass
 
 
 def heartbeat(cfg, net, state):
@@ -1530,6 +1810,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     """One posting round: the newest post of every source (in crisis mode the newest few), if new and
     not an ad, duplicates removed, random order, at most max_posts_per_run posts, then a pause."""
     now = time.time()
+    notify = manual = False
     if not dry:
         process_updates(cfg, net, state, state_path)
         apply_overrides(cfg, state)                # sources / banned words changed from the bot
@@ -1538,10 +1819,14 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         hours_update(cfg, net, state, now)
         state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
         if state.get("paused"):
+            state.pop("run_now", None)
             log.info("switched OFF from the bot - nothing is posted")
             return
+        notify = bool(state.pop("run_now", None))
+        # "send now": an extra round right away. The regular schedule (next_run_ts) stays untouched.
+        manual = notify and now < state.get("next_run_ts", 0)
     nxt = state.get("next_run_ts", 0)
-    if not force and not dry and now < nxt:
+    if not force and not dry and not manual and now < nxt:
         log.info("waiting - next posting round in about %d min", int((nxt - now) / 60) + 1)
         return
     # --- 1. read every source page, count what is new ---
@@ -1577,7 +1862,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                  int(cfg["crisis_posts_per_channel"]))
     hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
     n0, n1 = cfg["night_hours"]
-    night = n0 <= hour < n1 and not crisis
+    night = n0 <= hour < n1 and not crisis and not manual
     if night:
         log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
     # --- 2. choose candidates ---
@@ -1630,7 +1915,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         tag = "%s/%d" % (label, p["id"])
         text = build_text(cfg, rules, p["text_html"])
         fp = text_fp(norm_for_dedupe(text, rules.own))
-        fp["m"] = media_hashes(net, p["media"]) if p["media"] else []
+        fp["m"], look = media_info(net, p["media"]) if p["media"] else ([], [])
+        if look:
+            fp["p"] = look
         if find_dup(fp, hist + [c[3] for c in eligible]):
             log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
             if not dry:
@@ -1669,15 +1956,26 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         save_state(state_path, state)
         if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
-    if not posted and not dry:
+    if not posted and not dry and not manual:
         state["next_run_ts"] = max(state.get("next_run_ts", 0), time.time() + 120)
         save_state(state_path, state)
-    if posted and not dry:
+    if posted and not dry and not manual:
         a, b = (cfg["crisis_interval_minutes"] if crisis
                 else cfg["night_interval_minutes"] if night else cfg["interval_minutes"])
         state["next_run_ts"] = time.time() + random.uniform(float(a), float(b)) * 60
         save_state(state_path, state)
         log.info("round finished: %d posted, next round in %d-%d min or later", posted, a, b)
+    if manual and not dry:
+        save_state(state_path, state)
+        log.info("send-now round finished: %d posted (regular schedule unchanged)", posted)
+    if notify and not dry and owner_of(cfg, state):
+        left = max(0, state.get("next_run_ts", 0) - time.time())
+        tell(net, owner_of(cfg, state),
+             ("⚡ ارسال فوری انجام شد: %d پست گذاشته شد." % posted) if posted else
+             "⚡ الان پست تازه‌ی قابل‌ارسالی نیست (یا همه تکراری/ردشده‌اند).",
+             MENU_KB)
+        if manual:
+            log.info("regular round in about %d min", left // 60 + 1)
 
 
 def dump(cfg, net, rules, n, state=None, total=0):
@@ -1893,6 +2191,8 @@ def main():
                         process_updates(cfg, net, state, args.state, wait=max(1, min(15, end - t0)))
                     except Exception:
                         log.exception("bot check failed (will try again)")
+                    if state.get("run_now"):
+                        break
                     if time.time() - t0 < 1:       # never spin faster than once a second
                         time.sleep(1)
                 continue
