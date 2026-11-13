@@ -73,6 +73,9 @@ DEFAULTS = {
     "crisis_on_channels": 4,               # ... or this many sources with ...
     "crisis_channel_rate": 5,              # ... at least this many new posts each within 30 min
     "crisis_off_rate": 14,                 # auto-off: below this many per 30 min for 20 minutes
+    "boost_posts_range": [7, 10],          # boost mode: random number of posts per round
+    "boost_posts_per_channel": 3,          # boost mode: newest N new posts of every source
+    "boost_max_age_minutes": 45,           # boost mode: older posts are not worth posting any more
     "crisis_max_hours": 8,                 # auto mode never stays on longer than this
     "report_time": [23, 30],               # daily report to the bot chat (Iran time)
     "initial_posts": 0,            # how many old posts to publish on the very first run
@@ -1138,6 +1141,7 @@ run_cycle.fails = {}
 # --------------------------------------------------------------------------- #
 BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش", "▶️ روشن", "📊 وضعیت", "🔍 مشکوک‌ها"
 BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران روشن", "🛑 بحران خاموش", "🤖 بحران خودکار"
+BTN_SP_NORMAL, BTN_SP_BOOST = "🐢 نرمال (۱ تا ۶ پست)", "🚀 بوست (۷ تا ۱۰ پست)"
 BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌ها", "⚡ ارسال همین الان"
 # texts of older keyboards still work until the phone refreshes its buttons
 OLD_CR = {"🚨 بحران: روشن": BTN_CR_ON, "🛑 بحران: خاموش": BTN_CR_OFF, "🤖 بحران: خودکار": BTN_CR_AUTO}
@@ -1150,6 +1154,7 @@ def btn(t):
 
 MENU_KB = {"keyboard": [[btn(BTN_OFF), btn(BTN_ON), btn(BTN_STATUS)],
                         [btn(BTN_NOW), btn(BTN_REVIEW)],
+                        [btn(BTN_SP_NORMAL), btn(BTN_SP_BOOST)],
                         [btn(BTN_CR_ON), btn(BTN_CR_OFF), btn(BTN_CR_AUTO)],
                         [btn(BTN_SRC), btn(BTN_BAN), btn(BTN_HOURS)]],
            "resize_keyboard": True, "is_persistent": True}
@@ -1413,6 +1418,8 @@ def status_text(cfg, state):
     lines.append("پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
     lines.append("تاییدشده و منتظر ارسال: %d" % len(state.get("approved", [])))
     lines.append("بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+    lines.append("سرعت انتشار: " + ("🚀 بوست (۷ تا ۱۰ پست در هر دور، تا ۳ پست آخر هر کانال)"
+                                    if state.get("speed") == "boost" else "🐢 نرمال (۱ تا ۶ پست در هر دور)"))
     mode = state.get("crisis_mode", "auto")
     lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
         mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
@@ -1431,11 +1438,11 @@ def round_text(cfg, r, title):
     ago = max(0, int((time.time() - r["t"]) / 60))
     when = "%d دقیقه پیش" % ago if ago < 60 else "%d ساعت و %d دقیقه پیش" % (ago // 60, ago % 60)
     names = {src_key(n): n for n in cfg["sources"]}
-    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else ""),
+    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else "، حالت بوست 🚀" if r.get("boost") else ""),
            "• پست تازه پیدا شد: %d" % r["found"]]
     ignored = r["found"] - r.get("considered", r["found"])
     if ignored > 0:
-        out.append("• نادیده (فقط تازه‌ترین پست هر کانال بررسی می‌شود): %d" % ignored)
+        out.append("• نادیده (در حالت نرمال فقط تازه‌ترین پست هر کانال بررسی می‌شود؛ در بوست تا ۳ پست آخر و حداکثر ۴۵ دقیقه قدیمی): %d" % ignored)
     if r.get("rej"):
         out.append("• ردشده: %d (%s)" % (sum(r["rej"].values()), "، ".join("%s %d" % kv for kv in sorted(r["rej"].items()))))
     if r.get("over"):
@@ -1569,7 +1576,17 @@ def handle_update(cfg, net, state, u):
             state["run_now"] = int(time.time())
             tell(net, owner, "⚡ دور فوری شروع شد؛ نتیجه را همین‌جا می‌فرستم. دور عادی سر وقت خودش اجرا می‌شود.", MENU_KB)
         return
-    if text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
+    if text in (BTN_SP_NORMAL, BTN_SP_BOOST) or re.match(r"^/?(boost|normal)\b", text, re.I):
+        boost = text == BTN_SP_BOOST or text.lstrip("/").lower().startswith("boost")
+        state["speed"] = "boost" if boost else "normal"
+        if boost:
+            state["next_run_ts"] = 0
+            msg = ("🚀 بوست روشن شد: از دور بعدی (همین حالا شروع می‌شود) هر دور ۷ تا ۱۰ پست، با تا ۳ پست آخر هر کانال "
+                   "(فقط پست‌هایی که از فیلترها رد شوند و تکراری نباشند). با «🐢 نرمال» برمی‌گردد.")
+        else:
+            msg = "🐢 سرعت نرمال شد: هر دور تا ۶ پست (از هر کانال فقط تازه‌ترین)."
+        tell(net, owner, msg, MENU_KB)
+    elif text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
         if text == BTN_CR_ON or text.startswith("/crisis_on"):
             state["crisis_mode"] = "on"
             state["next_run_ts"] = 0
@@ -1848,6 +1865,33 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
     return True
 
 
+def spread_by_channel(items):
+    """Random order in which no source appears twice in a row (as far as the choice allows) and every
+    source gets its turn before any source gets a second one - so a busy channel cannot fill a round."""
+    approved = [i for i in items if i[0].startswith("approved/")]
+    groups = {}
+    for i in items:
+        if not i[0].startswith("approved/"):
+            groups.setdefault(i[0].split("/")[0], []).append(i)
+    out, last = list(approved), None
+    while groups:
+        # sources with the fewest posts already placed come first: fair share
+        placed = {}
+        for i in out:
+            placed[i[0].split("/")[0]] = placed.get(i[0].split("/")[0], 0) + 1
+        low = min(placed.get(g, 0) for g in groups)
+        pool = [g for g in groups if placed.get(g, 0) == low and g != last] or \
+               [g for g in groups if g != last] or list(groups)
+        g = random.choice(pool)
+        it = random.choice(groups[g])
+        groups[g].remove(it)
+        if not groups[g]:
+            del groups[g]
+        out.append(it)
+        last = g
+    return out
+
+
 def pick_and_order(items, limit):
     """Take up to `limit` items (random order already) and arrange them so that no two
     text-only posts (no photo/video) are next to each other."""
@@ -2053,12 +2097,13 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                  int(cfg["crisis_posts_per_channel"]))
     hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
     n0, n1 = cfg["night_hours"]
-    night = n0 <= hour < n1 and not crisis and not manual
+    boost = (not dry) and (not crisis) and state.get("speed") == "boost"
+    night = n0 <= hour < n1 and not crisis and not manual and not boost
     if night:
         log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
     # --- 2. choose candidates ---
     rec = {"found": sum(len(p[4]) for p in pages), "considered": 0, "posted": 0, "over": 0, "appr": 0,
-           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis),
+           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis), "boost": bool(boost),
            "why": [], "ign": {}}
 
     def note(key, pid, text):
@@ -2067,16 +2112,20 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     lab2key = {p[2]: p[1] for p in pages}
     cands = []
     reviewed = 0
-    take = int(cfg["crisis_posts_per_channel"]) if crisis else 1
+    take = int(cfg["crisis_posts_per_channel"]) if crisis else int(cfg["boost_posts_per_channel"]) if boost else 1
     for name, key, label, st, new in pages:
         if not new:
             log.info("[%s] nothing new", label)
             continue
         if not dry:
             st["last_id"] = new[-1]["id"]         # whatever happens, these are never reconsidered
-        if len(new) > take:
-            rec["ign"][key] = len(new) - take
-        for p in new[-take:]:
+        chosen_new = new[-take:]
+        if boost:                                 # too old to be worth posting
+            maxage = float(cfg["boost_max_age_minutes"]) * 60
+            chosen_new = [p for p in chosen_new if not p.get("ts") or now - p["ts"] <= maxage]
+        if len(new) > len(chosen_new):
+            rec["ign"][key] = len(new) - len(chosen_new)
+        for p in chosen_new:
             rec["considered"] += 1
             reason = skip_reason(cfg, p)
             if reason:
@@ -2100,6 +2149,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
     if crisis:
         limit = int(cfg["crisis_max_posts"])
+    elif boost:
+        limit = random.randint(int(cfg["boost_posts_range"][0]), int(cfg["boost_posts_range"][1]))
     else:
         limit = int(cfg["max_posts_per_run"]) or len(cands)
         if night:
@@ -2136,6 +2187,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 stat_add(state, cfg, "dup")
             continue
         eligible.append((tag, p, text, fp, st))
+    if boost:
+        eligible = spread_by_channel(eligible)
     chosen = pick_and_order(eligible, limit)
     for item in eligible:
         if item not in chosen:
