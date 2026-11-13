@@ -17,6 +17,7 @@ Usage:
     python repost.py --once       run a single cycle and exit
 """
 import argparse
+import datetime
 import hashlib
 import html
 import io
@@ -350,6 +351,24 @@ def strip_proxy_links(t):
     return PROXY_RE.sub("", t)
 
 
+def parse_views(num, unit):
+    try:
+        v = float(num.replace(",", ""))
+    except ValueError:
+        return None
+    return int(v * {"k": 1e3, "m": 1e6}.get(unit.lower(), 1))
+
+
+def parse_ts(s):
+    try:
+        d = datetime.datetime.fromisoformat(s.strip().replace("Z", "+00:00"))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=datetime.timezone.utc)
+        return int(d.timestamp())
+    except ValueError:
+        return None
+
+
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
@@ -374,8 +393,12 @@ def parse_page(page):
             if item[1] not in seen:
                 seen.add(item[1])
                 uniq.append(item)
+        vm = re.search(r'tgme_widget_message_views">\s*([\d.,]+)\s*([KkMm]?)\s*<', chunk)
+        tmm = re.search(r'<time[^>]*\bdatetime="([^"]+)"', chunk)
         posts.append({
             "id": int(m.group(1)),
+            "views": parse_views(vm.group(1), vm.group(2)) if vm else None,
+            "ts": parse_ts(tmm.group(1)) if tmm else None,
             "text_html": strip_proxy_links(tm.group(1)) if tm else "",
             "media": uniq,
             "forwarded": "tgme_widget_message_forwarded_from" in chunk,
@@ -942,9 +965,232 @@ run_cycle.fails = {}
 # --------------------------------------------------------------------------- #
 BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش کردن", "▶️ روشن کردن", "📊 وضعیت", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
 BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران: روشن", "🛑 بحران: خاموش", "🤖 بحران: خودکار"
+BTN_SRC, BTN_BAN, BTN_HOURS = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌های پربازدید"
 MENU_KB = {"keyboard": [[{"text": BTN_OFF}, {"text": BTN_ON}], [{"text": BTN_STATUS}],
                         [{"text": BTN_CR_ON}, {"text": BTN_CR_OFF}], [{"text": BTN_CR_AUTO}],
+                        [{"text": BTN_SRC}, {"text": BTN_BAN}], [{"text": BTN_HOURS}],
                         [{"text": BTN_REVIEW}]], "resize_keyboard": True, "is_persistent": True}
+
+
+def hours_update(cfg, net, state, now):
+    """About every 3 hours read the public page of OUR channel and note the views of posts that are
+    6-14 hours old, grouped by the Iran hour they were published. Needs a public channel."""
+    if now - state.get("hv_ts", 0) < 3 * 3600:
+        return
+    state["hv_ts"] = int(now)
+    name = normalize_source(str(cfg.get("target_channel", "")))
+    if not re.match(r"^[A-Za-z][A-Za-z0-9_]{3,31}$", name):
+        return
+    try:
+        posts = parse_page(net.get(cfg["web_base"] + name))
+    except Exception:                              # statistics must never disturb posting
+        log.info("could not read the destination page for the hour statistics")
+        return
+    hv, seen = state.setdefault("hv", {}), state.setdefault("hv_seen", [])
+    for p in posts:
+        if p.get("views") is None or p.get("ts") is None or p["id"] in seen:
+            continue
+        if not 6 * 3600 <= now - p["ts"] <= 14 * 3600:
+            continue
+        hour = str(time.gmtime(p["ts"] + int(cfg["utc_offset_minutes"]) * 60).tm_hour)
+        b = hv.setdefault(hour, [0, 0])
+        b[0] += p["views"]
+        b[1] += 1
+        seen.append(p["id"])
+    del seen[:-300]
+
+
+def hours_text(state):
+    rows = [(int(h), b[0] / b[1], b[1]) for h, b in (state.get("hv") or {}).items() if b[1] >= 2]
+    total = sum(b[1] for b in (state.get("hv") or {}).values())
+    if total < 15 or not rows:
+        return ("⏰ هنوز داده‌ی کافی نیست (%d پست سنجیده شده). ربات هر چند ساعت بازدید پست‌های ۶ تا ۱۴ ساعت "
+                "پیشِ کانال خودتان را می‌خواند؛ بعد از چند روز اینجا ساعت‌های پربازدید را می‌بینید." % total)
+    rows.sort(key=lambda r: -r[1])
+    lines = ["⏰ بهترین ساعت‌های انتشار (به وقت ایران، میانگین بازدید هر پست، %d پست سنجیده شده):" % total]
+    for h, avg, n in rows[:5]:
+        lines.append("• %02d:00 تا %02d:59  ←  %d بازدید (از %d پست)" % (h, h, avg, n))
+    worst = rows[-1]
+    if len(rows) > 5:
+        lines.append("کم‌بازدیدترین: %02d:00 با %d بازدید" % (worst[0], worst[1]))
+    lines.append("\nبازدید پست‌ها وقتی ۶ تا ۱۴ ساعت از انتشارشان گذشته ثبت می‌شود تا با هم قابل مقایسه باشند. "
+                 "ربات خودش ساعت ارسال را عوض نمی‌کند؛ این فقط راهنمای شماست.")
+    return "\n".join(lines)
+
+
+# ---- sources / banned words managed from the bot (kept in state.json, on top of the secret config) ----
+def apply_overrides(cfg, state):
+    """Merge what you changed in the bot with the base config: added/removed sources, banned words."""
+    base_src = cfg.setdefault("_base_sources", list(cfg["sources"]))
+    base_ad = cfg.setdefault("_base_ad", list(cfg["ad_keywords"]))
+    now = time.time()
+    mu = state.get("muted") or {}
+    for k in [k for k, v in mu.items() if v <= now]:
+        mu.pop(k)
+    gone = {x.lower() for x in state.get("src_del", [])}
+    srcs, seen = [], set()
+    for s in list(base_src) + list(state.get("src_add", [])):
+        if s.lower() not in gone and s.lower() not in seen:
+            seen.add(s.lower())
+            srcs.append(s)
+    if srcs:
+        cfg["sources"] = srcs
+    off = {w.lower() for w in state.get("ban_off", [])}
+    ads = [w for w in base_ad if w.lower() not in off]
+    ads += [w for w in state.get("ban_words", []) if w.lower() not in {a.lower() for a in ads}]
+    cfg["ad_keywords"] = ads
+
+
+def is_muted(state, name):
+    return (state.get("muted") or {}).get(name.lower(), 0) > time.time()
+
+
+def fmt_left(sec):
+    return "%d ساعت" % max(1, round(sec / 3600)) if sec < 2 * 86400 else "%d روز" % round(sec / 86400)
+
+
+def sources_view(cfg, state):
+    rows, lines = [], ["📋 منبع‌های فعلی (%d):" % len(cfg["sources"])]
+    for s in cfg["sources"]:
+        left = (state.get("muted") or {}).get(s.lower(), 0) - time.time()
+        lines.append("• %s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else ""))
+        rows.append([{"text": ("🔊 باز کردن " if left > 0 else "🔇 بی‌صدا (۱ روز) ") + s, "callback_data": "mt:" + s},
+                     {"text": "🗑 حذف", "callback_data": "dl:" + s}])
+    lines.append("\nاضافه کردن: لینک یا آیدی کانال را بفرست (مثلاً /add name)")
+    lines.append("بی‌صدا برای چند روز: /mute name 3")
+    return "\n".join(lines), {"inline_keyboard": rows}
+
+
+def bans_text(cfg, state):
+    mine = state.get("ban_words", [])
+    off = state.get("ban_off", [])
+    base = [w for w in cfg.get("_base_ad", cfg["ad_keywords"]) if w.lower() not in {x.lower() for x in off}]
+    lines = ["🚫 کلمات ممنوعِ شما (%d): %s" % (len(mine), "، ".join(mine) or "هیچ"),
+             "کلمات ممنوعِ پیش‌فرض (%d): %s" % (len(base), "، ".join(base)),
+             "\nاضافه: /ban کلمه\nحذف (از هر دو لیست): /unban کلمه",
+             "هر پستی که این کلمه‌ها را داشته باشد ارسال نمی‌شود."]
+    if off:
+        lines.insert(2, "پیش‌فرض‌های غیرفعال‌شده: " + "، ".join(off))
+    return "\n".join(lines)
+
+
+def add_source(cfg, net, state, raw):
+    name = normalize_source(raw)
+    if not re.match(r"^[A-Za-z][A-Za-z0-9_]{3,31}$", name):
+        return "❌ آیدی کانال درست نیست: %s" % raw
+    if name.lower() in {s.lower() for s in cfg["sources"]}:
+        return "این کانال از قبل در لیست هست."
+    try:
+        posts = parse_page(net.get(cfg["web_base"] + name))
+    except NetError:
+        posts = []
+    if not posts:
+        return "❌ کانالی عمومی با این نام پیدا نشد یا پستی نداشت: %s" % name
+    state["src_del"] = [x for x in state.get("src_del", []) if x.lower() != name.lower()]
+    if name.lower() not in {s.lower() for s in cfg.get("_base_sources", [])}:
+        state.setdefault("src_add", []).append(name)
+    state.setdefault("channels", {}).setdefault(src_key(name), {})["last_id"] = posts[-1]["id"]
+    apply_overrides(cfg, state)
+    return "✅ %s اضافه شد. از پست‌های بعدی‌اش استفاده می‌شود (پست‌های قدیمی نه)." % name
+
+
+def del_source(cfg, state, raw):
+    name = normalize_source(raw)
+    real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
+    if not real:
+        return "این کانال در لیست نیست: %s" % raw
+    if len(cfg["sources"]) <= 1:
+        return "❌ آخرین منبع را نمی‌شود حذف کرد."
+    state["src_add"] = [x for x in state.get("src_add", []) if x.lower() != real.lower()]
+    if real.lower() in {s.lower() for s in cfg.get("_base_sources", [])}:
+        state.setdefault("src_del", []).append(real)
+    (state.get("muted") or {}).pop(real.lower(), None)
+    apply_overrides(cfg, state)
+    return "🗑 %s حذف شد." % real
+
+
+def source_button(cfg, net, state, cb):
+    """Inline buttons under the sources list: mute / unmute (mt:) and delete (dl:)."""
+    act, _, name = (cb.get("data") or "").partition(":")
+    real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
+    note = "این کانال در لیست نیست"
+    if real:
+        mu = state.setdefault("muted", {})
+        if act == "mt":
+            if is_muted(state, real):
+                mu.pop(real.lower(), None)
+                note = "🔊 %s دوباره فعال شد" % real
+            else:
+                mu[real.lower()] = int(time.time() + 86400)
+                note = "🔇 %s برای ۱ روز بی‌صدا شد" % real
+        else:
+            note = del_source(cfg, state, real)
+    text, kb = sources_view(cfg, state)
+    m = cb.get("message") or {}
+    try:
+        net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"],
+                                    "text": text, "reply_markup": kb})
+    except (ApiError, NetError, KeyError):
+        pass
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note[:150]})
+    except (ApiError, NetError):
+        pass
+
+
+def manage_command(cfg, net, state, text):
+    """Returns (reply, markup) when the text is a source / banned-word command, else None."""
+    cmd, _, arg = text.partition(" ")
+    cmd, arg = cmd.split("@")[0].lower(), arg.strip()
+    if text == BTN_SRC or cmd == "/sources":
+        return sources_view(cfg, state)
+    if text == BTN_HOURS or cmd == "/hours":
+        return hours_text(state), None
+    if text == BTN_BAN or cmd == "/bans":
+        return bans_text(cfg, state), None
+    if cmd == "/add" or (not arg and re.match(r"^(?:https?://)?(?:www\.)?(?:t|telegram)\.me/[A-Za-z]\w+/?$", text)):
+        r = add_source(cfg, net, state, arg or text)
+        return r, None
+    if cmd == "/del":
+        return del_source(cfg, state, arg) if arg else "مثال: /del name", None
+    if cmd in ("/mute", "/unmute"):
+        parts = arg.split()
+        name = normalize_source(parts[0]) if parts else ""
+        real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
+        if not real:
+            return "این کانال در لیست نیست. مثال: /mute name 3", None
+        mu = state.setdefault("muted", {})
+        if cmd == "/unmute":
+            mu.pop(real.lower(), None)
+            return "🔊 %s دوباره فعال شد." % real, None
+        days = 1.0
+        if len(parts) > 1:
+            try:
+                days = min(30.0, max(0.1, float(parts[1])))
+            except ValueError:
+                pass
+        mu[real.lower()] = int(time.time() + days * 86400)
+        return "🔇 %s برای %s بی‌صدا شد؛ در این مدت پستش ارسال نمی‌شود." % (real, fmt_left(days * 86400)), None
+    if cmd in ("/ban", "/unban"):
+        w = arg.strip()
+        if not w:
+            return "مثال: %s کلمه" % cmd, None
+        mine, off = state.setdefault("ban_words", []), state.setdefault("ban_off", [])
+        lw = w.lower()
+        if cmd == "/ban":
+            if lw in {x.lower() for x in off}:
+                state["ban_off"] = [x for x in off if x.lower() != lw]
+            elif lw not in {x.lower() for x in mine} and lw not in {x.lower() for x in cfg.get("_base_ad", [])}:
+                mine.append(w)
+            r = "🚫 «%s» ممنوع شد." % w
+        else:
+            state["ban_words"] = [x for x in mine if x.lower() != lw]
+            if lw in {x.lower() for x in cfg.get("_base_ad", [])} and lw not in {x.lower() for x in off}:
+                off.append(w)
+            r = "✅ «%s» از کلمات ممنوع برداشته شد." % w
+        apply_overrides(cfg, state)
+        return r, None
+    return None
 
 
 def tell(net, chat, text, markup=None):
@@ -1011,6 +1257,9 @@ def handle_update(cfg, net, state, u):
         if cb["from"]["id"] != owner_of(cfg, state):
             return
         act, _, pid = (cb.get("data") or "").partition(":")
+        if act in ("mt", "dl"):
+            source_button(cfg, net, state, cb)
+            return
         pend = state.setdefault("pending", {}).pop(pid, None)
         if pend is None:
             try:
@@ -1046,6 +1295,10 @@ def handle_update(cfg, net, state, u):
         state["owner_id"] = owner = uid          # the first person who presses Start is the owner
         log.info("owner registered")
     if uid != owner:
+        return
+    managed = manage_command(cfg, net, state, text)
+    if managed:
+        tell(net, owner, managed[0], managed[1] or MENU_KB)
         return
     if text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
         if text == BTN_CR_ON or text.startswith("/crisis_on"):
@@ -1268,8 +1521,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     now = time.time()
     if not dry:
         process_updates(cfg, net, state, state_path)
+        apply_overrides(cfg, state)                # sources / banned words changed from the bot
         heartbeat(cfg, net, state)
         daily_report(cfg, net, state, now)
+        hours_update(cfg, net, state, now)
         state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
         if state.get("paused"):
             log.info("switched OFF from the bot - nothing is posted")
@@ -1294,6 +1549,11 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             log.warning("[%s] no posts found - is the username right and the channel public?", label)
             continue
         st = state["channels"].setdefault(key, {})
+        if is_muted(state, name):                  # muted from the bot: everything new counts as seen
+            if not dry:
+                st["last_id"] = posts[-1]["id"]
+            log.info("[%s] muted - skipped", label)
+            continue
         if "last_id" not in st:
             st["last_id"] = posts[-1]["id"] - 1   # first run: the newest post counts too
         new = [p for p in posts if p["id"] > st["last_id"]]
@@ -1593,6 +1853,7 @@ def main():
         dump(cfg, net, rules, args.dump, load_state(args.state), args.dump_total)
         return
     state = load_state(args.state)
+    apply_overrides(cfg, state)
     force = args.force
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
              "your channel" if IN_CLOUD else cfg["target_channel"])
