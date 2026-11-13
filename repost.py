@@ -1056,8 +1056,8 @@ def sources_view(cfg, state):
         lines.append("• %s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else ""))
         rows.append([{"text": ("🔊 باز کردن " if left > 0 else "🔇 بی‌صدا (۱ روز) ") + s, "callback_data": "mt:" + s},
                      {"text": "🗑 حذف", "callback_data": "dl:" + s}])
-    lines.append("\nاضافه کردن: لینک یا آیدی کانال را بفرست (مثلاً /add name)")
-    lines.append("بی‌صدا برای چند روز: /mute name 3")
+    lines.append("\nاضافه کردن منبع (هر شکلی درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr")
+    lines.append("\nبی‌صدا برای چند روز: /mute besnr 3")
     return "\n".join(lines), {"inline_keyboard": rows}
 
 
@@ -1146,7 +1146,7 @@ def manage_command(cfg, net, state, text):
         w = fm.group(1).lower()
         cmd, arg = "/" + {"اضافه": "add", "حذف": "del"}.get(w, w), (fm.group(2) or "").strip()
         if cmd in ("/add", "/del") and not arg:
-            return ("مثال: %s آیدی_کانال   یا   %s https://t.me/name" % (cmd, cmd)), None
+            return ("مثال:\n%s besnr\n%s/besnr\n%s https://t.me/besnr" % (cmd, cmd[1:], cmd)), None
     else:
         cmd, _, arg = text.partition(" ")
         cmd, arg = cmd.split("@")[0].lower(), arg.strip()
@@ -1336,7 +1336,7 @@ def handle_update(cfg, net, state, u):
     else:
         extra = ""
         if text and text != BTN_STATUS and not text.startswith(("/start", "/status", "/help")):
-            extra = "متوجه این پیام نشدم.\nاضافه کردن منبع: /add آیدی (یا لینک کانال)\nحذف: /del آیدی\nکلمه ممنوع: /ban کلمه\n\n"
+            extra = "متوجه این پیام نشدم.\n" + "اضافه کردن منبع (هر کدام از این شکل‌ها درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr\n\nحذف: /del besnr\nبی‌صدا برای ۳ روز: /mute besnr 3   (برگرداندن: /unmute besnr)\nکلمه ممنوع: /ban کلمه   (برداشتن: /unban کلمه)" + "\n\n"
         tell(net, owner, extra + status_text(cfg, state), MENU_KB)
 
 
