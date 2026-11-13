@@ -383,6 +383,32 @@ def parse_ts(s):
         return None
 
 
+VIDEO_META = {}        # video file url -> {"thumb": cover url, "w":, "h":, "d": seconds}
+
+
+def remember_videos(chunk):
+    for seg in chunk.split("tgme_widget_message_video_player")[1:]:
+        vm = re.search(r"<video\b[^>]*>", seg)
+        sm = re.search(r'\bsrc="([^"]+)"', vm.group(0)) if vm else None
+        if not sm:
+            continue
+        meta = {}
+        th = re.search(r"tgme_widget_message_video_thumb[^>]*?background-image:\s*url\(\s*['\"]?([^'\")]+)", seg)
+        if th:
+            meta["thumb"] = html.unescape(th.group(1))
+        for k, a in (("w", "width"), ("h", "height")):
+            am = re.search(r'\b%s="(\d+)"' % a, vm.group(0))
+            if am:
+                meta[k] = int(am.group(1))
+        dm = re.search(r'message_video_duration[^>]*>\s*(?:(\d+):)?(\d+):(\d+)\s*<', seg)
+        if dm:
+            meta["d"] = int(dm.group(1) or 0) * 3600 + int(dm.group(2)) * 60 + int(dm.group(3))
+        if meta:
+            if len(VIDEO_META) > 600:
+                VIDEO_META.clear()
+            VIDEO_META[html.unescape(sm.group(1))] = meta
+
+
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
@@ -390,6 +416,7 @@ def parse_page(page):
         if not m:
             continue
         tm = TEXT_RE.search(chunk)
+        remember_videos(chunk)
         media = []
         for mm in MEDIA_RE.finditer(chunk):
             if mm.group(1):
@@ -843,7 +870,53 @@ def marked_photo(net, cfg, url):
         return None
 
 
+def video_cover(net, url):
+    """(extra fields, {name: file}) for a video of a source channel: its cover picture, size, length.
+    Without them Telegram often shows a black box instead of a preview."""
+    meta = VIDEO_META.get(url)
+    if not meta:
+        return {}, {}
+    fields = {k: meta[k] for k in ("w", "h", "d") if k in meta}
+    fields = {"width": fields.get("w"), "height": fields.get("h"), "duration": fields.get("d")}
+    fields = {k: v for k, v in fields.items() if v}
+    files = {}
+    if meta.get("thumb"):
+        try:
+            data = net.get(meta["thumb"], binary=True, timeout=30)
+            try:                                     # Telegram wants a JPEG, at most 320 px and 200 KB
+                im = Image.open(io.BytesIO(data))
+                im.load()
+                im = im.convert("RGB")
+                im.thumbnail((320, 320))
+                buf = io.BytesIO()
+                im.save(buf, "JPEG", quality=80)
+                data = buf.getvalue()
+            except Exception:
+                pass
+            if 200 < len(data) <= 200 * 1024:
+                files["thumb"] = ("thumb.jpg", data, "image/jpeg")
+        except Exception:
+            pass
+    return fields, files
+
+
 def send_single(net, cfg, kind, url, caption):
+    if kind == "video" and not url.startswith("tgfile:"):
+        fields, tfiles = video_cover(net, url)
+        if tfiles:                                   # upload the video together with its cover
+            try:
+                data = net.get(url, binary=True, timeout=180)
+                if len(data) <= MAX_UPLOAD:
+                    payload = {"chat_id": cfg["target_channel"], "supports_streaming": True,
+                               "thumbnail": "attach://thumb"}
+                    payload.update(fields)
+                    if caption:
+                        payload["caption"] = caption
+                        payload["parse_mode"] = "HTML"
+                    files = dict(tfiles, video=("video.mp4", data, "video/mp4"))
+                    return call_html(net, "sendVideo", payload, files=files)
+            except (NetError, ApiError) as e:
+                log.info("video with cover failed (%s) - sending it the plain way", getattr(e, "desc", e))
     method = "sendPhoto" if kind == "photo" else "sendVideo"
     ref = url[7:] if url.startswith("tgfile:") else url      # a file id is sent as it is, no download
     payload = {"chat_id": cfg["target_channel"], kind: ref}
@@ -902,6 +975,11 @@ def send_group(net, cfg, media, caption):
             it = {"type": kind, "media": "attach://" + name}
             if kind == "video":
                 it["supports_streaming"] = True
+                fields, tfiles = video_cover(net, url)
+                if tfiles:
+                    files["t%d" % j] = tfiles["thumb"]
+                    it["thumbnail"] = "attach://t%d" % j
+                it.update(fields)
             if cap and j == 0:
                 it["caption"] = cap
                 it["parse_mode"] = "HTML"
