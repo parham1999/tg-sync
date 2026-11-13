@@ -70,7 +70,7 @@ DEFAULTS = {
     "crisis_max_posts": 15,                # at most this many posts per round
     "crisis_delay_seconds": [5, 15],       # pause between two posts
     "crisis_on_rate": 24,                  # auto-on: this many new posts (all sources) within 30 min ...
-    "crisis_on_channels": 3,               # ... or this many sources with ...
+    "crisis_on_channels": 4,               # ... or this many sources with ...
     "crisis_channel_rate": 5,              # ... at least this many new posts each within 30 min
     "crisis_off_rate": 14,                 # auto-off: below this many per 30 min for 20 minutes
     "crisis_max_hours": 8,                 # auto mode never stays on longer than this
@@ -2022,7 +2022,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             st["last_id"] = posts[-1]["id"] - 1   # first run: the newest post counts too
         new = [p for p in posts if p["id"] > st["last_id"]]
         if new:
-            counts[key] = len(new)
+            # an album shows up as several posts with the same time: it is ONE post; and one noisy channel
+            # may not push the crisis counter alone, so each source counts at most 6 per scan
+            groups = len({p["ts"] if p.get("ts") else ("id", p["id"]) for p in new})
+            counts[key] = min(groups, 6)
         pages.append((name, key, label, st, new))
     crisis = False if dry else crisis_eval(cfg, net, state, now, counts)
     if crisis:
