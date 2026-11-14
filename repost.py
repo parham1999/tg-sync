@@ -1734,7 +1734,7 @@ def process_updates(cfg, net, state, state_path, wait=0):
                 state["speed"] = "auto"
             save_state(state_path, state)
         SHOW_KB[0] = False
-    if flush_forwards(cfg, net, state) or ups:
+    if expire_pending(cfg, net, state) or flush_forwards(cfg, net, state) or ups:
         save_state(state_path, state)
 
 
@@ -2140,10 +2140,31 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
         return False
     state.setdefault("pending", {})[pid] = {
         "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time())}
-    tell(net, owner, "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟" % (reason, src), {
+    ask = "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟\n(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)" % (reason, src)
+    r = tell(net, owner, ask, {
         "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
                              {"text": "❌ رد", "callback_data": "no:" + pid}]]})
+    if isinstance(r, dict) and r.get("message_id"):
+        state["pending"][pid].update(mid=r["message_id"], chat=owner, ask=ask)
     return True
+
+
+PENDING_TTL = 2 * 3600
+
+
+def expire_pending(cfg, net, state, now=None):
+    """Posts waiting for your decision for more than 2 hours count as rejected."""
+    now = now or time.time()
+    old = [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > PENDING_TTL]
+    for k in old:
+        v = state["pending"].pop(k)
+        if v.get("mid"):
+            try:
+                net.api("editMessageText", {"chat_id": v["chat"], "message_id": v["mid"],
+                                            "text": v.get("ask", "") + "\n\n⏳ ۲ ساعت بدون جواب ماند؛ خودکار رد شد."})
+            except (ApiError, NetError):
+                pass
+    return bool(old)
 
 
 def spread_by_channel(items):
@@ -2427,8 +2448,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
                          {"id": 0, "media": a["media"]}, a["text"], fp, None))
-    for k in [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > 86400]:
-        state["pending"].pop(k)
+    expire_pending(cfg, net, state, now)
     if not dry:
         for name, key, label, st, new in pages:
             if new:
