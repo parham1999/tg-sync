@@ -2101,9 +2101,13 @@ def dest_menu(cfg0, root):
            "یک کانال مبدأ را می‌شود برای چند مقصد گذاشت (هر مقصد مستقل از آن استفاده می‌کند).\n"
            "دکمه‌های 📊 وضعیت، ⚡ ارسال، ▶️/⏸، 🎚 سرعت، 🚨 بحران، 📋 منبع‌ها و ⚙️ بیشتر همیشه روی «مقصد در حال مدیریت» (✅) اثر دارند؛ "
            "برای عوض کردنش روی نام مقصد بزنید.") % (len(ps), MAX_DESTS, dest_summary(cfg0, root, aid))
-    rows = [[{"text": ("✅ " if p[0] == aid else "🎯 ") + p[1]["target_channel"], "callback_data": "dp:" + p[0]}] for p in ps]
+    rows = []
+    for p in ps:
+        row = [{"text": ("✅ " if p[0] == aid else "🎯 ") + p[1]["target_channel"], "callback_data": "dp:" + p[0]}]
+        if p[0] != "p1":
+            row.append({"text": "🗑", "callback_data": "dd:" + p[0]})      # small: just an icon, 3 confirmations follow
+        rows.append(row)
     rows.append([{"text": "➕ مقصد جدید", "callback_data": "tx:dest_add"}])
-    rows += [[{"text": "🗑 حذف " + p[1]["target_channel"], "callback_data": "dd:" + p[0]}] for p in ps[1:]]
     return txt, {"inline_keyboard": rows}
 
 
@@ -2197,11 +2201,24 @@ def dest_switch(cfg0, root, pid_):
                 p[1]["target_channel"], status_text(p[1], p[2])))
 
 
-def dest_confirm(p):
-    return ("🗑 حذف مقصد %s؟\nفقط از ربات حذف می‌شود: منبع‌ها و تنظیمات این مقصد پاک می‌شود و دیگر چیزی به آن ارسال نمی‌شود. "
-            "پست‌های خود کانال و مدیر بودن ربات در آن دست نمی‌خورد." % p[1]["target_channel"],
-            {"inline_keyboard": [[{"text": "✅ بله، حذف شود", "callback_data": "dc:" + p[0]},
-                                  {"text": "↩️ انصراف", "callback_data": "dx:0"}]]})
+def dest_confirm(p, stage=1):
+    """Three confirmations before a destination is removed; the buttons change place each time."""
+    n = p[1]["target_channel"]
+    if stage == 1:
+        return ("🗑 می‌خواهید مقصد %s را از ربات حذف کنید.\n\n"
+                "با حذف: منبع‌ها، سرعت، کلمات ممنوع، تاریخچه و همه‌ی تنظیمات این مقصد پاک می‌شود و دیگر چیزی به آن ارسال نمی‌شود. "
+                "پست‌های خود کانال دست نمی‌خورد.\n\nمطمئنید؟ (۱ از ۳)" % n,
+                {"inline_keyboard": [[{"text": "↩️ نه، انصراف", "callback_data": "dx:0"},
+                                      {"text": "بله، مطمئنم", "callback_data": "d2:" + p[0]}]]})
+    if stage == 2:
+        return ("⚠️ دوباره می‌پرسم: صد در صد مطمئنید که «%s» حذف شود؟\n"
+                "این کار برگشت ندارد؛ تنظیمات و منبع‌های این مقصد از دست می‌رود و باید دوباره از اول بسازید. (۲ از ۳)" % n,
+                {"inline_keyboard": [[{"text": "بله، صد در صد", "callback_data": "d3:" + p[0]},
+                                      {"text": "↩️ نه، انصراف", "callback_data": "dx:0"}]]})
+    return ("🚨 آخرین بار! دارید مقصد %s را برای همیشه از ربات حذف می‌کنید.\n"
+            "اگر هیچ شکی ندارید دکمه‌ی قرمز را بزنید؛ بعد از آن راه برگشتی نیست. مراقب باشید. (۳ از ۳)" % n,
+            {"inline_keyboard": [[{"text": "↩️ انصراف", "callback_data": "dx:0"}],
+                                  [{"text": "🔴 شک ندارم، همین الان حذف شود", "callback_data": "dc:" + p[0]}]]})
 
 
 def dest_button(cfg0, net, root, cb, act, pid_):
@@ -2218,8 +2235,8 @@ def dest_button(cfg0, net, root, cb, act, pid_):
     pick = next((p for p in ps if p[0] == pid_), None)
     if act == "dp" and pick:
         tell(net, owner, dest_switch(cfg0, root, pick[0]))
-    elif act == "dd" and pick and pick[0] != "p1":
-        tell(net, owner, *dest_confirm(pick))
+    elif act in ("dd", "d2", "d3") and pick and pick[0] != "p1":
+        tell(net, owner, *dest_confirm(pick, {"dd": 1, "d2": 2, "d3": 3}[act]))
     elif act == "dc" and pick and pick[0] != "p1":
         root["dests"] = [d for d in root.get("dests", []) if d["id"] != pick[0]]
         _PCACHE.pop(pick[0], None)
@@ -2249,7 +2266,7 @@ def handle_update(cfg, net, state, u):
             return
         data = cb.get("data") or ""
         act, _, pid = data.partition(":")
-        if act in ("dp", "dd", "dc", "dx"):
+        if act in ("dp", "dd", "d2", "d3", "dc", "dx"):
             dest_button(cfg0, net, root, cb, act, pid)
             return
         if act == "tx":
