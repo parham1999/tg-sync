@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951681,
+ "update_offset": 774951686,
  "owner_id": 138180578,
  "fp": [
   {
@@ -8975,5 +8975,6 @@
  "rep_day": "2026-11-13",
  "muted": {},
  "seeded_src2": 1,
- "seed_tries": 1
+ "seed_tries": 1,
+ "active": "p1"
 }
