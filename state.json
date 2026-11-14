@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951740,
+ "update_offset": 774951742,
  "owner_id": 138180578,
  "fp": [
   {
@@ -9055,21 +9055,68 @@
       "last_id": 103644
      }
     },
-    "fp": [],
+    "fp": [
+     {
+      "x": "f2399dedff89",
+      "h": [
+       "1486a9d5",
+       "4f519a4b",
+       "714be0eb",
+       "931b2529",
+       "ddc1b797",
+       "e038de57",
+       "e17fedcf",
+       "f0db5684"
+      ],
+      "w": [
+       "0cfb0f8c",
+       "32952715",
+       "3d33f435",
+       "4a46afc8",
+       "a9d4a1e0",
+       "aa1db17b",
+       "ab64323b",
+       "ddea711d",
+       "f8a60791"
+      ],
+      "m": [
+       "67f3c8c21cc8"
+      ],
+      "p": [
+       "1d3e677674dc1a1b"
+      ],
+      "man": true,
+      "t": 1794651358,
+      "pid": "cdf7ec3a"
+     }
+    ],
     "next_run_ts": 1794651632,
     "await_src": 1794651307,
     "stats": {
      "day": "2026-11-14",
-     "posted": 0
+     "posted": 1
     },
     "hv_ts": 1794651316,
     "hv": {},
     "hv_seen": [],
-    "posted_log": [],
+    "posted_log": [
+     1794651358
+    ],
     "src_del": [],
     "src_add": [
      "rapkiingnews"
-    ]
+    ],
+    "undo": {
+     "cdf7ec3a": {
+      "ids": [
+       [
+        "@kwoe929w001kgkw",
+        3
+       ]
+      ],
+      "t": 1794651358
+     }
+    }
    }
   }
  ],
