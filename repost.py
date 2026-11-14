@@ -1531,6 +1531,10 @@ def add_source(cfg, net, state, raw):
     name = normalize_source(raw)
     if not re.match(r"^[A-Za-z][A-Za-z0-9_]{3,31}$", name):
         return "❌ آیدی کانال درست نیست: %s" % raw
+    cfg0, root = hub_of(cfg, state)
+    if any(p[1]["target_channel"].lower().lstrip("@") == name.lower() for p in profiles(cfg0, root)):
+        return ("❌ %s یکی از «مقصدهای» ربات است و نمی‌شود آن را منبع گذاشت. "
+                "اگر می‌خواستید مقصد اضافه کنید: /dest add @%s" % (name, name))
     if name.lower() in {s.lower() for s in cfg["sources"]}:
         return "این کانال از قبل در لیست هست."
     try:
@@ -2010,7 +2014,7 @@ def check_dest(net, target):
     try:
         mem = net.api("getChatMember", {"chat_id": target, "user_id": me["id"]})
     except ApiError as e:
-        return False, "❌ ربات در %s عضو یا مدیر نیست (%s). اول باید ربات را مدیر کانال کنید.%s" % (target, e.desc, how), None
+        return False, "❌ ربات هنوز در %s اضافه نشده یا مدیر آن نیست. اول باید ربات را مدیر کانال کنید.%s" % (target, how), None
     if mem.get("status") not in ("administrator", "creator"):
         return False, "❌ ربات در %s مدیر نیست.%s" % (target, how), None
     if mem.get("status") == "administrator":
@@ -2134,6 +2138,9 @@ def dest_text(cfg0, net, root, text):
     if awaiting and not m and text != BTN_DEST:
         root.pop("await_dest", None)
         msg, kb = dest_add(cfg0, net, root, text)
+        if not msg.startswith("✅") and "از قبل" not in msg:
+            root["await_dest"] = int(time.time())          # still waiting: send the link again after fixing it
+            msg += "\n\n(تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که بفرستید را «مقصد» حساب می‌کنم، نه منبع.)"
         tell(net, owner, msg, kb or MENU_KB)
         return True
     cmd = (m.group(1) or "").lower() if m else ""
@@ -2146,6 +2153,9 @@ def dest_text(cfg0, net, root, text):
                  "من قبل از شروع چک می‌کنم و اگر دسترسی‌ای کم باشد دقیقاً می‌گویم کدام. (تا ۱۰ دقیقه منتظرم)")
         else:
             msg, kb = dest_add(cfg0, net, root, arg)
+            if not msg.startswith("✅") and "از قبل" not in msg:
+                root["await_dest"] = int(time.time())
+                msg += "\n\n(تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که بفرستید را «مقصد» حساب می‌کنم، نه منبع.)"
             tell(net, owner, msg, kb or MENU_KB)
         return True
     if cmd in ("use", "del"):
