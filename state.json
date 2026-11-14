@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951758,
+ "update_offset": 774951765,
  "owner_id": 138180578,
  "fp": [
   {
@@ -9311,5 +9311,6 @@
  "seed_tries": 1,
  "active": "p1",
  "dest_n": 4,
- "dests": []
+ "dests": [],
+ "await_src": 1794660904
 }
