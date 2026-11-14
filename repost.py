@@ -217,11 +217,76 @@ def load_state(path):
     return {"channels": {}}
 
 
+class SubState(dict):
+    """The state of one extra destination channel (a 'profile'). It lives inside the main state under
+    state["dests"], and save_state() always writes the whole main state."""
+    root = None
+    root_cfg = None
+
+
 def save_state(path, state):
+    if isinstance(state, SubState) and state.root is not None:
+        state = state.root
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=1)
     os.replace(tmp, path)
+
+
+# ---- several destination channels: every destination is a separate profile (own sources, speed, words,
+# history, on/off, reports). The first one (p1) is the original channel and keeps living in the main state. ----
+MAX_DESTS = 10
+TAG = [""]                                         # prefix of bot messages when more than one destination exists
+_PCACHE = {}
+
+
+def hub_of(cfg, state):
+    """(main cfg, main state) whatever profile was passed."""
+    if isinstance(state, SubState) and state.root is not None:
+        return state.root_cfg, state.root
+    return cfg, state
+
+
+def dest_list(cfg0, root):
+    out = []
+    for d in root.get("dests", []):
+        st = d.get("st")
+        if not isinstance(st, SubState):
+            st = SubState(st if isinstance(st, dict) else {"channels": {}})
+            d["st"] = st
+        st.root, st.root_cfg = root, cfg0
+        out.append(d)
+    return out
+
+
+def dest_cfg(cfg0, d):
+    c = _PCACHE.get(d["id"])
+    if c is None or c[0] != d["target"] or c[2] is not cfg0:
+        ci = dict(cfg0)
+        base_ad = list(cfg0.get("_base_ad", cfg0["ad_keywords"]))
+        ci.update(target_channel=d["target"], sources=[], _base_sources=[], _base_ad=base_ad, ad_keywords=list(base_ad),
+                  _allow_empty=True, _pid=d["id"], watermark_text=d.get("wm", ""))
+        c = _PCACHE[d["id"]] = (d["target"], ci, cfg0)
+    return c[1]
+
+
+def profiles(cfg0, root):
+    """[(id, cfg, state)] - the first one is always the original destination."""
+    out = [("p1", cfg0, root)]
+    for d in dest_list(cfg0, root):
+        out.append((d["id"], dest_cfg(cfg0, d), d["st"]))
+    return out
+
+
+def active_profile(cfg0, root):
+    ps = profiles(cfg0, root)
+    want = root.get("active")
+    return next((p for p in ps if p[0] == want), ps[0])
+
+
+def set_tag(cfg, state):
+    cfg0, root = hub_of(cfg, state)
+    TAG[0] = ("🎯 %s" % cfg["target_channel"]) if root.get("dests") else ""
 
 
 # --------------------------------------------------------------------------- #
@@ -1159,8 +1224,9 @@ BTN_SP_NORMAL, BTN_SP_BOOST = "🐢 نرمال (۱ تا ۶ پست)", "🚀 بو�
 BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌ها", "⚡ ارسال همین الان"
 SEED_SOURCES = ["Daneshjoo", "FilmFarsiOrg", "Radiokocsher"]
 BTN_SPEED, BTN_CRMENU, BTN_MORE = "🎚 سرعت ارسال", "🚨 بحران", "⚙️ بیشتر"
+BTN_DEST = "🎯 مقصدها"
 ALL_BTNS = {BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW, BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO, BTN_SP_NORMAL, BTN_SP_BOOST,
-            BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW, BTN_SPEED, BTN_CRMENU, BTN_MORE}
+            BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW, BTN_SPEED, BTN_CRMENU, BTN_MORE, BTN_DEST}
 HELP_TEXT = ("📖 راهنما\n"
              "• 📊 وضعیت: حال ربات و توضیح آخرین دور\n"
              "• ⚡ ارسال همین الان: یک دور فوری\n"
@@ -1169,6 +1235,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• 🚨 بحران: روشن، خاموش یا خودکار\n"
              "• 📋 منبع‌ها: لیست کانال‌های مبدا؛ اضافه کردن: /add name ، حذف: /del name ، بی‌صدا: /mute name 3\n"
              "• ⚙️ بیشتر: کلمات ممنوع، ساعت‌های پربازدید، بررسی مشکوک‌ها\n"
+             "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
 
@@ -1184,7 +1251,7 @@ def btn(t):
 MENU_KB = {"keyboard": [[btn(BTN_STATUS), btn(BTN_NOW)],
                         [btn(BTN_ON), btn(BTN_OFF)],
                         [btn(BTN_SPEED), btn(BTN_CRMENU)],
-                        [btn(BTN_SRC), btn(BTN_MORE)]],
+                        [btn(BTN_SRC), btn(BTN_DEST), btn(BTN_MORE)]],
            "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
 
 
@@ -1354,7 +1421,7 @@ def more_menu(state):
 
 TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
           "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
-          "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
+          "dest_add": "/dest add", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 
 
 def hours_update(cfg, net, state, now):
@@ -1418,7 +1485,7 @@ def apply_overrides(cfg, state):
         if s.lower() not in gone and s.lower() not in seen:
             seen.add(s.lower())
             srcs.append(s)
-    if srcs:
+    if srcs or cfg.get("_allow_empty"):
         cfg["sources"] = srcs
     off = {w.lower() for w in state.get("ban_off", [])}
     ads = [w for w in base_ad if w.lower() not in off]
@@ -1439,8 +1506,9 @@ def sources_view(cfg, state):
     for s in cfg["sources"]:
         left = (state.get("muted") or {}).get(s.lower(), 0) - time.time()
         lines.append("• %s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else ""))
-        rows.append([{"text": ("🔊 باز کردن " if left > 0 else "🔇 بی‌صدا (۱ روز) ") + s, "callback_data": "mt:" + s},
-                     {"text": "🗑 حذف", "callback_data": "dl:" + s}])
+        pre = (cfg["_pid"] + "|") if cfg.get("_pid") else ""
+        rows.append([{"text": ("🔊 باز کردن " if left > 0 else "🔇 بی‌صدا (۱ روز) ") + s, "callback_data": "mt:" + pre + s},
+                     {"text": "🗑 حذف", "callback_data": "dl:" + pre + s}])
     lines.append("\nاضافه کردن منبع (هر شکلی درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr")
     lines.append("\nبی‌صدا برای چند روز: /mute besnr 3")
     return "\n".join(lines), {"inline_keyboard": rows}
@@ -1484,7 +1552,7 @@ def del_source(cfg, state, raw):
     real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
     if not real:
         return "این کانال در لیست نیست: %s" % raw
-    if len(cfg["sources"]) <= 1:
+    if len(cfg["sources"]) <= 1 and not cfg.get("_allow_empty"):
         return "❌ آخرین منبع را نمی‌شود حذف کرد."
     state["src_add"] = [x for x in state.get("src_add", []) if x.lower() != real.lower()]
     if real.lower() in {s.lower() for s in cfg.get("_base_sources", [])}:
@@ -1591,6 +1659,8 @@ REPLY_TO = [None]      # id of the owner's message the bot is answering right no
 
 
 def tell(net, chat, text, markup=None):
+    if TAG[0]:
+        text = TAG[0] + "\n" + text
     p = {"chat_id": chat, "text": text, "disable_web_page_preview": True}
     if REPLY_TO[0]:
         p["reply_to_message_id"] = REPLY_TO[0]
@@ -1606,12 +1676,17 @@ def tell(net, chat, text, markup=None):
 
 
 def owner_of(cfg, state):
-    return int(cfg.get("owner_id") or state.get("owner_id") or 0)
+    root = hub_of(cfg, state)[1]
+    return int(cfg.get("owner_id") or root.get("owner_id") or 0)
 
 
 def status_text(cfg, state):
     on = not state.get("paused")
     lines = ["وضعیت ربات: " + ("🟢 روشن" if on else "🔴 خاموش")]
+    root = hub_of(cfg, state)[1]
+    if root.get("dests"):
+        lines.insert(0, "🎯 مقصد در حال مدیریت: %s (از %d مقصد؛ تغییر: «🎯 مقصدها»)" % (
+            cfg["target_channel"], len(root["dests"]) + 1))
     nxt = state.get("next_run_ts", 0) - time.time()
     if on:
         lines.append("دور بعدی ارسال: " + ("به‌زودی" if nxt <= 0 else "حدود %d دقیقه دیگر" % (nxt // 60 + 1)))
@@ -1690,6 +1765,7 @@ def reseed(cfg, net, state):
 
 def process_updates(cfg, net, state, state_path, wait=0):
     """wait > 0 = long polling: Telegram holds the request and answers the moment you press a button."""
+    cfg, state = hub_of(cfg, state)
     if FWD_BUF and wait:
         wait = min(wait, 2)                         # collecting album parts: look again in 2 s
     try:
@@ -1708,6 +1784,7 @@ def process_updates(cfg, net, state, state_path, wait=0):
             log.exception("could not handle a bot message")
         REPLY_TO[0] = None
         SHOW_KB[0] = False
+    TAG[0] = ""
     ow = owner_of(cfg, state)
     if ow and not state.get("seeded_src2"):       # one time: three new source channels
         out = []
@@ -1719,17 +1796,18 @@ def process_updates(cfg, net, state, state_path, wait=0):
         state["seed_tries"] = state.get("seed_tries", 0) + 1
         save_state(state_path, state)
         tell(net, ow, "📋 افزودن منبع‌های جدید:\n" + "\n".join(out) + "\n(از پست‌های قدیمی‌شان چیزی ارسال نمی‌شود؛ فقط پست‌های تازه.)")
-    if ow and state.get("kb_v") != 3:             # one time: the new, shorter menu
+    if ow and state.get("kb_v") != 4:             # one time: the menu with the new "destinations" button
         SHOW_KB[0] = True
         old = state.get("speed") in ("normal", "boost")
-        msg = ("⌨️ منوی ربات مرتب‌تر شد: دکمه‌های مرتبط داخل بخش‌ها رفتند.\n"
+        msg = ("⌨️ منوی ربات به‌روز شد.\n"
+               "• 🎯 مقصدها: چند کانال مقصد، هر کدام با منبع‌ها و تنظیمات جدا (ویماپرو همان که بود می‌ماند)\n"
                "• 🎚 سرعت ارسال ← کم / متوسط / زیاد / دستی / خودکار\n• 🚨 بحران ← روشن / خاموش / خودکار\n"
                "• ⚙️ بیشتر ← کلمات ممنوع، ساعت‌ها، بررسی مشکوک‌ها، راهنما\n"
                "هر دکمه که بزنید، ربات به پیام شما ریپلای می‌کند و توضیح کامل می‌دهد چه حالتی روشن شد.")
         if old:
             msg += "\n\nℹ️ سرعت‌های قدیمی (نرمال/بوست) حذف شدند و الان روی «🤖 خودکار» هستید."
         if tell(net, ow, msg, MENU_KB) is not None:
-            state["kb_v"] = 3
+            state["kb_v"] = 4
             if old:
                 state["speed"] = "auto"
             save_state(state_path, state)
@@ -1738,7 +1816,7 @@ def process_updates(cfg, net, state, state_path, wait=0):
         save_state(state_path, state)
 
 
-def handle_update(cfg, net, state, u):
+def _handle_update(cfg, net, state, u):
     cb = u.get("callback_query")
     if cb:
         if cb["from"]["id"] != owner_of(cfg, state):
@@ -1793,7 +1871,7 @@ def handle_update(cfg, net, state, u):
     if not owner:
         if not text.startswith("/start"):
             return
-        state["owner_id"] = owner = uid          # the first person who presses Start is the owner
+        hub_of(cfg, state)[1]["owner_id"] = owner = uid          # the first person who presses Start is the owner
         log.info("owner registered")
     if uid != owner:
         return
@@ -1802,7 +1880,7 @@ def handle_update(cfg, net, state, u):
     if is_forward_or_media(m):                    # a post you forwarded / sent: process it and publish now
         gid = m.get("media_group_id")
         if gid:
-            b = FWD_BUF.setdefault(gid, {"msgs": [], "t": 0})
+            b = FWD_BUF.setdefault(gid, {"msgs": [], "t": 0, "pf": (cfg, state)})
             b["msgs"].append(m)
             b["t"] = time.time()
         else:
@@ -1903,6 +1981,243 @@ def handle_update(cfg, net, state, u):
 FWD_BUF = {}                                     # album parts arrive as separate messages: collect them
 FWD_KEYS = ("forward_origin", "forward_from_chat", "forward_from", "forward_date", "forward_sender_name")
 FWD_BAD = ("document", "voice", "audio", "sticker", "animation", "video_note", "poll", "location", "contact")
+
+
+# ---------------------------------------------------------------------------- #
+# destinations: add / switch / remove (every destination = a separate profile)
+# ---------------------------------------------------------------------------- #
+SPEED_FA = {"low": "کم", "mid": "متوسط", "high": "زیاد", "manual": "دستی", "auto": "خودکار"}
+
+
+def check_dest(net, target):
+    """(ok, message, title). The bot must be an admin that may post AND delete messages - checked before anything starts."""
+    try:
+        me = net.api("getMe")
+        chat = net.api("getChat", {"chat_id": target})
+    except ApiError as e:
+        return False, ("❌ کانالی با آیدی %s پیدا نشد (%s).\nآیدی را درست و عمومی بنویسید، مثل @mychannel" % (target, e.desc)), None
+    except NetError as e:
+        return False, "⚠️ مشکل شبکه؛ چند دقیقه بعد دوباره امتحان کنید (%s)." % e, None
+    title = chat.get("title") or target
+    if chat.get("type") != "channel":
+        return False, "❌ %s یک کانال نیست (فقط کانال تلگرام پشتیبانی می‌شود)." % target, None
+    how = ("\n\nچطور: کانال %s ← بالا روی نامش بزنید ← Administrators ← Add Admin ← این ربات را انتخاب کنید ← "
+           "گزینه‌های «Post Messages» و «Delete Messages» را روشن کنید ← Save. بعد دوباره همین‌جا آیدی کانال را بفرستید." % target)
+    try:
+        mem = net.api("getChatMember", {"chat_id": target, "user_id": me["id"]})
+    except ApiError as e:
+        return False, "❌ ربات در %s عضو یا مدیر نیست (%s). اول باید ربات را مدیر کانال کنید.%s" % (target, e.desc, how), None
+    if mem.get("status") not in ("administrator", "creator"):
+        return False, "❌ ربات در %s مدیر نیست.%s" % (target, how), None
+    if mem.get("status") == "administrator":
+        miss = []
+        if not mem.get("can_post_messages"):
+            miss.append("ارسال پیام (Post Messages)")
+        if not mem.get("can_delete_messages"):
+            miss.append("حذف پیام‌ها (Delete Messages)")
+        if miss:
+            return False, "❌ ربات در %s مدیر است ولی این دسترسی‌ها را ندارد: %s.%s" % (target, "، ".join(miss), how), None
+    return True, "", title
+
+
+def dest_summary(cfg0, root, active_id):
+    rows = []
+    for i, (pid_, c, st) in enumerate(profiles(cfg0, root), 1):
+        rows.append("%d) %s%s\n    %d منبع • %s • سرعت: %s" % (
+            i, c["target_channel"], "  ✅ (در حال مدیریت)" if pid_ == active_id else "", len(c["sources"]),
+            "⏸ خاموش" if st.get("paused") else "🟢 روشن", SPEED_FA.get(speed_mode(st), "؟")))
+    return "\n".join(rows)
+
+
+def dest_menu(cfg0, root):
+    aid = active_profile(cfg0, root)[0]
+    ps = profiles(cfg0, root)
+    txt = ("🎯 مقصدها (%d از %d):\n%s\n\n"
+           "هر مقصد کاملاً جداست: منبع‌ها، سرعت، کلمات ممنوع، تاریخچه‌ی ضدتکرار، روشن/خاموش و گزارش‌هایش. "
+           "یک کانال مبدأ را می‌شود برای چند مقصد گذاشت (هر مقصد مستقل از آن استفاده می‌کند).\n"
+           "دکمه‌های 📊 وضعیت، ⚡ ارسال، ▶️/⏸، 🎚 سرعت، 🚨 بحران، 📋 منبع‌ها و ⚙️ بیشتر همیشه روی «مقصد در حال مدیریت» (✅) اثر دارند؛ "
+           "برای عوض کردنش روی نام مقصد بزنید.") % (len(ps), MAX_DESTS, dest_summary(cfg0, root, aid))
+    rows = [[{"text": ("✅ " if p[0] == aid else "🎯 ") + p[1]["target_channel"], "callback_data": "dp:" + p[0]}] for p in ps]
+    rows.append([{"text": "➕ مقصد جدید", "callback_data": "tx:dest_add"}])
+    rows += [[{"text": "🗑 حذف " + p[1]["target_channel"], "callback_data": "dd:" + p[0]}] for p in ps[1:]]
+    return txt, {"inline_keyboard": rows}
+
+
+def dest_add(cfg0, net, root, raw):
+    name = normalize_source(raw)
+    if not re.match(r"^[A-Za-z][A-Za-z0-9_]{3,31}$", name):
+        return "❌ آیدی کانال درست نیست: %s\nمثال: /dest add @mychannel" % raw, None
+    target = "@" + name
+    ps = profiles(cfg0, root)
+    if any(p[1]["target_channel"].lower() == target.lower() for p in ps):
+        return "این کانال از قبل در لیست مقصدها هست.", None
+    if len(ps) >= MAX_DESTS:
+        return "❌ سقف %d مقصد پر شده است. اول یکی را حذف کنید." % MAX_DESTS, None
+    ok, msg, title = check_dest(net, target)
+    if not ok:
+        return msg, None
+    n = int(root.get("dest_n", 1)) + 1
+    root["dest_n"] = n
+    st = SubState({"channels": {}, "fp": [], "next_run_ts": int(time.time() + random.uniform(120, 420))})
+    root.setdefault("dests", []).append({"id": "d%d" % n, "target": target, "title": title, "st": st})
+    root["active"] = "d%d" % n
+    profiles(cfg0, root)
+    return ("✅ مقصد جدید اضافه شد: %s (%s)\n"
+            "ربات مدیر کانال است و دسترسی ارسال و حذف پیام را دارد.\n\n"
+            "از همین لحظه %s «مقصد در حال مدیریت» است: دکمه‌های 📋 منبع‌ها، 🎚 سرعت، 🚨 بحران، ▶️/⏸ و ... همه روی همین کانال اثر دارند "
+            "و تنظیمات ویماپرو و بقیه‌ی مقصدها دست نمی‌خورد.\n\n"
+            "قدم بعد: منبع‌هایش را اضافه کنید، مثلاً /add besnr (هر منبعی که برای مقصد دیگر هم گذاشته‌اید مجاز است). "
+            "تا وقتی منبعی نداشته باشد هیچ پستی به آن ارسال نمی‌شود. سرعت پیش‌فرضش «خودکار» است و آیدی و لیبل عکس‌هایش %s می‌شود. "
+            "برای برگشتن به ویماپرو: 🎯 مقصدها ← نام کانال." % (target, title, target, target)), None
+
+
+def dest_text(cfg0, net, root, text):
+    """Hub-level texts. Returns True when handled."""
+    owner = owner_of(cfg0, root)
+    m = re.match(r"^/dests?(?:@\w+)?(?:\s+(add|use|del)(?:\s+(.*))?)?\s*$", text, re.I | re.S)
+    awaiting = root.get("await_dest")
+    if awaiting and time.time() - awaiting > 600:
+        root.pop("await_dest", None)
+        awaiting = None
+    if text != BTN_DEST and not m and not (awaiting and text and not text.startswith("/") and text not in ALL_BTNS):
+        return False
+    TAG[0] = ""
+    if awaiting and not m and text != BTN_DEST:
+        root.pop("await_dest", None)
+        msg, kb = dest_add(cfg0, net, root, text)
+        tell(net, owner, msg, kb or MENU_KB)
+        return True
+    cmd = (m.group(1) or "").lower() if m else ""
+    arg = (m.group(2) or "").strip() if m else ""
+    if cmd == "add":
+        if not arg:
+            root["await_dest"] = int(time.time())
+            tell(net, owner, "➕ مقصد جدید: آیدی کانال را بفرستید، مثلاً @mychannel\n"
+                 "قبلش ربات را در آن کانال مدیر کنید و دسترسی‌های «Post Messages» و «Delete Messages» را بدهید؛ "
+                 "من قبل از شروع چک می‌کنم و اگر دسترسی‌ای کم باشد دقیقاً می‌گویم کدام. (تا ۱۰ دقیقه منتظرم)")
+        else:
+            msg, kb = dest_add(cfg0, net, root, arg)
+            tell(net, owner, msg, kb or MENU_KB)
+        return True
+    if cmd in ("use", "del"):
+        ps = profiles(cfg0, root)
+        pick = None
+        if arg.translate(_DIG).isdigit() and 1 <= int(arg.translate(_DIG)) <= len(ps):
+            pick = ps[int(arg.translate(_DIG)) - 1]
+        else:
+            pick = next((p for p in ps if p[1]["target_channel"].lower().lstrip("@") == arg.lower().lstrip("@")), None)
+        if not pick:
+            tell(net, owner, "این مقصد را پیدا نکردم. شماره یا آیدی را از 🎯 مقصدها ببینید، مثل /dest use 2")
+        elif cmd == "use":
+            tell(net, owner, dest_switch(cfg0, root, pick[0]))
+        else:
+            tell(net, owner, *dest_confirm(pick))
+        return True
+    txt, kb = dest_menu(cfg0, root)
+    tell(net, owner, txt, kb)
+    return True
+
+
+def dest_switch(cfg0, root, pid_):
+    root["active"] = pid_
+    p = active_profile(cfg0, root)
+    return ("🎯 حالا «%s» در حال مدیریت است.\nهمه‌ی دکمه‌ها (وضعیت، ارسال، روشن/خاموش، سرعت، بحران، منبع‌ها، بیشتر) "
+            "و فوروارد کردن پست برای ربات از این لحظه روی همین کانال اثر دارند و بقیه‌ی مقصدها دست نمی‌خورند.\n\n%s" % (
+                p[1]["target_channel"], status_text(p[1], p[2])))
+
+
+def dest_confirm(p):
+    return ("🗑 حذف مقصد %s؟\nفقط از ربات حذف می‌شود: منبع‌ها و تنظیمات این مقصد پاک می‌شود و دیگر چیزی به آن ارسال نمی‌شود. "
+            "پست‌های خود کانال و مدیر بودن ربات در آن دست نمی‌خورد." % p[1]["target_channel"],
+            {"inline_keyboard": [[{"text": "✅ بله، حذف شود", "callback_data": "dc:" + p[0]},
+                                  {"text": "↩️ انصراف", "callback_data": "dx:0"}]]})
+
+
+def dest_button(cfg0, net, root, cb, act, pid_):
+    owner = owner_of(cfg0, root)
+    m = cb.get("message") or {}
+    TAG[0] = ""
+    note = ""
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
+    except (ApiError, NetError):
+        pass
+    REPLY_TO[0] = m.get("message_id")
+    ps = profiles(cfg0, root)
+    pick = next((p for p in ps if p[0] == pid_), None)
+    if act == "dp" and pick:
+        tell(net, owner, dest_switch(cfg0, root, pick[0]))
+    elif act == "dd" and pick and pick[0] != "p1":
+        tell(net, owner, *dest_confirm(pick))
+    elif act == "dc" and pick and pick[0] != "p1":
+        root["dests"] = [d for d in root.get("dests", []) if d["id"] != pick[0]]
+        _PCACHE.pop(pick[0], None)
+        if root.get("active") == pick[0]:
+            root["active"] = "p1"
+        tell(net, owner, "🗑 مقصد %s از ربات حذف شد و دیگر چیزی به آن ارسال نمی‌شود. حالا «%s» در حال مدیریت است." % (
+            pick[1]["target_channel"], active_profile(cfg0, root)[1]["target_channel"]))
+    elif act == "dx":
+        tell(net, owner, "↩️ انصراف داده شد؛ چیزی حذف نشد.")
+    else:
+        tell(net, owner, "این مورد دیگر وجود ندارد.")
+    REPLY_TO[0] = None
+    txt, kb = dest_menu(cfg0, root)
+    try:
+        net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"], "text": txt, "reply_markup": kb})
+    except (ApiError, NetError, KeyError):
+        pass
+
+
+def handle_update(cfg, net, state, u):
+    """Routes a bot message / button to the destination it belongs to (the one you manage, or the owner of a
+    pending review / forward / source button)."""
+    cfg0, root = hub_of(cfg, state)
+    cb = u.get("callback_query")
+    if cb:
+        if cb["from"]["id"] != owner_of(cfg0, root):
+            return
+        data = cb.get("data") or ""
+        act, _, pid = data.partition(":")
+        if act in ("dp", "dd", "dc", "dx"):
+            dest_button(cfg0, net, root, cb, act, pid)
+            return
+        if act == "tx":
+            cmd = TX_MAP.get(pid)
+            m0 = cb.get("message") or {}
+            try:
+                net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
+            except (ApiError, NetError):
+                pass
+            if cmd and m0.get("chat"):
+                handle_update(cfg0, net, root, {"message": {"message_id": m0.get("message_id"), "chat": m0["chat"],
+                                                            "from": cb["from"], "text": cmd}})
+            return
+        ps = profiles(cfg0, root)
+        target = None
+        if act in ("mt", "dl") and "|" in pid:
+            want, _, name = pid.partition("|")
+            target = next((p for p in ps if p[0] == want), None)
+            cb = dict(cb, data="%s:%s" % (act, name))
+        elif act in ("ok", "no"):
+            target = next((p for p in ps if pid in (p[2].get("pending") or {})), None)
+        elif act == "fw":
+            target = next((p for p in ps if pid in (p[2].get("fwd") or {})), None)
+        elif act == "rm":
+            target = next((p for p in ps if pid in (p[2].get("undo") or {})), None)
+        target = target or active_profile(cfg0, root)
+        set_tag(target[1], target[2])
+        _handle_update(target[1], net, target[2], dict(u, callback_query=cb))
+        return
+    m = u.get("message")
+    if m and (m.get("chat") or {}).get("type") == "private" and (m.get("from") or {}).get("id") == owner_of(cfg0, root) \
+            and not is_forward_or_media(m):
+        REPLY_TO[0] = m.get("message_id")
+        SHOW_KB[0] = (m.get("text") or "").startswith(("/start", "/menu"))
+        if dest_text(cfg0, net, root, (m.get("text") or "").strip()):
+            return
+    p = active_profile(cfg0, root)
+    set_tag(p[1], p[2])
+    _handle_update(p[1], net, p[2], u)
 
 
 def is_forward_or_media(m):
@@ -2058,7 +2373,9 @@ def flush_forwards(cfg, net, state):
     for gid in [g for g, b in FWD_BUF.items() if time.time() - b["t"] >= 2.0]:
         b = FWD_BUF.pop(gid)
         try:
-            handle_forward(cfg, net, state, owner_of(cfg, state), b["msgs"])
+            pc, ps = b.get("pf") or (cfg, state)
+            set_tag(pc, ps)
+            handle_forward(pc, net, ps, owner_of(cfg, state), b["msgs"])
         except Exception:
             log.exception("could not process a forwarded album")
         done = True
@@ -2105,17 +2422,23 @@ def forward_button(cfg, net, state, cb, act, pid):
 def heartbeat(cfg, net, state):
     """Once a day (after 07:30 Iran time) tell the owner the bot is alive."""
     owner = owner_of(cfg, state)
-    if not owner:
+    if not owner or isinstance(state, SubState):
         return
     now = time.time()
     lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
     day = "%04d-%02d-%02d" % (lt.tm_year, lt.tm_mon, lt.tm_mday)
     if (lt.tm_hour, lt.tm_min) < (7, 30) or state.get("hb_day") == day:
         return
-    log_ = [t for t in state.get("posted_log", []) if now - t < 86400]
+    TAG[0] = ""
     txt = "🟢 ربات از سمت گیت‌هاب فعال است.\n"
-    txt += "وضعیت: " + ("⏸ خاموش (با دکمه‌ی شما)" if state.get("paused") else "روشن") + "\n"
-    txt += "پست‌های ارسال‌شده در ۲۴ ساعت گذشته: %d" % len(log_)
+    for pid_, c, st in profiles(cfg, state):
+        log_ = [t for t in st.get("posted_log", []) if now - t < 86400]
+        if state.get("dests"):
+            txt += "%s: %s، %d پست در ۲۴ ساعت گذشته\n" % (
+                c["target_channel"], "⏸ خاموش" if st.get("paused") else "روشن", len(log_))
+        else:
+            txt += "وضعیت: " + ("⏸ خاموش (با دکمه‌ی شما)" if st.get("paused") else "روشن") + "\n"
+            txt += "پست‌های ارسال‌شده در ۲۴ ساعت گذشته: %d" % len(log_)
     if tell(net, owner, txt, MENU_KB) is not None:
         state["hb_day"] = day
 
@@ -2153,6 +2476,15 @@ PENDING_TTL = 2 * 3600
 
 
 def expire_pending(cfg, net, state, now=None):
+    """Same for every destination (called from the main loop)."""
+    cfg0, root = hub_of(cfg, state)
+    done = False
+    for pid_, c, st in profiles(cfg0, root):
+        done = _expire_pending(c, net, st, now) or done
+    return done
+
+
+def _expire_pending(cfg, net, state, now=None):
     """Posts waiting for your decision for more than 2 hours count as rejected."""
     now = now or time.time()
     old = [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > PENDING_TTL]
@@ -2346,7 +2678,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     now = time.time()
     notify = manual = False
     if not dry:
-        process_updates(cfg, net, state, state_path)
+        set_tag(cfg, state)
+        if not isinstance(state, SubState):        # the bot's messages are read once per loop (by the main destination)
+            process_updates(cfg, net, state, state_path)
+        set_tag(cfg, state)
         apply_overrides(cfg, state)                # sources / banned words changed from the bot
         heartbeat(cfg, net, state)
         daily_report(cfg, net, state, now)
@@ -2362,6 +2697,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     nxt = state.get("next_run_ts", 0)
     if not force and not dry and not manual and now < nxt:
         log.info("waiting - next posting round in about %d min", int((nxt - now) / 60) + 1)
+        return
+    if not cfg["sources"] and not dry:
+        log.info("no sources for this destination yet - nothing to do")
+        state["next_run_ts"] = time.time() + 600
         return
     # --- 1. read every source page, count what is new ---
     names = list(cfg["sources"])
@@ -2448,7 +2787,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
                          {"id": 0, "media": a["media"]}, a["text"], fp, None))
-    expire_pending(cfg, net, state, now)
+    _expire_pending(cfg, net, state, now)
     if not dry:
         for name, key, label, st, new in pages:
             if new:
@@ -2779,8 +3118,14 @@ def main():
                 run_cycle(cfg, net, rules, state, args.state, args.dry_run)
         except Exception:
             log.exception("cycle failed (will try again)")
+        for pid_, pcfg, pst in profiles(cfg, state)[1:]:     # the other destinations: each one is a separate round
+            try:
+                run_cycle_latest(pcfg, net, Rules(pcfg), pst, args.state, args.dry_run, force and first)
+            except Exception:
+                log.exception("cycle of %s failed (will try again)", pcfg["target_channel"])
         first = False
         if args.serve:
+            TAG[0] = ""
             d = state_digest(state)
             if d != saved and IN_CLOUD:
                 git_push_state(args.state)
@@ -2793,7 +3138,7 @@ def main():
                         process_updates(cfg, net, state, args.state, wait=max(1, min(15, end - t0)))
                     except Exception:
                         log.exception("bot check failed (will try again)")
-                    if state.get("run_now"):
+                    if any(p[2].get("run_now") for p in profiles(cfg, state)):
                         break
                     if time.time() - t0 < 1:       # never spin faster than once a second
                         time.sleep(1)
