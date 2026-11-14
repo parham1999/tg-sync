@@ -2105,7 +2105,7 @@ def dest_menu(cfg0, root):
     for p in ps:
         row = [{"text": ("✅ " if p[0] == aid else "🎯 ") + p[1]["target_channel"], "callback_data": "dp:" + p[0]}]
         if p[0] != "p1":
-            row.append({"text": "🗑", "callback_data": "dd:" + p[0]})      # small: just an icon, 3 confirmations follow
+            row.insert(0, {"text": "🗑", "callback_data": "dd:" + p[0]})    # on the left; Telegram gives every button in a row the same width
         rows.append(row)
     rows.append([{"text": "➕ مقصد جدید", "callback_data": "tx:dest_add"}])
     return txt, {"inline_keyboard": rows}
