@@ -1608,12 +1608,23 @@ def manage_command(cfg, net, state, text):
         cmd, _, arg = text.partition(" ")
         cmd, arg = cmd.split("@")[0].lower(), arg.strip()
     if text == BTN_SRC or cmd == "/sources":
-        return sources_view(cfg, state)
+        state["await_src"] = int(time.time())          # for 10 minutes a bare link / id sent here is a SOURCE
+        hub_of(cfg, state)[1].pop("await_dest", None)
+        t, kb = sources_view(cfg, state)
+        return t + "\n\n✏️ تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که همین‌جا بفرستید را «منبع» همین مقصد حساب می‌کنم.", kb
     if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
         return hours_text(state), None
     if text == BTN_BAN or cmd == "/bans":
         return bans_text(cfg, state), None
+    bare = not arg and re.match(r"^(?:(?:https?://)?(?:www\.)?(?:t|telegram)\.me/@?|@)?[A-Za-z][A-Za-z0-9_]{3,31}/?$", text)
+    if bare and cmd != "/add" and state.get("await_src") and time.time() - state["await_src"] <= 600 \
+            and not text.startswith("/") and text not in ALL_BTNS:
+        return add_source(cfg, net, state, text), None
     if cmd == "/add" or (not arg and re.match(r"^(?:https?://)?(?:www\.)?(?:t|telegram)\.me/[A-Za-z]\w+/?$", text)):
+        if cmd != "/add":                              # a bare link outside the sources / destinations sections
+            return ("❓ این لینک را به‌عنوان چه می‌خواهید؟ برای امنیت، لینک یا آیدی تنها را جایی ثبت نمی‌کنم.\n"
+                    "• اگر «منبع» است: دکمه‌ی «📋 منبع‌ها» را بزنید و همان‌جا لینک را بفرستید (یا /add آیدی)\n"
+                    "• اگر «مقصد» است: «🎯 مقصدها ← ➕ مقصد جدید» (یا /dest add @آیدی)"), None
         r = add_source(cfg, net, state, arg or text)
         return r, None
     if cmd == "/del":
@@ -2148,6 +2159,7 @@ def dest_text(cfg0, net, root, text):
     if cmd == "add":
         if not arg:
             root["await_dest"] = int(time.time())
+            active_profile(cfg0, root)[2].pop("await_src", None)
             tell(net, owner, "➕ مقصد جدید: آیدی کانال را بفرستید، مثلاً @mychannel\n"
                  "قبلش ربات را در آن کانال مدیر کنید و دسترسی‌های «Post Messages» و «Delete Messages» را بدهید؛ "
                  "من قبل از شروع چک می‌کنم و اگر دسترسی‌ای کم باشد دقیقاً می‌گویم کدام. (تا ۱۰ دقیقه منتظرم)")
