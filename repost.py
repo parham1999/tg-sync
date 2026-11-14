@@ -73,9 +73,9 @@ DEFAULTS = {
     "crisis_on_channels": 4,               # ... or this many sources with ...
     "crisis_channel_rate": 5,              # ... at least this many new posts each within 30 min
     "crisis_off_rate": 14,                 # auto-off: below this many per 30 min for 20 minutes
-    "boost_posts_range": [7, 10],          # boost mode: random number of posts per round
-    "boost_posts_per_channel": 3,          # boost mode: newest N new posts of every source
-    "boost_max_age_minutes": 45,           # boost mode: older posts are not worth posting any more
+    "widen_max_layers": 4,                 # to reach the wanted post count: up to this many newest posts per source
+    "widen_max_age_minutes": 60,           # ... but only posts younger than this (the newest one is always allowed)
+    "manual_max_posts": 15,                # the highest number you can type in "manual" speed
     "crisis_max_hours": 8,                 # auto mode never stays on longer than this
     "report_time": [23, 30],               # daily report to the bot chat (Iran time)
     "initial_posts": 0,            # how many old posts to publish on the very first run
@@ -1157,6 +1157,21 @@ BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW = "⏸ خاموش", "▶️ روشن", "
 BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO = "🚨 بحران روشن", "🛑 بحران خاموش", "🤖 بحران خودکار"
 BTN_SP_NORMAL, BTN_SP_BOOST = "🐢 نرمال (۱ تا ۶ پست)", "🚀 بوست (۷ تا ۱۰ پست)"
 BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW = "📋 منبع‌ها", "🚫 کلمات ممنوع", "⏰ ساعت‌ها", "⚡ ارسال همین الان"
+SEED_SOURCES = ["Daneshjoo", "FilmFarsiOrg", "Radiokocsher"]
+BTN_SPEED, BTN_CRMENU, BTN_MORE = "🎚 سرعت ارسال", "🚨 بحران", "⚙️ بیشتر"
+ALL_BTNS = {BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW, BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO, BTN_SP_NORMAL, BTN_SP_BOOST,
+            BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW, BTN_SPEED, BTN_CRMENU, BTN_MORE}
+HELP_TEXT = ("📖 راهنما\n"
+             "• 📊 وضعیت: حال ربات و توضیح آخرین دور\n"
+             "• ⚡ ارسال همین الان: یک دور فوری\n"
+             "• ▶️ روشن / ⏸ خاموش: شروع و توقف ارسال\n"
+             "• 🎚 سرعت ارسال: کم، متوسط، زیاد، دستی (بازه‌ی دلخواه) یا خودکار (فرمول ساعت و تعطیلی)\n"
+             "• 🚨 بحران: روشن، خاموش یا خودکار\n"
+             "• 📋 منبع‌ها: لیست کانال‌های مبدا؛ اضافه کردن: /add name ، حذف: /del name ، بی‌صدا: /mute name 3\n"
+             "• ⚙️ بیشتر: کلمات ممنوع، ساعت‌های پربازدید، بررسی مشکوک‌ها\n"
+             "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
+             "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
+
 # texts of older keyboards still work until the phone refreshes its buttons
 OLD_CR = {"🚨 بحران: روشن": BTN_CR_ON, "🛑 بحران: خاموش": BTN_CR_OFF, "🤖 بحران: خودکار": BTN_CR_AUTO}
 OLD_HOURS, OLD_REVIEW = "⏰ ساعت‌های پربازدید", "🔍 بررسی مشکوک‌ها (روشن/خاموش)"
@@ -1166,12 +1181,180 @@ def btn(t):
     return {"text": t}
 
 
-MENU_KB = {"keyboard": [[btn(BTN_OFF), btn(BTN_ON), btn(BTN_STATUS)],
-                        [btn(BTN_NOW), btn(BTN_REVIEW)],
-                        [btn(BTN_SP_NORMAL), btn(BTN_SP_BOOST)],
-                        [btn(BTN_CR_ON), btn(BTN_CR_OFF), btn(BTN_CR_AUTO)],
-                        [btn(BTN_SRC), btn(BTN_BAN), btn(BTN_HOURS)]],
+MENU_KB = {"keyboard": [[btn(BTN_STATUS), btn(BTN_NOW)],
+                        [btn(BTN_ON), btn(BTN_OFF)],
+                        [btn(BTN_SPEED), btn(BTN_CRMENU)],
+                        [btn(BTN_SRC), btn(BTN_MORE)]],
            "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
+
+
+
+# ---------------------------------------------------------------------------- #
+# posting speed: low / mid / high / manual range / automatic (hour and holiday table)
+# ---------------------------------------------------------------------------- #
+SPEED_FIXED = {"low": ("کم", 1, 2), "mid": ("متوسط", 2, 4), "high": ("زیاد", 6, 8)}
+# automatic: posts per HOUR, by hour of the day (Iran time). W = normal days, H = Thursday noon..Friday evening
+AUTO_W = [(0, 1, 4, 5), (1, 7, 0, 1), (7, 11, 3, 4), (11, 16, 2, 3), (16, 20, 3, 4), (20, 24, 4, 5)]
+AUTO_H = [(0, 2, 6, 6), (2, 8, 0, 1), (8, 12, 4, 4), (12, 17, 4, 4), (17, 20, 4, 5), (20, 24, 6, 6)]
+_DIG = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
+
+
+def speed_mode(state):
+    m = state.get("speed")
+    return m if m in ("low", "mid", "high", "manual", "auto") else "auto"      # older values: auto
+
+
+def parse_range(text, top=15):
+    """'8 تا 10', '8-10', '۸ الی ۱۰', '8' -> (8, 10) / (8, 8); None when there is no number."""
+    t = (text or "").translate(_DIG)
+    m = re.search(r"(\d{1,3})\s*(?:تا|الی|الي|to|[-–—~،,/]|\s)\s*(\d{1,3})", t) or re.search(r"(\d{1,3})", t)
+    if not m:
+        return None
+    a = int(m.group(1))
+    b = int(m.group(2)) if m.lastindex and m.lastindex >= 2 else a
+    lo, hi = sorted((a, b))
+    lo, hi = max(1, min(lo, top)), max(1, min(hi, top))
+    return lo, hi
+
+
+def auto_rate(cfg, now):
+    """(low, high posts per hour, is_holiday, hour) wanted right now by the automatic formula."""
+    lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
+    wd, h = lt.tm_wday, lt.tm_hour                         # Monday = 0 ... Thursday = 3, Friday = 4
+    holiday = (wd == 3 and h >= 12) or (wd == 4 and h < 20) or (wd == 4 and False)
+    for a, b, lo, hi in (AUTO_H if holiday else AUTO_W):
+        if a <= h < b:
+            return lo, hi, holiday, h
+    return 3, 4, holiday, h
+
+
+def mean_gap(cfg, night):
+    a, b = cfg["night_interval_minutes"] if night else cfg["interval_minutes"]
+    return (float(a) + float(b)) / 2.0
+
+
+def round_target(cfg, state, now):
+    """(how many posts this round should end with, is it a quiet-night round, short description)."""
+    mode = speed_mode(state)
+    if mode in SPEED_FIXED:
+        name, lo, hi = SPEED_FIXED[mode]
+        return random.randint(lo, hi), False, "%s (%d تا %d پست در هر دور)" % (name, lo, hi)
+    if mode == "manual":
+        lo, hi = state.get("manual_range") or [2, 4]
+        return random.randint(int(lo), int(hi)), False, "دستی (%d تا %d پست در هر دور)" % (lo, hi)
+    lo, hi, holiday, h = auto_rate(cfg, now)
+    night = hi <= 1
+    x = random.uniform(lo, hi) * mean_gap(cfg, night) / 60.0
+    n = int(x) + (1 if random.random() < x - int(x) else 0)
+    if night:
+        n = min(n, int(cfg["night_max_posts"]))
+    return n, night, "خودکار (%s، ساعت %d: %s پست در ساعت)" % (
+        "تعطیلی" if holiday else "روز عادی", h, ("%d تا %d" % (lo, hi)) if lo != hi else str(lo))
+
+
+def _speed_line(cfg, state, now=None):
+    now = now or time.time()
+    mode = speed_mode(state)
+    rounds = 1440.0 / mean_gap(cfg, False)
+    if mode in SPEED_FIXED:
+        name, lo, hi = SPEED_FIXED[mode]
+        return "🎚 سرعت: %s (%d تا %d پست در هر دور)" % (name, lo, hi)
+    if mode == "manual":
+        lo, hi = state.get("manual_range") or [2, 4]
+        return "🎚 سرعت: دستی (%d تا %d پست در هر دور)" % (lo, hi)
+    lo, hi, holiday, h = auto_rate(cfg, now)
+    return "🎚 سرعت: 🤖 خودکار — الان ساعت %d و %s: %s پست در ساعت" % (
+        h, "زمان تعطیلی (پنجشنبه ظهر تا جمعه)" if holiday else "روز عادی", ("%d تا %d" % (lo, hi)) if lo != hi else str(lo))
+
+
+def _speed_apply(cfg, state, mode, rng=None):
+    """Switch the speed and return the full explanation for the owner."""
+    rounds = 1440.0 / mean_gap(cfg, False)
+    tail = ("\n\nهمه‌ی فیلترها مثل قبل اجرا می‌شوند (تبلیغ، لینک، فوروارد، ریپلای، تکراری...) و عدد بالا تعداد "
+            "پستِ نهاییِ ارسال‌شده است. اگر بعد از فیلترها به این تعداد نرسید، ربات از هر کانال پست‌های کمی قدیمی‌تر "
+            "را هم (تا %d پست آخر و حداکثر %d دقیقه قدیمی) بررسی می‌کند؛ باز هم اگر پست قابل‌ارسال کافی نبود، همان تعدادِ "
+            "موجود را می‌فرستد. اگر «بحران» روشن باشد، قانون خودش اولویت دارد." % (
+                int(cfg["widen_max_layers"]), int(cfg["widen_max_age_minutes"])))
+    state["next_run_ts"] = 0                          # start with the new speed in the next loop
+    if mode in SPEED_FIXED:
+        name, lo, hi = SPEED_FIXED[mode]
+        state["speed"] = mode
+        return ("%s حالت «%s» روشن شد.\nاز دور بعدی (همین حالا شروع می‌شود) هر دور %d تا %d پست می‌گذارم. دورها هر ۳۰ تا ۴۰ "
+                "دقیقه‌اند (حدود %d دور در شبانه‌روز)، یعنی اگر پست قابل‌ارسال کافی باشد حدود %d تا %d پست در روز." % (
+                    {"low": "🐢", "mid": "⚖️", "high": "🚀"}[mode], name, lo, hi, rounds, lo * rounds, hi * rounds) + tail)
+    if mode == "manual":
+        lo, hi = rng
+        state["speed"] = "manual"
+        state["manual_range"] = [lo, hi]
+        state.pop("await_manual", None)
+        return ("✏️ حالت «دستی» روشن شد.\nاز دور بعدی هر دور %s پست می‌گذارم (هر دور یک عدد تصادفی در این بازه). "
+                "دورها هر ۳۰ تا ۴۰ دقیقه‌اند، یعنی اگر پست قابل‌ارسال کافی باشد حدود %d تا %d پست در روز." % (
+                    ("%d تا %d" % (lo, hi)) if lo != hi else str(lo), lo * rounds, hi * rounds) + tail)
+    state["speed"] = "auto"
+    return ("🤖 حالت «خودکار» روشن شد. از این به بعد دقیقاً طبق این فرمول پست می‌گذارم (ساعت به وقت ایران):\n\n"
+            "📅 روز عادی (شنبه تا پنجشنبه تا ظهر) — پست در هر ساعت:\n"
+            "• ۰۰ تا ۰۱: ۴ تا ۵\n"
+            "• ۰۱ تا ۰۷: ۰ تا ۱ (نیمه‌خاموش)\n"
+            "• ۰۷ تا ۱۱: ۳ تا ۴\n"
+            "• ۱۱ تا ۱۶: ۲ تا ۳\n"
+            "• ۱۶ تا ۲۰: ۳ تا ۴\n"
+            "• ۲۰ تا ۲۴: ۴ تا ۵\n"
+            "جمع: حدود ۶۰ تا ۷۰ پست در شبانه‌روز.\n\n"
+            "🎉 تعطیلی (پنجشنبه از ساعت ۱۲ تا جمعه ساعت ۲۰) — پست در هر ساعت:\n"
+            "• ۰۰ تا ۰۲: ۶\n"
+            "• ۰۲ تا ۰۸: ۰ تا ۱\n"
+            "• ۰۸ تا ۱۲: ۴\n"
+            "• ۱۲ تا ۱۷: ۴\n"
+            "• ۱۷ تا ۲۰: ۴ تا ۵\n"
+            "• ۲۰ تا ۲۴: ۶\n"
+            "جمع: حدود ۸۰ تا ۸۵ پست در شبانه‌روز. جمعه شب بعد از ساعت ۲۰ دوباره مثل روز عادی می‌شود.\n\n"
+            "🧮 محاسبه‌ی هر دور: نرخ ساعتِ فعلی (یک عدد تصادفی بین کمینه و بیشینه) × طول دور (حدود ۳۵ دقیقه ÷ ۶۰). "
+            "مثلاً ساعت ۲۱ روز عادی: ۴ تا ۵ پست در ساعت × ۰٫۵۸ ≈ ۲ تا ۳ پست در هر دور. اعشار تصادفی گرد می‌شود؛ "
+            "پس در ساعت‌های کم‌پست بعضی دورها پستی ندارند و بعضی یکی می‌فرستند." + tail
+            + "\n\n" + speed_line(cfg, state))
+
+
+_FA = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def speed_apply(cfg, state, mode, rng=None):
+    return _speed_apply(cfg, state, mode, rng).translate(_FA)
+
+
+def speed_line(cfg, state, now=None):
+    return _speed_line(cfg, state, now).translate(_FA)
+
+
+def speed_menu():
+    kb = {"inline_keyboard": [
+        [{"text": "🐢 کم (۱ تا ۲)", "callback_data": "tx:sp_low"}, {"text": "⚖️ متوسط (۲ تا ۴)", "callback_data": "tx:sp_mid"},
+         {"text": "🚀 زیاد (۶ تا ۸)", "callback_data": "tx:sp_high"}],
+        [{"text": "✏️ تنظیم دستی", "callback_data": "tx:sp_manual"}, {"text": "🤖 خودکار", "callback_data": "tx:sp_auto"}]]}
+    return kb
+
+
+def speed_menu_text(cfg, state):
+    return ("🎚 سرعت ارسال را انتخاب کنید (تعداد پستِ نهایی هر دور، بعد از همه‌ی فیلترها):\n"
+            "🐢 کم: ۱ تا ۲ • ⚖️ متوسط: ۲ تا ۴ • 🚀 زیاد: ۶ تا ۸\n"
+            "✏️ دستی: خودتان بازه را می‌نویسید (مثلاً ۸ تا ۱۰)\n"
+            "🤖 خودکار: با ساعت شبانه‌روز و تعطیلات خودش تنظیم می‌کند\n\n"
+            "الان: " + speed_line(cfg, state))
+
+
+def crisis_menu():
+    return {"inline_keyboard": [[{"text": "🚨 روشن", "callback_data": "tx:cr_on"}, {"text": "🛑 خاموش", "callback_data": "tx:cr_off"},
+                                 {"text": "🤖 خودکار", "callback_data": "tx:cr_auto"}]]}
+
+
+def more_menu(state):
+    return {"inline_keyboard": [[{"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}, {"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}],
+                                [{"text": "🔍 بررسی مشکوک‌ها (روشن/خاموش)", "callback_data": "tx:review"}],
+                                [{"text": "📖 راهنما و دستورها", "callback_data": "tx:help"}]]}
+
+
+TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
+          "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
+          "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 
 
 def hours_update(cfg, net, state, now):
@@ -1435,8 +1618,12 @@ def status_text(cfg, state):
     lines.append("پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
     lines.append("تاییدشده و منتظر ارسال: %d" % len(state.get("approved", [])))
     lines.append("بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
-    lines.append("سرعت انتشار: " + ("🚀 بوست (۷ تا ۱۰ پست در هر دور، تا ۳ پست آخر هر کانال)"
-                                    if state.get("speed") == "boost" else "🐢 نرمال (۱ تا ۶ پست در هر دور)"))
+    lines.append(speed_line(cfg, state))
+    if speed_mode(state) == "auto":
+        lo, hi, hol, h = auto_rate(cfg, time.time())
+        lines.append("   ↳ این ساعت %s پست در ساعت ≈ %s پست در هر دور (فرمول کامل: 🎚 سرعت ارسال ← خودکار)" % (
+            ("%d تا %d" % (lo, hi)) if lo != hi else str(lo),
+            ("%.1f تا %.1f" % (lo * mean_gap(cfg, hi <= 1) / 60, hi * mean_gap(cfg, hi <= 1) / 60))))
     mode = state.get("crisis_mode", "auto")
     lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
         mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
@@ -1455,11 +1642,13 @@ def round_text(cfg, r, title):
     ago = max(0, int((time.time() - r["t"]) / 60))
     when = "%d دقیقه پیش" % ago if ago < 60 else "%d ساعت و %d دقیقه پیش" % (ago // 60, ago % 60)
     names = {src_key(n): n for n in cfg["sources"]}
-    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else "، حالت بوست 🚀" if r.get("boost") else ""),
+    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else ("، سرعت %s" % r["mode"]) if r.get("mode") else ""),
            "• پست تازه پیدا شد: %d" % r["found"]]
     ignored = r["found"] - r.get("considered", r["found"])
     if ignored > 0:
-        out.append("• نادیده (در حالت نرمال فقط تازه‌ترین پست هر کانال بررسی می‌شود؛ در بوست تا ۳ پست آخر و حداکثر ۴۵ دقیقه قدیمی): %d" % ignored)
+        out.append("• نادیده (بعد از رسیدن به تعداد هدف، پست‌های قدیمی‌تر بررسی نمی‌شوند): %d" % ignored)
+    if r.get("target") is not None and r.get("mode"):
+        out.append("• هدف این دور: %d پست%s" % (r["target"], (" — %d پست کمتر از هدف قابل‌ارسال بود (پست تازه‌ی تکراری/ردشده/نبود)" % r["short"]) if r.get("short") else ""))
     if r.get("rej"):
         out.append("• ردشده: %d (%s)" % (sum(r["rej"].values()), "، ".join("%s %d" % kv for kv in sorted(r["rej"].items()))))
     if r.get("over"):
@@ -1520,11 +1709,29 @@ def process_updates(cfg, net, state, state_path, wait=0):
         REPLY_TO[0] = None
         SHOW_KB[0] = False
     ow = owner_of(cfg, state)
-    if ow and state.get("kb_v") != 2:             # one time: replace the old always-open keyboard with a hideable one
+    if ow and not state.get("seeded_src2"):       # one time: three new source channels
+        out = []
+        for nm in SEED_SOURCES:
+            r = add_source(cfg, net, state, nm)
+            out.append("• %s: %s" % (nm, r))
+        if all(("پیدا نشد" not in x) for x in out) or state.get("seed_tries", 0) >= 3:
+            state["seeded_src2"] = 1
+        state["seed_tries"] = state.get("seed_tries", 0) + 1
+        save_state(state_path, state)
+        tell(net, ow, "📋 افزودن منبع‌های جدید:\n" + "\n".join(out) + "\n(از پست‌های قدیمی‌شان چیزی ارسال نمی‌شود؛ فقط پست‌های تازه.)")
+    if ow and state.get("kb_v") != 3:             # one time: the new, shorter menu
         SHOW_KB[0] = True
-        if tell(net, ow, "⌨️ منوی ربات به‌روز شد. حالا با آیکن کیبورد کنار کادر پیام می‌توانید دکمه‌ها را ببندید و "
-                "دوباره باز کنید (یا /menu بفرستید).", MENU_KB) is not None:
-            state["kb_v"] = 2
+        old = state.get("speed") in ("normal", "boost")
+        msg = ("⌨️ منوی ربات مرتب‌تر شد: دکمه‌های مرتبط داخل بخش‌ها رفتند.\n"
+               "• 🎚 سرعت ارسال ← کم / متوسط / زیاد / دستی / خودکار\n• 🚨 بحران ← روشن / خاموش / خودکار\n"
+               "• ⚙️ بیشتر ← کلمات ممنوع، ساعت‌ها، بررسی مشکوک‌ها، راهنما\n"
+               "هر دکمه که بزنید، ربات به پیام شما ریپلای می‌کند و توضیح کامل می‌دهد چه حالتی روشن شد.")
+        if old:
+            msg += "\n\nℹ️ سرعت‌های قدیمی (نرمال/بوست) حذف شدند و الان روی «🤖 خودکار» هستید."
+        if tell(net, ow, msg, MENU_KB) is not None:
+            state["kb_v"] = 3
+            if old:
+                state["speed"] = "auto"
             save_state(state_path, state)
         SHOW_KB[0] = False
     if flush_forwards(cfg, net, state) or ups:
@@ -1537,6 +1744,17 @@ def handle_update(cfg, net, state, u):
         if cb["from"]["id"] != owner_of(cfg, state):
             return
         act, _, pid = (cb.get("data") or "").partition(":")
+        if act == "tx":                            # a button inside one of the menus = the same as typing its command
+            cmd = TX_MAP.get(pid)
+            m0 = cb.get("message") or {}
+            try:
+                net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
+            except (ApiError, NetError):
+                pass
+            if cmd and m0.get("chat"):
+                fake = {"message": {"message_id": m0.get("message_id"), "chat": m0["chat"], "from": cb["from"], "text": cmd}}
+                handle_update(cfg, net, state, fake)
+            return
         if act in ("mt", "dl"):
             source_button(cfg, net, state, cb)
             return
@@ -1594,6 +1812,16 @@ def handle_update(cfg, net, state, u):
     if managed:
         tell(net, owner, managed[0], managed[1] or MENU_KB)
         return
+    if state.get("await_manual") and not text.startswith("/") and text not in ALL_BTNS:
+        if time.time() - state["await_manual"] > 600:
+            state.pop("await_manual", None)
+        else:
+            rng = parse_range(text, int(cfg["manual_max_posts"]))
+            if rng:
+                tell(net, owner, speed_apply(cfg, state, "manual", rng), MENU_KB)
+                return
+            tell(net, owner, "عدد را متوجه نشدم. مثلاً بنویسید «۸ تا ۱۰» یا «4».")
+            return
     text = OLD_CR.get(text, text)
     if text in (OLD_REVIEW,):
         text = BTN_REVIEW
@@ -1604,17 +1832,42 @@ def handle_update(cfg, net, state, u):
             state["run_now"] = int(time.time())
             tell(net, owner, "⚡ دور فوری شروع شد؛ نتیجه را همین‌جا می‌فرستم. دور عادی سر وقت خودش اجرا می‌شود.", MENU_KB)
         return
-    if text in (BTN_SP_NORMAL, BTN_SP_BOOST) or re.match(r"^/?(boost|normal)\b", text, re.I):
-        boost = text == BTN_SP_BOOST or text.lstrip("/").lower().startswith("boost")
-        state["speed"] = "boost" if boost else "normal"
-        if boost:
-            state["next_run_ts"] = 0
-            msg = ("🚀 بوست روشن شد: از دور بعدی (همین حالا شروع می‌شود) هر دور ۷ تا ۱۰ پست، با تا ۳ پست آخر هر کانال "
-                   "(فقط پست‌هایی که از فیلترها رد شوند و تکراری نباشند). با «🐢 نرمال» برمی‌گردد.")
+    sm = re.match(r"^/?(speed|manual|boost|normal|auto)(?:@\w+)?(?:[\s:_]+(.*))?$", text, re.I | re.S)
+    if text in (BTN_SPEED, BTN_SP_NORMAL, BTN_SP_BOOST) or (sm and (text.startswith("/") or sm.group(2))):
+        word = (sm.group(1).lower() if sm else "")
+        arg = ((sm.group(2) or "").strip().lower() if sm else "")
+        if word in ("boost", "normal") or text in (BTN_SP_NORMAL, BTN_SP_BOOST):
+            word, arg = "speed", "auto"           # the old two buttons: now the automatic mode
+        if word == "auto":
+            word, arg = "speed", "auto"
+        if word == "manual":
+            rng = parse_range(arg, int(cfg["manual_max_posts"])) if arg else None
+            if rng:
+                tell(net, owner, speed_apply(cfg, state, "manual", rng), MENU_KB)
+            else:
+                state["await_manual"] = int(time.time())
+                tell(net, owner, "✏️ تنظیم دستی: بازه‌ی تعداد پستِ نهایی هر دور را بنویسید، مثلاً «۸ تا ۱۰» یا «3-5» "
+                     "(یک عدد تنها هم قبول است؛ از ۱ تا %d). همین‌جا برایم بنویسید؛ تا ۱۰ دقیقه منتظرم." % int(cfg["manual_max_posts"]))
+        elif word == "speed" and arg in ("low", "mid", "high", "auto"):
+            tell(net, owner, speed_apply(cfg, state, arg), MENU_KB)
         else:
-            msg = "🐢 سرعت نرمال شد: هر دور تا ۶ پست (از هر کانال فقط تازه‌ترین)."
-        tell(net, owner, msg, MENU_KB)
-    elif text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
+            tell(net, owner, speed_menu_text(cfg, state), speed_menu())
+        return
+    if text == BTN_CRMENU:
+        mode = state.get("crisis_mode", "auto")
+        tell(net, owner, "🚨 حالت بحران: وقتی کانال‌ها ناگهان پر از پست تازه می‌شوند (مثلاً خبر مهم)، ربات از هر کانال تا ۳ پست آخر "
+             "را با فاصله‌ی کم (هر ۱۰ تا ۱۵ دقیقه، تا ۱۵ پست در هر دور) می‌فرستد و لیبل عکس را نمی‌گذارد.\n"
+             "🚨 روشن = همیشه بحران • 🛑 خاموش = هرگز بحران • 🤖 خودکار = با هجوم پست‌ها خودش روشن و خاموش می‌شود.\n\n"
+             "الان: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
+                 mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"), crisis_menu())
+        return
+    if text == BTN_MORE:
+        tell(net, owner, "⚙️ تنظیمات بیشتر:", more_menu(state))
+        return
+    if text.startswith("/help"):
+        tell(net, owner, HELP_TEXT, MENU_KB)
+        return
+    if text.startswith("/crisis") or text in (BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO):
         if text == BTN_CR_ON or text.startswith("/crisis_on"):
             state["crisis_mode"] = "on"
             state["next_run_ts"] = 0
@@ -1911,7 +2164,7 @@ def spread_by_channel(items):
         pool = [g for g in groups if placed.get(g, 0) == low and g != last] or \
                [g for g in groups if g != last] or list(groups)
         g = random.choice(pool)
-        it = random.choice(groups[g])
+        it = max(groups[g], key=lambda i: i[1].get("id", 0))      # the newest post of that source first
         groups[g].remove(it)
         if not groups[g]:
             del groups[g]
@@ -2125,35 +2378,71 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                  int(cfg["crisis_posts_per_channel"]))
     hour = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60).tm_hour
     n0, n1 = cfg["night_hours"]
-    boost = (not dry) and (not crisis) and state.get("speed") == "boost"
-    night = n0 <= hour < n1 and not crisis and not manual and not boost
-    if night:
-        log.info("night hours: at most %d post(s) per round", cfg["night_max_posts"])
+    custom = (not dry) and (not crisis)           # speed modes (low/mid/high/manual/auto) apply
+    night = False
+    mode_desc = ""
+    limit = 0
+    if crisis:
+        limit = int(cfg["crisis_max_posts"])
+    elif custom:
+        limit, night, mode_desc = round_target(cfg, state, now)
+        if manual:
+            limit = max(1, limit)                 # "send now" always tries for at least one post
+        log.info("speed %s: this round should end with %d post(s)", mode_desc, limit)
+        if limit <= 0:                            # a deliberately empty round (quiet hours): nothing consumed
+            a, b = cfg["night_interval_minutes"] if night else cfg["interval_minutes"]
+            state["next_run_ts"] = time.time() + random.uniform(float(a), float(b)) * 60
+            state["last_round"] = {"t": int(time.time()), "found": sum(len(p[4]) for p in pages), "considered": 0,
+                                   "posted": 0, "over": 0, "appr": 0, "rej": {}, "src": {}, "crisis": False,
+                                   "mode": mode_desc, "target": 0, "why": [], "ign": {}}
+            save_state(state_path, state)
+            log.info("quiet round (target 0): nothing posted, posts stay available for the next round")
+            return
+    else:
+        limit = int(cfg["max_posts_per_run"]) or 99
     # --- 2. choose candidates ---
     rec = {"found": sum(len(p[4]) for p in pages), "considered": 0, "posted": 0, "over": 0, "appr": 0,
-           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis), "boost": bool(boost),
-           "why": [], "ign": {}}
+           "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis), "mode": mode_desc,
+           "target": limit, "why": [], "ign": {}}
 
     def note(key, pid, text):
         if len(rec["why"]) < 40:
             rec["why"].append([key, pid, text])
     lab2key = {p[2]: p[1] for p in pages}
-    cands = []
     reviewed = 0
-    take = int(cfg["crisis_posts_per_channel"]) if crisis else int(cfg["boost_posts_per_channel"]) if boost else 1
-    for name, key, label, st, new in pages:
-        if not new:
-            log.info("[%s] nothing new", label)
+    maxl = int(cfg["crisis_posts_per_channel"]) if crisis else int(cfg["widen_max_layers"]) if custom else 1
+    maxage = float(cfg["widen_max_age_minutes"]) * 60
+    done = {}                                     # how many of every source's new posts were looked at
+    hist = state.setdefault("fp", [])
+    hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
+    eligible = []
+    appr = state.get("approved", [])
+    state["approved"] = []
+    for a in appr:                                # posts you approved in the bot go first
+        if now - a.get("t", 0) > 2 * 86400:
             continue
-        if not dry:
-            st["last_id"] = new[-1]["id"]         # whatever happens, these are never reconsidered
-        chosen_new = new[-take:]
-        if boost:                                 # too old to be worth posting
-            maxage = float(cfg["boost_max_age_minutes"]) * 60
-            chosen_new = [p for p in chosen_new if not p.get("ts") or now - p["ts"] <= maxage]
-        if len(new) > len(chosen_new):
-            rec["ign"][key] = len(new) - len(chosen_new)
-        for p in chosen_new:
+        fp = text_fp(norm_for_dedupe(a["text"], rules.own))
+        fp["m"] = []
+        if find_dup(fp, hist):
+            continue
+        eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
+                         {"id": 0, "media": a["media"]}, a["text"], fp, None))
+    for k in [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > 86400]:
+        state["pending"].pop(k)
+    if not dry:
+        for name, key, label, st, new in pages:
+            if new:
+                st["last_id"] = new[-1]["id"]     # whatever happens, these are never reconsidered
+    chosen = []
+    for layer in range(1, maxl + 1):
+        cands = []
+        for name, key, label, st, new in pages:
+            if len(new) < layer:
+                continue
+            p = new[-layer]
+            if layer >= 2 and not crisis and p.get("ts") and now - p["ts"] > maxage:
+                continue                          # too old to be worth posting
+            done[key] = done.get(key, 0) + 1
             rec["considered"] += 1
             reason = skip_reason(cfg, p)
             if reason:
@@ -2173,51 +2462,36 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 note(src_key(name), p["id"], why)
                 continue
             cands.append((label, st, p))
-    hist = state.setdefault("fp", [])
-    hist[:] = [e for e in hist if now - e.get("t", 0) < 14 * 86400][-400:]
-    if crisis:
-        limit = int(cfg["crisis_max_posts"])
-    elif boost:
-        limit = random.randint(int(cfg["boost_posts_range"][0]), int(cfg["boost_posts_range"][1]))
-    else:
-        limit = int(cfg["max_posts_per_run"]) or len(cands)
-        if night:
-            limit = min(limit, int(cfg["night_max_posts"])) if limit else int(cfg["night_max_posts"])
-    eligible = []
-    appr = state.get("approved", [])
-    state["approved"] = []
-    for a in appr:                                # posts you approved in the bot go first
-        if now - a.get("t", 0) > 2 * 86400:
-            continue
-        fp = text_fp(norm_for_dedupe(a["text"], rules.own))
-        fp["m"] = []
-        if find_dup(fp, hist):
-            continue
-        eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
-                         {"id": 0, "media": a["media"]}, a["text"], fp, None))
-    for k in [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > 86400]:
-        state["pending"].pop(k)
-    for label, st, p in cands:                    # candidates are already in random order
-        tag = "%s/%d" % (label, p["id"])
-        text = build_text(cfg, rules, p["text_html"])
-        fp = text_fp(norm_for_dedupe(text, rules.own))
-        fp["m"], look = media_info(net, p["media"]) if p["media"] else ([], [])
-        if look:
-            fp["p"] = look
-        d, dwhy = find_dup_why(fp, hist + [c[3] for c in eligible])
-        if d:
-            log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
-            rec["rej"]["تکراری"] = rec["rej"].get("تکراری", 0) + 1
-            note(lab2key.get(label, ""), p["id"], "تکراری: %s؛ %s" % (
-                dwhy, ("مشابهش %s پیش در کانال گذاشته شده بود" % hours_ago(d["t"])) if d.get("t") else
-                "در همین دور از کانال دیگری هم رسید و همان یکی ارسال شد"))
-            if not dry:
-                stat_add(state, cfg, "dup")
-            continue
-        eligible.append((tag, p, text, fp, st))
-    if boost:
-        eligible = spread_by_channel(eligible)
-    chosen = pick_and_order(eligible, limit)
+        for label, st, p in cands:                # candidates are already in random order
+            tag = "%s/%d" % (label, p["id"])
+            text = build_text(cfg, rules, p["text_html"])
+            fp = text_fp(norm_for_dedupe(text, rules.own))
+            fp["m"], look = media_info(net, p["media"]) if p["media"] else ([], [])
+            if look:
+                fp["p"] = look
+            d, dwhy = find_dup_why(fp, hist + [c[3] for c in eligible])
+            if d:
+                log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
+                rec["rej"]["تکراری"] = rec["rej"].get("تکراری", 0) + 1
+                note(lab2key.get(label, ""), p["id"], "تکراری: %s؛ %s" % (
+                    dwhy, ("مشابهش %s پیش در کانال گذاشته شده بود" % hours_ago(d["t"])) if d.get("t") else
+                    "در همین دور از کانال دیگری هم رسید و همان یکی ارسال شد"))
+                if not dry:
+                    stat_add(state, cfg, "dup")
+                continue
+            eligible.append((tag, p, text, fp, st))
+        if not crisis:
+            eligible = spread_by_channel(eligible)
+        chosen = pick_and_order(eligible, limit)
+        if custom and not crisis and len(chosen) >= limit:
+            break                                 # the wanted number is reached: no need to look further back
+        if custom and not crisis and layer == 2 and len(chosen) < limit:
+            log.info("only %d of %d wanted posts so far: also looking at older posts of each source", len(chosen), limit)
+    for name, key, label, st, new in pages:
+        if len(new) > done.get(key, 0):
+            rec["ign"][key] = len(new) - done.get(key, 0)
+    if custom and len(chosen) < limit:
+        rec["short"] = limit - len(chosen)
     for item in eligible:
         if item not in chosen:
             log.info("[%s] not chosen this time", item[0])
