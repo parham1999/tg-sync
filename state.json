@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951777,
+ "update_offset": 774951778,
  "owner_id": 138180578,
  "fp": [
   {
@@ -9203,11 +9203,8 @@
    "t": 1794679941
   }
  ],
- "approved": [],
- "next_run_ts": 1794681760.11658,
- "review_off": false,
- "pending": {
-  "20e409a9": {
+ "approved": [
+  {
    "text": "\u0645\u0646\u0648 \u0628\u06af\u0648 \u06af\u0641\u062a\u0645 \u0627\u0644\u0627\u0646 \u0634\u0627\u0637\u0631 \u0645\u06cc\u200c\u062e\u0648\u0627\u062f \u062f\u0639\u0648\u0627\u0634\u0648\u0646 \u06a9\u0646\u0647\n\n@Wimapro",
    "media": [
     [
@@ -9215,12 +9212,15 @@
      "https://cdn4.telesco.pe/file/c1978ae9f7.mp4?token=ph2Al31oFVXhjpITJntZTDytT5e00xwUQphLm_ztYEbaUyIMGsBSIHyBPCccjxf4zRu9ZSTYCEKNkkWEjxw8PfPpIur7AaX5EKtFER7MomWlLC8tq0Zf98HXReaUzBPZe8dBRDOxNNB9wHuwGjFBK40cR9lubyyDZgjn0v1rb4YqK-njO_GkXIoZh7E8-Ceg7TYYhDcazu9bcLe8blzlFBTL6lDkI4b-iUChXUmgCkaIgGiMVf0F2kcicXI8e5FbqBGOLcNfO7Rk1rsUrQ0IyZ5_4TJ2mo4bv9GMJBNbxyhWXiKV35qMc_FM1NRhibIC-Yye2wZLhteXCyoVFxb-eg"
     ]
    ],
-   "t": 1794675628,
+   "t": 1794680122,
    "mid": 472,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1794681760.11658,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1794519113,
   1794523307,
