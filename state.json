@@ -9027,7 +9027,7 @@
      }
     },
     "fp": [],
-    "next_run_ts": 1794650210,
+    "next_run_ts": 1794650341.4868186,
     "stats": {
      "day": "2026-11-14",
      "posted": 0
@@ -9040,7 +9040,10 @@
     "src_del": [],
     "src_add": [
      "rapkiingnews"
-    ]
+    ],
+    "arrivals": [],
+    "last_scan_ts": 1794650220,
+    "approved": []
    }
   }
  ],
