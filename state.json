@@ -29,6 +29,12 @@
   },
   "3ea375f9c9": {
    "last_id": 17849
+  },
+  "1b77124c19": {
+   "last_id": 25989
+  },
+  "d07f631318": {
+   "last_id": 83223
   }
  },
  "update_offset": 774951665,
@@ -8526,7 +8532,9 @@
  "src_add": [
   "CloseFriend3",
   "dodollism",
-  "ParsTwt"
+  "ParsTwt",
+  "FilmFarsiOrg",
+  "Radiokocsher"
  ],
  "last_round": {
   "found": 6,
@@ -8615,8 +8623,10 @@
   },
   "t": 1794566119
  },
- "speed": "normal",
- "kb_v": 2,
+ "speed": "auto",
+ "kb_v": 3,
  "rep_day": "2026-11-13",
- "muted": {}
+ "muted": {},
+ "seeded_src2": 1,
+ "seed_tries": 1
 }
