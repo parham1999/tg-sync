@@ -9210,7 +9210,7 @@
    "st": {
     "channels": {
      "6a8d94adf0": {
-      "last_id": 103645
+      "last_id": 103646
      }
     },
     "fp": [
@@ -9248,13 +9248,14 @@
       "pid": "cdf7ec3a"
      }
     ],
-    "next_run_ts": 1794653177.4741194,
+    "next_run_ts": 1794653305.7251358,
     "await_src": 1794651307,
     "stats": {
      "day": "2026-11-14",
      "posted": 1,
      "skip": {
-      "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 1
+      "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 1,
+      "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 1
      }
     },
     "hv_ts": 1794651316,
@@ -9285,9 +9286,16 @@
       {
        "6a8d94adf0": 1
       }
+     ],
+     [
+      1794653180,
+      1,
+      {
+       "6a8d94adf0": 1
+      }
      ]
     ],
-    "last_scan_ts": 1794653056,
+    "last_scan_ts": 1794653180,
     "approved": [],
     "last_round": {
      "found": 1,
@@ -9296,7 +9304,7 @@
      "over": 0,
      "appr": 0,
      "rej": {
-      "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 1
+      "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 1
      },
      "src": {
       "6a8d94adf0": [
@@ -9310,13 +9318,28 @@
      "why": [
       [
        "6a8d94adf0",
-       103645,
-       "\u0641\u0648\u0631\u0648\u0627\u0631\u062f\u06cc \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 \u062f\u06cc\u06af\u0631 \u0627\u0633\u062a"
+       103646,
+       "\u0628\u0647 \u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0634\u0627\u0631\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f: @rapking \u2190 \u0628\u0631\u0627\u06cc \u062a\u0623\u06cc\u06cc\u062f \u0634\u0645\u0627 \u0641\u0631\u0633\u062a\u0627\u062f\u0647 \u0634\u062f (\u067e\u06cc\u0627\u0645 \u062c\u062f\u0627 \u0628\u0627 \u062f\u06a9\u0645\u0647\u200c\u06cc \u0627\u0631\u0633\u0627\u0644/\u0631\u062f)"
       ]
      ],
      "ign": {},
      "short": 1,
-     "t": 1794652928
+     "t": 1794653185
+    },
+    "pending": {
+     "1b4921cf": {
+      "text": "\u06a9\u0648\u0686\u0647 \u067e\u0633 \u06a9\u0648\u0686\u0647 \u0647\u0627\u06cc \u062a\u0647\u0631\u0627\u0646\n\n@kwoe929w001kgkw",
+      "media": [
+       [
+        "photo",
+        "https://cdn4.telesco.pe/file/nwncyEH-JBNYx1lk5qgo7C6_ZLfnqRkI_L5g342csJxRHnm2Nnraid5DNDFPUimqhsHDWLrjBmscmWvba_gF2esB9uBguKyOgBVgZGF2gcZ-i6AJrpesfLCWfrpmogYqvnlNBMjuY5NX0ECmjNHmVmqCYNTF6uId-h24apyinHWYoAlSgr0nJqIzoZ-DGtJVwM3r8P2aVY3G8pYWb78LeZE9c3KJr8LPwN4gNulbfY8_7lfSNRTdidSp7uAJBUhjBr3kXkFBTPyHUchfCsIkkck9v0M4qvX9ETZo0IdEDwPYqAa9SjS8TIPbLvHHuraZ0_9k7OFKVF8G9DY011JQZg.jpg"
+       ]
+      ],
+      "t": 1794653183,
+      "mid": 418,
+      "chat": 138180578,
+      "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@rapking)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 rapkiingnews.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
+     }
     }
    }
   }
