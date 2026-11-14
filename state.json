@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951709,
+ "update_offset": 774951710,
  "owner_id": 138180578,
  "fp": [
   {
@@ -9023,7 +9023,16 @@
    "st": {
     "channels": {},
     "fp": [],
-    "next_run_ts": 1794650210
+    "next_run_ts": 1794650210,
+    "stats": {
+     "day": "2026-11-14",
+     "posted": 0
+    },
+    "hv_ts": 1794650047,
+    "hv": {},
+    "hv_seen": [],
+    "posted_log": [],
+    "await_src": 1794650066
    }
   }
  ],
