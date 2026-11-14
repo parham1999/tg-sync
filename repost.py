@@ -1785,6 +1785,10 @@ def process_updates(cfg, net, state, state_path, wait=0):
         REPLY_TO[0] = None
         SHOW_KB[0] = False
     TAG[0] = ""
+    try:
+        sync_pin(cfg, net, state)
+    except Exception:
+        log.exception("pin update failed")
     ow = owner_of(cfg, state)
     if ow and not state.get("seeded_src2"):       # one time: three new source channels
         out = []
@@ -2027,6 +2031,51 @@ def dest_summary(cfg0, root, active_id):
             i, c["target_channel"], "  ✅ (در حال مدیریت)" if pid_ == active_id else "", len(c["sources"]),
             "⏸ خاموش" if st.get("paused") else "🟢 روشن", SPEED_FA.get(speed_mode(st), "؟")))
     return "\n".join(rows)
+
+
+def sync_pin(cfg0, net, root):
+    """Keep ONE pinned message at the top of the bot chat that names the destination you are managing
+    (only while there is more than one destination). Changing the destination edits that message."""
+    owner = owner_of(cfg0, root)
+    if not owner:
+        return
+    pin = root.get("pin") or {}
+    if not root.get("dests"):
+        if pin.get("mid"):
+            for method, extra in (("unpinChatMessage", {}), ("deleteMessage", {})):
+                try:
+                    net.api(method, dict({"chat_id": owner, "message_id": pin["mid"]}, **extra))
+                except (ApiError, NetError):
+                    pass
+            root.pop("pin", None)
+        return
+    want = "📌 مقصد در حال مدیریت: %s\nهمه‌ی دکمه‌ها و دستورها الان روی همین کانال اثر دارند." % active_profile(cfg0, root)[1]["target_channel"]
+    if pin.get("text") == want and pin.get("mid"):
+        return
+    if pin.get("mid"):
+        try:
+            net.api("editMessageText", {"chat_id": owner, "message_id": pin["mid"], "text": want})
+            root["pin"] = {"mid": pin["mid"], "text": want}
+            return
+        except ApiError as e:
+            if "not modified" in str(e.desc).lower():
+                root["pin"] = {"mid": pin["mid"], "text": want}
+                return
+        except NetError:
+            return
+        for method in ("unpinChatMessage", "deleteMessage"):          # the old one is gone or broken: replace it
+            try:
+                net.api(method, {"chat_id": owner, "message_id": pin["mid"]})
+            except (ApiError, NetError):
+                pass
+    try:
+        r = net.api("sendMessage", {"chat_id": owner, "text": want, "disable_notification": True})
+        mid = (r or {}).get("message_id")
+        if mid:
+            net.api("pinChatMessage", {"chat_id": owner, "message_id": mid, "disable_notification": True})
+            root["pin"] = {"mid": mid, "text": want}
+    except (ApiError, NetError) as e:
+        log.warning("could not pin the destination message: %s", getattr(e, "desc", e))
 
 
 def dest_menu(cfg0, root):
