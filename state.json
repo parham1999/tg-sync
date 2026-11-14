@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951732,
+ "update_offset": 774951735,
  "owner_id": 138180578,
  "fp": [
   {
@@ -9021,7 +9021,11 @@
    "target": "@widiowofowr9osoapqp",
    "title": "\u0645\u0642\u0635\u062f \u062a\u0633\u062a\u06f2",
    "st": {
-    "channels": {},
+    "channels": {
+     "46bd0c92df": {
+      "last_id": 122942
+     }
+    },
     "fp": [],
     "next_run_ts": 1794651283,
     "stats": {
@@ -9032,12 +9036,16 @@
     "hv": {},
     "hv_seen": [],
     "posted_log": [],
-    "await_src": 1794651147
+    "src_del": [],
+    "src_add": [
+     "Daneshjoo"
+    ]
    }
   }
  ],
  "pin": {
   "mid": 387,
   "text": "\ud83d\udccc \u0645\u0642\u0635\u062f \u062f\u0631 \u062d\u0627\u0644 \u0645\u062f\u06cc\u0631\u06cc\u062a: @widiowofowr9osoapqp\n\u0647\u0645\u0647\u200c\u06cc \u062f\u06a9\u0645\u0647\u200c\u0647\u0627 \u0648 \u062f\u0633\u062a\u0648\u0631\u0647\u0627 \u0627\u0644\u0627\u0646 \u0631\u0648\u06cc \u0647\u0645\u06cc\u0646 \u06a9\u0627\u0646\u0627\u0644 \u0627\u062b\u0631 \u062f\u0627\u0631\u0646\u062f."
- }
+ },
+ "await_dest": 1794651191
 }
