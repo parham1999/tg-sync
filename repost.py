@@ -73,6 +73,7 @@ DEFAULTS = {
     "crisis_on_channels": 4,               # ... or this many sources with ...
     "crisis_channel_rate": 5,              # ... at least this many new posts each within 30 min
     "crisis_off_rate": 14,                 # auto-off: below this many per 30 min for 20 minutes
+    "carry_over": True,                    # a good post that did not fit this round waits (max 2 h) for the next one
     "widen_max_layers": 4,                 # to reach the wanted post count: up to this many newest posts per source
     "widen_max_age_minutes": 60,           # ... but only posts younger than this (the newest one is always allowed)
     "manual_max_posts": 15,                # the highest number you can type in "manual" speed
@@ -1744,6 +1745,8 @@ def round_text(cfg, r, title):
     if r.get("over"):
         out.append("• جا نشد (سقف پست در هر دور): %d" % r["over"])
     out.append("• ریپوست شد: %d" % r.get("posted", 0))
+    if r.get("carry"):
+        out.append("• جا نشد و برای دور بعد نگه داشته شد: %d" % r["carry"])
     rows = sorted(r.get("src", {}).items(), key=lambda kv: (-kv[1][1], -kv[1][0]))
     if rows:
         out.append("سهم کانال‌ها (تازه ← ریپوست):")
@@ -1751,6 +1754,11 @@ def round_text(cfg, r, title):
             out.append("  %s %s: %d ← %d" % ("✅" if sent else "▫️", names.get(key, "(کانال حذف‌شده)"), new, sent))
     if r.get("appr"):
         out.append("  + %d پست تاییدشده‌ی شما" % r["appr"])
+    sent = r.get("sent") or []
+    if sent:
+        out.append("\n✅ پست‌هایی که ارسال شد:")
+        for n, (link, note_) in enumerate(sent[:15], 1):
+            out.append("%d) %s" % (n, "\n    ".join(x for x in (link or "پست بدون لینک منبع", note_) if x)))
     why = r.get("why") or []
     ign = r.get("ign") or {}
     if why or ign:
@@ -1868,8 +1876,10 @@ def _handle_update(cfg, net, state, u):
         if act == "ok":
             pend["t"] = int(time.time())
             state.setdefault("approved", []).append(pend)
+            stat_add(state, cfg, "rev_ok")
             note = "✅ تایید شد؛ در دور بعدی ارسال می‌شود"
         else:
+            stat_add(state, cfg, "rev_no")
             note = "❌ رد شد"
         m = cb.get("message") or {}
         try:                                       # first: update the message (works even when late)
@@ -2395,6 +2405,7 @@ def publish_forward(cfg, net, state, owner, ttext, media, fp, pid):
     hist.append(dict(fp, t=now, man=True, pid=pid))
     state.setdefault("posted_log", []).append(now)
     stat_add(state, cfg, "posted")
+    stat_add(state, cfg, "fwd")
     und = state.setdefault("undo", {})
     und[pid] = {"ids": [list(x) for x in getattr(net, "last_sent", [])], "t": now}
     for k in [k for k, v in und.items() if now - v.get("t", 0) > 2 * 86400]:
@@ -2507,31 +2518,6 @@ def forward_button(cfg, net, state, cb, act, pid):
         pass
 
 
-def heartbeat(cfg, net, state):
-    """Once a day (after 07:30 Iran time) tell the owner the bot is alive."""
-    owner = owner_of(cfg, state)
-    if not owner or isinstance(state, SubState):
-        return
-    now = time.time()
-    lt = time.gmtime(now + int(cfg["utc_offset_minutes"]) * 60)
-    day = "%04d-%02d-%02d" % (lt.tm_year, lt.tm_mon, lt.tm_mday)
-    if (lt.tm_hour, lt.tm_min) < (7, 30) or state.get("hb_day") == day:
-        return
-    TAG[0] = ""
-    txt = "🟢 ربات از سمت گیت‌هاب فعال است.\n"
-    for pid_, c, st in profiles(cfg, state):
-        log_ = [t for t in st.get("posted_log", []) if now - t < 86400]
-        if state.get("dests"):
-            txt += "%s: %s، %d پست در ۲۴ ساعت گذشته\n" % (
-                c["target_channel"], "⏸ خاموش" if st.get("paused") else "روشن", len(log_))
-        else:
-            txt += "وضعیت: " + ("⏸ خاموش (با دکمه‌ی شما)" if st.get("paused") else "روشن") + "\n"
-            txt += "پست‌های ارسال‌شده در ۲۴ ساعت گذشته: %d" % len(log_)
-    if tell(net, owner, txt, MENU_KB) is not None:
-        state["hb_day"] = day
-
-
-
 def review_worthy(cfg, reason):
     if not cfg["review_suspicious"] or not reason:
         return False
@@ -2557,10 +2543,12 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
                              {"text": "❌ رد", "callback_data": "no:" + pid}]]})
     if isinstance(r, dict) and r.get("message_id"):
         state["pending"][pid].update(mid=r["message_id"], chat=owner, ask=ask)
+    stat_add(state, cfg, "rev_ask")
     return True
 
 
 PENDING_TTL = 2 * 3600
+CARRY_TTL = 2 * 3600                              # a leftover post waits at most 2 hours for a free place
 
 
 def expire_pending(cfg, net, state, now=None):
@@ -2578,6 +2566,7 @@ def _expire_pending(cfg, net, state, now=None):
     old = [k for k, v in state.get("pending", {}).items() if now - v.get("t", 0) > PENDING_TTL]
     for k in old:
         v = state["pending"].pop(k)
+        stat_add(state, cfg, "rev_exp")
         if v.get("mid"):
             try:
                 net.api("editMessageText", {"chat_id": v["chat"], "message_id": v["mid"],
@@ -2591,9 +2580,10 @@ def spread_by_channel(items):
     """Random order in which no source appears twice in a row (as far as the choice allows) and every
     source gets its turn before any source gets a second one - so a busy channel cannot fill a round."""
     approved = [i for i in items if i[0].startswith("approved/")]
+    carried = [i for i in items if i[0].startswith("carry/")]       # older leftovers only fill what fresh posts leave free
     groups = {}
     for i in items:
-        if not i[0].startswith("approved/"):
+        if not i[0].startswith(("approved/", "carry/")):
             groups.setdefault(i[0].split("/")[0], []).append(i)
     out, last = list(approved), None
     while groups:
@@ -2611,7 +2601,7 @@ def spread_by_channel(items):
             del groups[g]
         out.append(it)
         last = g
-    return out
+    return out + carried
 
 
 def pick_and_order(items, limit):
@@ -2660,6 +2650,9 @@ def skip_group(what):
     return "تکراری" if what == "dup" else next((g for p, g in SKIP_GROUPS if what.startswith(p)), "سایر")
 
 
+COUNTERS = ("crisis", "seen", "found", "rounds", "send_now", "fwd", "appr", "carried", "rev_ask", "rev_ok", "rev_no", "rev_exp")
+
+
 def stat_add(state, cfg, what, key=None, n=1):
     """Counters for the daily report: what = 'posted' | 'dup' | 'crisis' | a skip reason text."""
     day = iran_day(cfg, time.time())[0]
@@ -2671,29 +2664,70 @@ def stat_add(state, cfg, what, key=None, n=1):
         if key:
             by = st.setdefault("by_src", {})
             by[key] = by.get(key, 0) + n
-    elif what == "crisis":
-        st["crisis"] = st.get("crisis", 0) + n
+        hh = st.setdefault("by_hour", {})
+        hk = str(iran_day(cfg, time.time())[1].tm_hour)
+        hh[hk] = hh.get(hk, 0) + n
+    elif what in COUNTERS:
+        st[what] = st.get(what, 0) + n
     else:
         grp = skip_group(what)
         sk = st.setdefault("skip", {})
         sk[grp] = sk.get(grp, 0) + n
 
 
+def fa(n):
+    """Western digits -> Persian digits for the report."""
+    return str(n).translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+
+
 def report_text(cfg, st):
     names = {src_key(n): n for n in cfg["sources"]}
-    lines = ["📊 گزارش روز %s" % st["day"], "✅ ارسال‌شده: %d" % st.get("posted", 0)]
+    g = lambda k: int(st.get(k, 0))
+    posted, fwd, appr = g("posted"), g("fwd"), g("appr")
+    auto = max(0, posted - fwd - appr)
+    sk = st.get("skip", {})
+    rej = sum(sk.values())
+    L = ["🟢 ربات فعال است", "",
+         "📊 گزارش ۲۴ ساعت گذشته", "🗓 روز %s (از ۰۰:۰۰ تا ۲۴:۰۰ به وقت ایران)" % st["day"], "",
+         "━━━━━━━━━━━━", "🔎 بررسی پست‌ها", "",
+         "• پست تازه‌ای که در منبع‌ها آمد: %s" % fa(g("found")),
+         "• پستی که خود ربات بررسی کرد: %s" % fa(g("seen")),
+         "• از این بررسی‌ها ارسال شد: %s" % fa(auto + appr),
+         "• ردشد: %s" % fa(rej), "",
+         "━━━━━━━━━━━━", "📤 ارسال‌شده در کل: %s پست" % fa(posted), "",
+         "• خودکار (خود ربات از منبع‌ها): %s" % fa(auto),
+         "• فوروارد دستی شما: %s" % fa(fwd),
+         "• مشکوک‌هایی که شما تایید کردید: %s" % fa(appr)]
+    if g("carried"):
+        L.append("  (%s پست از این‌ها در دور قبل جا نشده بود و در دور بعد رفت)" % fa(g("carried")))
+    L += ["", "━━━━━━━━━━━━", "⛔ ردشده‌ها", ""]
+    if sk:
+        L += ["• %s: %s" % (k, fa(v)) for k, v in sorted(sk.items(), key=lambda x: -x[1])]
+    else:
+        L.append("• هیچ‌کدام")
+    if g("rev_ask"):
+        L += ["", "━━━━━━━━━━━━", "🧐 پست‌های مشکوک (برای تصمیم شما)", "",
+              "• فرستاده شد برای شما: %s" % fa(g("rev_ask")),
+              "• شما تایید کردید: %s" % fa(g("rev_ok")),
+              "• شما رد کردید: %s" % fa(g("rev_no")),
+              "• بدون جواب ماند و رد شد: %s" % fa(g("rev_exp"))]
     by = sorted(st.get("by_src", {}).items(), key=lambda x: -x[1])
     if by:
-        lines.append("منبع‌ها: " + "، ".join("%s %d" % (names.get(k, "؟"), v) for k, v in by))
-    sk = st.get("skip", {})
-    lines.append("⛔ ردشده: " + ("، ".join("%s %d" % (g, v) for g, v in sorted(sk.items(), key=lambda x: -x[1])) or "هیچ"))
-    if st.get("crisis"):
-        lines.append("🚨 حالت بحران %d بار خودکار فعال شد" % st["crisis"])
-    return "\n".join(lines)
+        L += ["", "━━━━━━━━━━━━", "📡 سهم منبع‌ها از ارسال", ""]
+        L += ["• %s: %s" % (names.get(k, "(حذف‌شده)"), fa(v)) for k, v in by]
+    hh = sorted(st.get("by_hour", {}).items(), key=lambda x: -x[1])[:3]
+    L += ["", "━━━━━━━━━━━━", "⚙️ جزئیات اجرا", "",
+          "• دورهای ارسال: %s" % fa(g("rounds")),
+          "• ارسال فوری (⚡): %s" % fa(g("send_now"))]
+    if hh:
+        L.append("• پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh))
+    if g("crisis"):
+        L.append("• حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis")))
+    return "\n".join(L)
 
 
 def daily_report(cfg, net, state, now):
-    """One short summary per day in the bot chat (default 23:30 Iran time)."""
+    """One full report per day in the bot chat, sent right after midnight (Iran time) for the day that just ended."""
     owner = owner_of(cfg, state)
     day, lt = iran_day(cfg, now)
     st = state.get("stats")
@@ -2703,12 +2737,8 @@ def daily_report(cfg, net, state, now):
     if st["day"] != day:                          # a new day began: close the old one first
         if owner and state.get("rep_day") != st["day"]:
             tell(net, owner, report_text(cfg, st), MENU_KB)
+            state["rep_day"] = st["day"]
         state["stats"] = {"day": day, "posted": 0}
-        return
-    h, m = cfg["report_time"]
-    if owner and state.get("rep_day") != day and (lt.tm_hour, lt.tm_min) >= (int(h), int(m)):
-        if tell(net, owner, report_text(cfg, st), MENU_KB) is not None:
-            state["rep_day"] = day
 
 
 def crisis_eval(cfg, net, state, now, counts):
@@ -2771,7 +2801,6 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             process_updates(cfg, net, state, state_path)
         set_tag(cfg, state)
         apply_overrides(cfg, state)                # sources / banned words changed from the bot
-        heartbeat(cfg, net, state)
         daily_report(cfg, net, state, now)
         hours_update(cfg, net, state, now)
         state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
@@ -2849,6 +2878,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     else:
         limit = int(cfg["max_posts_per_run"]) or 99
     # --- 2. choose candidates ---
+    if not dry:
+        stat_add(state, cfg, "found", n=len({p["ts"] if p.get("ts") else ("id", p["id"]) for pg in pages for p in pg[4]}))
     rec = {"found": sum(len(p[4]) for p in pages), "considered": 0, "posted": 0, "over": 0, "appr": 0,
            "rej": {}, "src": {p[1]: [len(p[4]), 0] for p in pages if p[4]}, "crisis": bool(crisis), "mode": mode_desc,
            "target": limit, "why": [], "ign": {}}
@@ -2857,6 +2888,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         if len(rec["why"]) < 40:
             rec["why"].append([key, pid, text])
     lab2key = {p[2]: p[1] for p in pages}
+    names_by_key = {p[1]: p[0] for p in pages}
     reviewed = 0
     maxl = int(cfg["crisis_posts_per_channel"]) if crisis else int(cfg["widen_max_layers"]) if custom else 1
     maxage = float(cfg["widen_max_age_minutes"]) * 60
@@ -2875,6 +2907,21 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
                          {"id": 0, "media": a["media"]}, a["text"], fp, None))
+    carried_in = state.get("carry", [])
+    state["carry"] = []
+    if custom and not crisis and cfg["carry_over"]:
+        for c in carried_in:                      # leftovers of earlier rounds (not sent only because the round was full)
+            if now - c.get("t", 0) > CARRY_TTL:
+                continue
+            fp = text_fp(norm_for_dedupe(c["text"], rules.own))
+            fp["m"] = []
+            if find_dup(fp, hist):
+                continue
+            eligible.append(("carry/" + hashlib.sha1(c["text"].encode()).hexdigest()[:6],
+                             {"id": 0, "media": c["media"], "link": c.get("link"), "ckey": c.get("key"), "ct": c.get("t", now)},
+                             c["text"], fp, None))
+    elif carried_in:
+        state["carry"] = carried_in               # crisis / dry run: keep them for a normal round
     _expire_pending(cfg, net, state, now)
     if not dry:
         for name, key, label, st, new in pages:
@@ -2891,6 +2938,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 continue                          # too old to be worth posting
             done[key] = done.get(key, 0) + 1
             rec["considered"] += 1
+            if not dry:
+                stat_add(state, cfg, "seen")
             reason = skip_reason(cfg, p)
             if reason:
                 g = skip_group(reason)
@@ -2942,11 +2991,24 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     for item in eligible:
         if item not in chosen:
             log.info("[%s] not chosen this time", item[0])
+            carry_it = custom and not crisis and not dry and bool(cfg["carry_over"])
+            if item[0].startswith("carry/"):
+                if carry_it and len(state["carry"]) < 12:   # still no place: wait for the next round (until it is too old)
+                    state["carry"].append({"text": item[2], "media": item[1]["media"], "t": item[1].get("ct", int(now)),
+                                           "link": item[1].get("link"), "key": item[1].get("ckey")})
+                continue
             if not item[0].startswith("approved/"):
                 rec["over"] += 1
-                note(lab2key.get(item[0].split("/")[0], ""), item[1]["id"],
+                kk = lab2key.get(item[0].split("/")[0], "")
+                nm = names_by_key.get(kk)
+                note(kk, item[1]["id"],
                      ("جا نشد: سقف %d پست در این دور پر شده بود" % limit) if len(chosen) >= limit else
                      "کنار گذاشته شد تا دو پست فقط‌متنی پشت‌سرهم نیایند")
+                if carry_it and len(state["carry"]) < 12:
+                    state["carry"].append({"text": item[2], "media": item[1]["media"], "t": int(now),
+                                           "link": ("t.me/%s/%s" % (nm, item[1]["id"])) if nm and item[1].get("id") else None,
+                                           "key": kk or None})
+                    rec["carry"] = rec.get("carry", 0) + 1
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
                 state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
     if not dry:
@@ -2966,10 +3028,24 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             state.setdefault("posted_log", []).append(int(time.time()))
             stat_add(state, cfg, "posted", tag.split("/")[0] if tag.split("/")[0] in keys else None)
             posted += 1
-            if tag.split("/")[0] in lab2key:
-                rec["src"].setdefault(lab2key[tag.split("/")[0]], [0, 0])[1] += 1
+            head = tag.split("/")[0]
+            if head in lab2key:
+                rec["src"].setdefault(lab2key[head], [0, 0])[1] += 1
+                nm = names_by_key.get(lab2key[head])
+                rec.setdefault("sent", []).append(["t.me/%s/%s" % (nm, p["id"]) if nm else "", ""])
+            elif head == "carry":
+                ck = p.get("ckey")
+                if ck:
+                    by = state["stats"].setdefault("by_src", {}) if isinstance(state.get("stats"), dict) else {}
+                    by[ck] = by.get(ck, 0) + 1
+                    rec["src"].setdefault(ck, [0, 0])[1] += 1
+                rec["carried"] = rec.get("carried", 0) + 1
+                stat_add(state, cfg, "carried")
+                rec.setdefault("sent", []).append([p.get("link") or "", "از دور قبل مانده بود"])
             else:
                 rec["appr"] += 1
+                stat_add(state, cfg, "appr")
+                rec.setdefault("sent", []).append(["", "پست تاییدشده‌ی شما"])
         except Skip as e:
             log.warning("[%s] skipped: %s", tag, e)
             note(lab2key.get(tag.split("/")[0], ""), p["id"], "ارسال نشد: %s" % e)
@@ -2982,7 +3058,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         save_state(state_path, state)
         if i < len(chosen) - 1:
             time.sleep(random.uniform(float(lo), float(hi)))
-    if not dry and rec["found"]:                  # what the bot's "status" button shows
+    if posted and not dry:
+        stat_add(state, cfg, "send_now" if manual else "rounds")
+    if not dry and (rec["found"] or posted):      # what the bot's "status" button shows
         rec.update(t=int(time.time()), posted=posted)
         state["last_manual" if manual else "last_round"] = rec
     if not posted and not dry and not manual:
