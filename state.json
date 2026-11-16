@@ -15355,19 +15355,6 @@
  "next_run_ts": 1794861817.9103422,
  "review_off": false,
  "pending": {
-  "22b2f830": {
-   "text": "@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn1.telesco.pe/file/sPmlnBlm8ET1XSexW0VYhT3UclZ3R_MbAEYEjQQzO7qvDyHBaMlG_bZ1xGivrPaNJkG9M_svphIgOHKcZu6xjiSm4PZEEe1q13nRCwxmJ3UOTYYc_qbXgNAiz--S3_sdr3YnplsGOX5hsgPYWVpMcGhxSNH4WC7ekeS9D36gbJ2PGqiDFlH3wvFj0Ns95L6dTUMklz86qgxicSwlMBLZ3arlHkFjVHScQktL9kx64DBYorwKWRejKZo8ZYMPtDvQxPVjNK4Gt4Eqt9eDTc7kpVHjAotlaoFg0w2SHhWryHJgc5pN8DvSS3NUcnnRai-eJV_AZ2bVwhh4N1jL3JXt7g.jpg"
-    ]
-   ],
-   "t": 1794852958,
-   "mid": 579,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  },
   "8c8d0003": {
    "text": "\u062d\u0627\u062c \u0622\u0642\u0627 \u0634\u06cc\u0631 \u062e\u0634\u06a9\u0634\u0648 \u062e\u0648\u0631\u062f \u0648 \u062e\u0648\u0627\u0628\u06cc\u062f\n\n@Wimapro",
    "media": [
@@ -15676,7 +15663,7 @@
   "fwd": 8,
   "appr": 3,
   "carried": 1,
-  "rev_exp": 1
+  "rev_exp": 2
  },
  "arrivals": [
   [
