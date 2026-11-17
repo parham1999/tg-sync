@@ -486,15 +486,17 @@ def remember_videos(chunk):
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
-        m = re.search(r'data-post="[^"/]+/(\d+)"', chunk)
+        m = re.search(r'data-post="([^"/]+)/(\d+)"', chunk)
         if not m:
             continue
+        chan_ = m.group(1)
         tm = TEXT_RE.search(chunk)
         remember_videos(chunk)
         media = []
         for mm in MEDIA_RE.finditer(chunk):
             if mm.group(1):
                 media.append(("photo", html.unescape(mm.group(1))))
+                PHOTO_SRC[html.unescape(mm.group(1))] = (chan_, int(m.group(2)))
             elif mm.group(2):
                 tag = mm.group(2)
                 cm = re.search(r'\bclass="([^"]*)"', tag)
@@ -511,7 +513,7 @@ def parse_page(page):
         vm = re.search(r'tgme_widget_message_views">\s*([\d.,]+)\s*([KkMm]?)\s*<', chunk)
         tmm = re.search(r'<time[^>]*\bdatetime="([^"]+)"', chunk)
         posts.append({
-            "id": int(m.group(1)),
+            "id": int(m.group(2)),
             "views": parse_views(vm.group(1), vm.group(2)) if vm else None,
             "ts": parse_ts(tmm.group(1)) if tmm else None,
             "text_html": strip_proxy_links(tm.group(1)) if tm else "",
@@ -983,15 +985,153 @@ def watermark_photo(data, text):
     return buf.getvalue()
 
 
-def marked_photo(net, cfg, url):
-    """Download a photo and return its watermarked bytes, or None if that is not possible."""
-    if not wm_on(cfg):
-        return None
+# --------------------------------------------------------------------------- #
+# optional: full-quality photos through a spare Telegram account (userbot)
+# Off unless TG_API_ID, TG_API_HASH and TG_SESSION exist. Any trouble -> the old way (public web page).
+# --------------------------------------------------------------------------- #
+PHOTO_SRC = {}                 # photo url of the public web page -> (channel, message id)
+HD = {"root": None, "client": None, "ents": {}, "run_off": False, "notify": None, "used": 0}
+HD_DEAD_ERRORS = ("AuthKey", "SessionRevoked", "SessionExpired", "UserDeactivated", "PhoneNumberBanned",
+                  "Unauthorized", "ApiId", "AuthBytes")
+
+
+def _hd_secret():
+    a, h, ss = (os.environ.get(k, "").strip() for k in ("TG_API_ID", "TG_API_HASH", "TG_SESSION"))
+    if a.isdigit() and h and ss:
+        return int(a), h, ss
+    return None
+
+
+def _hd_fp(ss):
+    return hashlib.sha1(ss.encode()).hexdigest()[:8]
+
+
+def hd_enabled():
+    sec = _hd_secret()
+    if not sec or HD["run_off"]:
+        return False
+    st = (HD["root"] or {}).get("hd") or {}
+    if st.get("fp") == _hd_fp(sec[2]) and (st.get("dead") or st.get("off_until", 0) > time.time()):
+        return False                       # known broken (a NEW session secret resets this automatically)
+    return True
+
+
+def _hd_say(msg):
     try:
-        return watermark_photo(net.get(url, binary=True, timeout=60), wm_text(cfg))
+        if HD["notify"]:
+            HD["notify"](msg)
+    except Exception:
+        pass
+
+
+def _hd_fail(e):
+    """Decide what an error means. Never raises."""
+    sec = _hd_secret()
+    st = HD["root"].setdefault("hd", {}) if HD["root"] is not None else {}
+    name = type(e).__name__
+    if name in ("RuntimeError", "Exception"):
+        name = str(e).split(":")[0][:40] or name
+    st["fp"] = _hd_fp(sec[2]) if sec else ""
+    HD["run_off"] = True
+    detail = str(e).strip().replace("\n", " ")[:200]
+    tail = "\n\nربات خودکار برگشت به روش قبلی (عکس از صفحه‌ی عمومی) و مثل همیشه کار می‌کند؛ هیچ پستی گم نمی‌شود و نیازی به کاری از شما نیست."
+    if any(k in name for k in HD_DEAD_ERRORS):
+        st["dead"] = True
+        st["why"] = name
+        log.info("userbot account unusable (%s) - back to the normal way for good", name)
+        if not st.get("told"):
+            st["told"] = True
+            _hd_say("⚠️ اکانت کمکی (برای عکس با کیفیت) از کار افتاد؛ احتمالاً بن، ریزش نشست یا خروج از دستگاه‌ها.\n"
+                    "نوع خطا: %s\n%s%s\n\nاگر خواستید دوباره فعالش کنید: یک session تازه با make_session.py بسازید و در GitHub Secrets (TG_SESSION) جایگزین کنید؛ خودش فعال می‌شود." % (name, detail, tail))
+    elif "FloodWait" in name:
+        wait = min(6 * 3600, int(getattr(e, "seconds", 600) or 600) + 120)
+        st["off_until"] = time.time() + wait
+        log.info("userbot asked to wait (%s) - normal way for a while", name)
+        _hd_say("⚠️ تلگرام به اکانت کمکی محدودیت موقت داد (FloodWait، حدود %d دقیقه).\n"
+                "بعد از پایان محدودیت خودش دوباره امتحان می‌کند؛ تا آن موقع:%s" % (wait // 60, tail))
+    else:
+        st["fails"] = int(st.get("fails", 0)) + 1
+        log.info("userbot failed (%s: %s) - normal way for now", name, str(e)[:120])
+        if st["fails"] >= 3:
+            st["off_until"] = time.time() + 6 * 3600
+            st["fails"] = 0
+            _hd_say("⚠️ اکانت کمکی چند بار پشت‌سرهم خطا داد (آخرین خطا: %s — %s).\n"
+                    "۶ ساعت کنارش می‌گذارم و بعد دوباره امتحان می‌کنم؛ تا آن موقع:%s" % (name, detail, tail))
+
+
+def _hd_client():
+    if HD["client"] is None:
+        from telethon.sync import TelegramClient            # imported only when really used
+        from telethon.sessions import StringSession
+        a, h, ss = _hd_secret()
+        c = TelegramClient(StringSession(ss), a, h, connection_retries=1, request_retries=1, timeout=20)
+        c.connect()
+        HD["client"] = c
+        import atexit
+        atexit.register(hd_close)
+        if not c.is_user_authorized():
+            raise RuntimeError("AuthKeyUnregistered: session not authorized")
+    return HD["client"]
+
+
+def hd_close():
+    c, HD["client"] = HD["client"], None
+    if c is not None:
+        try:
+            c.disconnect()
+        except Exception:
+            pass
+
+
+def hd_photo(url):
+    """The photo exactly as Telegram holds it (bytes), or None -> caller uses the public web copy."""
+    info = PHOTO_SRC.get(url)
+    if not info or not hd_enabled():
+        return None
+    chan, mid = info
+    try:
+        c = _hd_client()
+        ent = HD["ents"].get(chan)
+        if ent is None:
+            ent = HD["ents"][chan] = c.get_entity(chan)
+        msg = c.get_messages(ent, ids=mid)
+        if not msg or not getattr(msg, "photo", None):
+            return None
+        data = c.download_media(msg, file=bytes)
+        if not data or len(data) < 3000 or data[:2] != b"\xff\xd8":
+            return None
+        st = (HD["root"] or {}).get("hd")
+        if st and (st.get("fails") or st.get("off_until")):
+            st["fails"], st["off_until"] = 0, 0
+        HD["used"] += 1
+        return data
+    except Exception as e:
+        _hd_fail(e)
+        return None
+
+
+def photo_bytes(net, url):
+    """(bytes, is_hd): the best copy of a photo we can get."""
+    d = hd_photo(url)
+    if d:
+        return d, True
+    return net.get(url, binary=True, timeout=60), False
+
+
+def marked_photo(net, cfg, url):
+    """Photo bytes with the ID on it, or (ID off) the full-quality bytes, or None when the plain URL should be used."""
+    try:
+        data, hd = photo_bytes(net, url)
+    except Exception as e:
+        log.info("could not download a photo (%s) - sending it as it is", e)
+        return None
+    if not wm_on(cfg):
+        return data if hd else None
+    try:
+        return watermark_photo(data, wm_text(cfg))
     except Exception as e:
         log.info("could not put the ID on a photo (%s) - sending it as it is", e)
-        return None
+        return data if hd else None
 
 
 def video_cover(net, url):
@@ -1605,15 +1745,24 @@ def _img_info(data):
 
 
 def qtest(cfg, net, state, arg=""):
-    """Photo-quality probe (private chat only, nothing goes to any channel): forward a source post to the owner,
-    read the photo Telegram itself holds, compare it with the small picture of the public web page, delete the copy."""
+    """Photo-quality probe (private chat only, nothing goes to any channel): compares the small picture of the
+    public web page with the full photo the spare account gets from Telegram."""
     owner = owner_of(cfg, state)
     names = [normalize_source(arg)] if arg else list(cfg["sources"])
     if not owner or not names:
         return "اول باید حداقل یک منبع داشته باشید."
-    out, tries = ["🔬 آزمایش کیفیت عکس (فقط در همین چت؛ به هیچ کانالی چیزی نمی‌رود):"], 0
+    out = ["🔬 آزمایش کیفیت عکس (فقط در همین چت؛ به هیچ کانالی چیزی نمی‌رود):"]
+    st = state.get("hd") or {}
+    if not _hd_secret():
+        out.append("\nاکانت کمکی هنوز وصل نیست (TG_API_ID / TG_API_HASH / TG_SESSION در Secrets نیست)؛ ربات با روش معمولی کار می‌کند.")
+    elif not hd_enabled():
+        why = "از کار افتاده (%s)" % st.get("why") if st.get("dead") else "موقتاً کنار گذاشته شده تا %s" % time.strftime("%H:%M", time.localtime(st.get("off_until", 0)))
+        out.append("\n⚠️ اکانت کمکی الان %s؛ ربات با روش معمولی کار می‌کند." % why)
+    else:
+        out.append("\n✅ اکانت کمکی وصل است.")
+    tries = 0
     for name in names:
-        if tries >= 6:
+        if tries >= 4:
             break
         try:
             posts = parse_page(net.get(cfg["web_base"] + name))
@@ -1621,7 +1770,7 @@ def qtest(cfg, net, state, arg=""):
             continue
         for p in reversed(posts[-8:]):
             ph = [u for k, u in p["media"] if k == "photo"]
-            if not ph or tries >= 6:
+            if not ph or tries >= 4:
                 continue
             tries += 1
             link = "t.me/%s/%s" % (name, p["id"])
@@ -1630,33 +1779,10 @@ def qtest(cfg, net, state, arg=""):
             except NetError as e:
                 out.append("\n• %s\n  خواندن عکس صفحه‌ی وب ممکن نشد: %s" % (link, e))
                 continue
-            try:
-                m = net.api("forwardMessage", {"chat_id": owner, "from_chat_id": "@" + name, "message_id": p["id"]})
-            except (ApiError, NetError) as e:
-                out.append("\n• %s\n  ❌ تلگرام اجازه‌ی کپی این پست را نداد: %s" % (link, getattr(e, "desc", e)))
-                if tries >= 2 and not any("✅" in x for x in out):
-                    break
-                continue
-            mid = (m or {}).get("message_id")
-            try:
-                sizes = (m or {}).get("photo") or []
-                if not sizes:
-                    out.append("\n• %s\n  کپی شد ولی عکس نبود." % link)
-                    continue
-                best = max(sizes, key=lambda x: (x.get("width", 0) * x.get("height", 0), x.get("file_size", 0)))
-                tg = net.get("tgfile:" + best["file_id"], binary=True, timeout=60)
-                out.append("\n• %s\n  صفحه‌ی وب: %s\n  ✅ نسخه‌ی خود تلگرام: %s" % (link, _img_info(web), _img_info(tg)))
-            except (ApiError, NetError) as e:
-                out.append("\n• %s\n  دانلود نسخه‌ی تلگرام ممکن نشد: %s" % (link, getattr(e, "desc", e)))
-            finally:
-                if mid:
-                    try:
-                        net.api("deleteMessage", {"chat_id": owner, "message_id": mid})
-                    except (ApiError, NetError):
-                        pass
-            if sum("✅" in x for x in out) >= 3:
-                tries = 99
-                break
+            hd = hd_photo(ph[0])
+            line = "\n• %s\n  صفحه‌ی وب: %s" % (link, _img_info(web))
+            line += ("\n  ✅ نسخه‌ی خود تلگرام: %s" % _img_info(hd)) if hd else "\n  (نسخه‌ی تلگرام گرفته نشد)"
+            out.append(line)
     if tries == 0:
         out.append("\nپست عکس‌دار تازه‌ای در منبع‌ها پیدا نشد؛ کمی بعد دوباره امتحان کنید.")
     return "\n".join(out)
@@ -3338,6 +3464,8 @@ def main():
         return
     state = load_state(args.state)
     apply_overrides(cfg, state)
+    HD["root"] = state
+    HD["notify"] = lambda m: net.api("sendMessage", {"chat_id": owner_of(cfg, state), "text": m}) if owner_of(cfg, state) else None
     force = args.force
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
              "your channel" if IN_CLOUD else cfg["target_channel"])
