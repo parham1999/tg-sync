@@ -16,7 +16,7 @@
    "last_id": 72849
   },
   "b2a6a8ff4b": {
-   "last_id": 33293
+   "last_id": 33295
   },
   "ef680edcd0": {
    "last_id": 18840
@@ -15417,12 +15417,70 @@
    "man": true,
    "t": 1794925653,
    "pid": "b493f736"
+  },
+  {
+   "x": "76c6110e78bc",
+   "h": [
+    "0c58136c",
+    "0dd6fa9e",
+    "0eb69643",
+    "111fdeb7",
+    "1a7bf511",
+    "5539c557",
+    "59470e2b",
+    "79037127",
+    "7a4b2c67",
+    "7fcefb76",
+    "86fa00b6",
+    "9b8983f3",
+    "bcf78332",
+    "c0b3dff0",
+    "c703f546",
+    "d5d11318",
+    "eecc8f72"
+   ],
+   "w": [
+    "06b7a1b1",
+    "07ff28e7",
+    "1dc17892",
+    "3b9e49d3",
+    "4ff2bb9d",
+    "5c0a4fc7",
+    "661938f4",
+    "6b0a0ffe",
+    "76d6c01a",
+    "79ba78bc",
+    "8e1505a4",
+    "b764bbd3",
+    "c05a7444",
+    "c99cfaf1",
+    "dc7d96d4",
+    "f96c4714"
+   ],
+   "m": [
+    "6207aa95f488"
+   ],
+   "t": 1794926029
   }
  ],
  "approved": [],
- "next_run_ts": 1794925978.075239,
+ "next_run_ts": 1794928071.8796077,
  "review_off": false,
- "pending": {},
+ "pending": {
+  "b99e3205": {
+   "text": "\ud83c\uddea\ud83c\uddfa<b> \u0645\u06cc\u06a9\u0633 \u0648\u06cc\u0698\u0647 \u0627\u0645\u0634\u0628 \u0648\u06cc\u0646\u06a9\u0648\u0628\u062a \u0627\u0632 \u0631\u0627\u0647 \u0631\u0633\u06cc\u062f\u061b \u0647\u06cc\u062c\u0627\u0646 \u0631\u0642\u0627\u0628\u062a\u200c\u0647\u0627\u06cc \u0627\u0645\u0634\u0628 \u0631\u0648 \u0628\u0627 \u062a\u0631\u06a9\u06cc\u0628\u06cc \u0627\u062e\u062a\u0635\u0627\u0635\u06cc \u062f\u0646\u0628\u0627\u0644 \u06a9\u0646!</b>\n\n\u2764\ufe0f<b> Wales</b><b>\ud83c\udd9a</b>\ud83c\uddf5\ud83c\uddf9<b> Portugal</b>\n\u23f0 <b>Tonight 23:15</b>\n\ud83c\udfdf<b> Cardiff City\n </b>\n\u2705<b>[ MIX CODE ]:</b> <code>b24d17</code>\n\n\ud83c\udf81    <b>\u06a9\u062f \u0645\u06cc\u06a9\u0633 \u0628\u0627\u0644\u0627 \u0631\u0648 \u06a9\u067e\u06cc \u06a9\u0646\u06cc\u062f \u0648 \u062f\u0627\u062e\u0644 \u0628\u0631\u06af\u0647 \u0634\u0631\u0637 \u062e\u0648\u062f\u060c \u062f\u0631 \u0633\u0627\u06cc\u062a \u0648\u0627\u0631\u062f \u06a9\u0646\u06cc\u062f \u0648 \u0627\u0632 \u0645\u06cc\u06a9\u0633 \u067e\u06cc\u0634\u0646\u0647\u0627\u062f\u06cc \u0628\u0627\u0632\u06cc\u200c\u0647\u0627\u06cc \u0627\u0645\u0634\u0628 \u0646\u0647\u0627\u06cc\u062a \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u0631\u0648 \u0628\u0628\u0631\u06cc\u062f.\n</b><b>\ud83d\udd17</b><b> \u0647\u0645\u06cc\u0646 \u062d\u0627\u0644\u0627 \u0648\u0627\u0631\u062f \u0645\u06cc\u0646\u06cc\u200c\u0627\u067e \u0648\u06cc\u0646\u06a9\u0648\u0628\u062a \u0634\u0648 \u0648 \u0641\u0631\u0635\u062a \u0631\u0648 \u0627\u0632 \u062f\u0633\u062a \u0646\u062f\u0647 \u0648 \u062f\u06cc\u062f\u0627\u0631 \u062c\u0630\u0627\u0628 \u0627\u0645\u0634\u0628 \u0631\u0648 \u067e\u06cc\u0634\u200c\u0628\u06cc\u0646\u06cc \u06a9\u0646:</b>\ud83d\udc47\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/LkRSjCjShTWASXvlgPfcE8gypBDBCFMqLr-MJV9r0KI-zU7FCdjY9H_hvRMkXTvVX51NN0WkPsOuczs_8oSKe3QtX3RpVzF0lqLoPadj5oLBiUaB1KVmfr6cmwa-ZeTTbqeGtRVJorgFzpLsyCVnIFHpS9MJqoQNh7ugll6Y7KilxJc3VYZ2eHaojSNdiEu8u6JLMnNHGkwv1jW6umf-9V0vYevNTf2uRNhZqIx7G2PYQNXpfNLXSR-3deFfpr8Xgp62zdRdXQbTHwWtb_PCX3PuMrvZdrepAg1sFjHOvSEMSgA4S1W6CC9WfTYCeyXgbFNiPexDhXTLUlyKvisW_w.jpg"
+    ]
+   ],
+   "t": 1794926021,
+   "mid": 644,
+   "chat": 138180578,
+   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@wincobet_bot)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 SourceShit.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
+  }
+ },
  "posted_log": [
   1794668606,
   1794668652,
@@ -15645,24 +15703,25 @@
   1794925560,
   1794925613,
   1794925649,
-  1794925653
+  1794925653,
+  1794926029
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-17",
-  "posted": 53,
-  "found": 172,
-  "seen": 124,
+  "posted": 54,
+  "found": 174,
+  "seen": 126,
   "skip": {
-   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 10,
+   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 11,
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 18,
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 5,
    "\u062a\u0628\u0644\u06cc\u063a": 5,
    "\u062a\u06a9\u0631\u0627\u0631\u06cc": 5
   },
-  "rev_ask": 10,
+  "rev_ask": 11,
   "by_src": {
-   "b2a6a8ff4b": 2,
+   "b2a6a8ff4b": 3,
    "7f69010262": 4,
    "2201e87742": 3,
    "a198fa18c9": 6,
@@ -15689,9 +15748,10 @@
    "14": 2,
    "15": 4,
    "16": 2,
-   "17": 18
+   "17": 18,
+   "18": 1
   },
-  "rounds": 23,
+  "rounds": 24,
   "rev_exp": 5,
   "rev_ok": 5,
   "appr": 5,
@@ -15743,9 +15803,16 @@
    {
     "2201e87742": 1
    }
+  ],
+  [
+   1794926002,
+   2,
+   {
+    "b2a6a8ff4b": 2
+   }
   ]
  ],
- "last_scan_ts": 1794925842,
+ "last_scan_ts": 1794926002,
  "hv_ts": 1794921625,
  "hv": {
   "7": [
@@ -16068,18 +16135,18 @@
   "Radiokocsher"
  ],
  "last_round": {
-  "found": 1,
-  "considered": 1,
-  "posted": 0,
+  "found": 2,
+  "considered": 2,
+  "posted": 1,
   "over": 0,
   "appr": 0,
   "rej": {
-   "\u0631\u06cc\u067e\u0644\u0627\u06cc": 1
+   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 1
   },
   "src": {
-   "2201e87742": [
-    1,
-    0
+   "b2a6a8ff4b": [
+    2,
+    1
    ]
   },
   "crisis": false,
@@ -16087,14 +16154,20 @@
   "target": 2,
   "why": [
    [
-    "2201e87742",
-    72849,
-    "\u0631\u06cc\u067e\u0644\u0627\u06cc \u0628\u0647 \u067e\u0633\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0633\u062a"
+    "b2a6a8ff4b",
+    33294,
+    "\u0628\u0647 \u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0634\u0627\u0631\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f: @wincobet_bot \u2190 \u0628\u0631\u0627\u06cc \u062a\u0623\u06cc\u06cc\u062f \u0634\u0645\u0627 \u0641\u0631\u0633\u062a\u0627\u062f\u0647 \u0634\u062f (\u067e\u06cc\u0627\u0645 \u062c\u062f\u0627 \u0628\u0627 \u062f\u06a9\u0645\u0647\u200c\u06cc \u0627\u0631\u0633\u0627\u0644/\u0631\u062f)"
    ]
   ],
   "ign": {},
-  "short": 2,
-  "t": 1794925858
+  "short": 1,
+  "sent": [
+   [
+    "t.me/SourceShit/33295",
+    ""
+   ]
+  ],
+  "t": 1794926029
  },
  "last_manual": {
   "found": 1,
