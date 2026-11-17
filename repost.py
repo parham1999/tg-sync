@@ -1596,6 +1596,72 @@ def source_button(cfg, net, state, cb):
         pass
 
 
+def _img_info(data):
+    try:
+        im = Image.open(io.BytesIO(data))
+        return "%d×%d پیکسل، %d کیلوبایت" % (im.size[0], im.size[1], len(data) // 1024)
+    except Exception:
+        return "%d کیلوبایت" % (len(data) // 1024)
+
+
+def qtest(cfg, net, state, arg=""):
+    """Photo-quality probe (private chat only, nothing goes to any channel): forward a source post to the owner,
+    read the photo Telegram itself holds, compare it with the small picture of the public web page, delete the copy."""
+    owner = owner_of(cfg, state)
+    names = [normalize_source(arg)] if arg else list(cfg["sources"])
+    if not owner or not names:
+        return "اول باید حداقل یک منبع داشته باشید."
+    out, tries = ["🔬 آزمایش کیفیت عکس (فقط در همین چت؛ به هیچ کانالی چیزی نمی‌رود):"], 0
+    for name in names:
+        if tries >= 6:
+            break
+        try:
+            posts = parse_page(net.get(cfg["web_base"] + name))
+        except NetError:
+            continue
+        for p in reversed(posts[-8:]):
+            ph = [u for k, u in p["media"] if k == "photo"]
+            if not ph or tries >= 6:
+                continue
+            tries += 1
+            link = "t.me/%s/%s" % (name, p["id"])
+            try:
+                web = net.get(ph[0], binary=True, timeout=60)
+            except NetError as e:
+                out.append("\n• %s\n  خواندن عکس صفحه‌ی وب ممکن نشد: %s" % (link, e))
+                continue
+            try:
+                m = net.api("forwardMessage", {"chat_id": owner, "from_chat_id": "@" + name, "message_id": p["id"]})
+            except (ApiError, NetError) as e:
+                out.append("\n• %s\n  ❌ تلگرام اجازه‌ی کپی این پست را نداد: %s" % (link, getattr(e, "desc", e)))
+                if tries >= 2 and not any("✅" in x for x in out):
+                    break
+                continue
+            mid = (m or {}).get("message_id")
+            try:
+                sizes = (m or {}).get("photo") or []
+                if not sizes:
+                    out.append("\n• %s\n  کپی شد ولی عکس نبود." % link)
+                    continue
+                best = max(sizes, key=lambda x: (x.get("width", 0) * x.get("height", 0), x.get("file_size", 0)))
+                tg = net.get("tgfile:" + best["file_id"], binary=True, timeout=60)
+                out.append("\n• %s\n  صفحه‌ی وب: %s\n  ✅ نسخه‌ی خود تلگرام: %s" % (link, _img_info(web), _img_info(tg)))
+            except (ApiError, NetError) as e:
+                out.append("\n• %s\n  دانلود نسخه‌ی تلگرام ممکن نشد: %s" % (link, getattr(e, "desc", e)))
+            finally:
+                if mid:
+                    try:
+                        net.api("deleteMessage", {"chat_id": owner, "message_id": mid})
+                    except (ApiError, NetError):
+                        pass
+            if sum("✅" in x for x in out) >= 3:
+                tries = 99
+                break
+    if tries == 0:
+        out.append("\nپست عکس‌دار تازه‌ای در منبع‌ها پیدا نشد؛ کمی بعد دوباره امتحان کنید.")
+    return "\n".join(out)
+
+
 def manage_command(cfg, net, state, text):
     """Returns (reply, markup) when the text is a source / banned-word command, else None."""
     # forgiving format: "/add name", "add name", "add/name", "/add/name", "اضافه name"
@@ -1613,6 +1679,8 @@ def manage_command(cfg, net, state, text):
         hub_of(cfg, state)[1].pop("await_dest", None)
         t, kb = sources_view(cfg, state)
         return t + "\n\n✏️ تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که همین‌جا بفرستید را «منبع» همین مقصد حساب می‌کنم.", kb
+    if cmd == "/qtest":
+        return qtest(cfg, net, state, arg), None
     if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
         return hours_text(state), None
     if text == BTN_BAN or cmd == "/bans":
