@@ -1,7 +1,7 @@
 {
  "channels": {
   "ee6c8e519c": {
-   "last_id": 8949
+   "last_id": 8950
   },
   "1c1cb821b4": {
    "last_id": 14588
@@ -10,13 +10,13 @@
    "last_id": 9711
   },
   "46bd0c92df": {
-   "last_id": 123040
+   "last_id": 123041
   },
   "2201e87742": {
    "last_id": 72822
   },
   "b2a6a8ff4b": {
-   "last_id": 33285
+   "last_id": 33286
   },
   "ef680edcd0": {
    "last_id": 18829
@@ -34,7 +34,7 @@
    "last_id": 26012
   },
   "d07f631318": {
-   "last_id": 83286
+   "last_id": 83287
   },
   "363a9cab3d": {
    "last_id": 2
@@ -43,13 +43,6 @@
  "update_offset": 774951827,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "19f93f3861a2",
-   "m": [
-    "ee815d752c13"
-   ],
-   "t": 1794503200
-  },
   {
    "x": "0aa0adbb67b6",
    "h": [
@@ -15418,14 +15411,19 @@
     "41416162cec8c0c0"
    ],
    "t": 1794892244
+  },
+  {
+   "m": [
+    "6fe5b28a16f0"
+   ],
+   "t": 1794894400
   }
  ],
  "approved": [],
- "next_run_ts": 1794894377.5813782,
+ "next_run_ts": 1794896348.1053512,
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1794634280,
   1794636513,
   1794636557,
   1794636596,
@@ -15639,14 +15637,15 @@
   1794877711,
   1794886382,
   1794890164,
-  1794892244
+  1794892244,
+  1794894400
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-17",
-  "posted": 11,
-  "found": 44,
-  "seen": 28,
+  "posted": 12,
+  "found": 48,
+  "seen": 32,
   "skip": {
    "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 2,
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 6,
@@ -15663,35 +15662,39 @@
    "1c1cb821b4": 1,
    "ef680edcd0": 1,
    "f20a53f3a3": 1,
-   "ee6c8e519c": 1
+   "ee6c8e519c": 2
   },
   "by_hour": {
    "0": 6,
    "2": 1,
    "4": 1,
    "7": 1,
-   "8": 2
+   "8": 2,
+   "9": 1
   },
-  "rounds": 7,
+  "rounds": 8,
   "rev_exp": 4
  },
  "arrivals": [
-  [
-   1794890150,
-   1,
-   {
-    "ee6c8e519c": 1
-   }
-  ],
   [
    1794892232,
    1,
    {
     "a198fa18c9": 1
    }
+  ],
+  [
+   1794894385,
+   4,
+   {
+    "d07f631318": 1,
+    "ee6c8e519c": 1,
+    "46bd0c92df": 1,
+    "b2a6a8ff4b": 1
+   }
   ]
  ],
- "last_scan_ts": 1794892232,
+ "last_scan_ts": 1794894385,
  "hv_ts": 1794888278,
  "hv": {
   "7": [
@@ -16051,31 +16054,59 @@
   "Radiokocsher"
  ],
  "last_round": {
-  "found": 1,
-  "considered": 1,
+  "found": 4,
+  "considered": 4,
   "posted": 1,
-  "over": 0,
+  "over": 3,
   "appr": 0,
   "rej": {},
   "src": {
-   "a198fa18c9": [
+   "d07f631318": [
+    1,
+    0
+   ],
+   "ee6c8e519c": [
     1,
     1
+   ],
+   "46bd0c92df": [
+    1,
+    0
+   ],
+   "b2a6a8ff4b": [
+    1,
+    0
    ]
   },
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 8: 3 \u062a\u0627 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
-  "target": 3,
-  "why": [],
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 9: 3 \u062a\u0627 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "target": 1,
+  "why": [
+   [
+    "46bd0c92df",
+    123041,
+    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 1 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+   ],
+   [
+    "b2a6a8ff4b",
+    33286,
+    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 1 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+   ],
+   [
+    "d07f631318",
+    83287,
+    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 1 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+   ]
+  ],
   "ign": {},
-  "short": 2,
+  "carry": 3,
   "sent": [
    [
-    "t.me/dodollism/20725",
+    "t.me/Khartox/8950",
     ""
    ]
   ],
-  "t": 1794892244
+  "t": 1794894400
  },
  "last_manual": {
   "found": 5,
@@ -16123,5 +16154,42 @@
  "dest_n": 4,
  "dests": [],
  "await_src": 1794660904,
- "carry": []
+ "carry": [
+  {
+   "text": "\u0641\u06a9\u0631 \u06a9\u0646\u0645 \u0645\u0646\u0628\u0639 \u062f\u0631\u0622\u0645\u062f \u0645\u0627\u0647 \u0628\u0639\u062f\u0645\u0648 \u067e\u06cc\u062f\u0627 \u06a9\u0631\u062f\u0645\n\n\u06af\u0631\u0648\u0647 \u062e\u0648\u0627\u0628\u06af\u0627\u0647 \u062f\u062e\u062a\u0631\u200c\u0648\u0646\u0647:\n\n- \u0627\u0644\u0628\u0627\u0644\u0648\u06cc \u0628\u062f\u0648\u0646 \u0647\u0633\u062a\u0647\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/ZOTm6EHrp9R1Q-IwQNkOGPMbZEE-UbenBe70bxDTmr-ec9Lr8QD2HYCQQ-i-UCaXoxf9EPnVS9XzanYL6ducBdALy4jJ_NXp3z-6oEEtBYX2QlHfwqcBzd6rsUfV8qEGHrMWxciSV8zZJNs7eQI5XApAs_6HfVuqmwixKC8WXjqyAv1D24Vac3ZfV8JRoeepdb2RW5UZCyw0cfIX5KhN3Gb5PKyWavYDt6r0RojtN-TNLQhBbkCbMZQ__H4-5AdXDD_FNhecouYFA3usxVWb0f9dweaMgzXYCZQEcc11C6iyrrlGnXkcSYfT53liUgLKmZwm4am7Jud0wwt3EB4cVA.jpg"
+    ]
+   ],
+   "t": 1794894385,
+   "link": "t.me/Daneshjoo/123041",
+   "key": "46bd0c92df"
+  },
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "video",
+     "https://cdn4.telesco.pe/file/93f858686d.mp4?token=mA6LGevK912_8pFNuPwOxrSHsSczHx2FNwKO_UbPc0UqO-OKu6F44ZX8_fbiW7S-yF2RJfshihS88pKYhs8PrGvX-CpecOfecCArURSgf1NVg1G8VlkeB88FVCU72Ji2NNMfg6gi56mWWiZq1zGINUOJ2eI9PTNHc4QxbFZSXVVRhTOh6b9vELMk9NN5hZvItEbeM6L9Vd5UuYpb7EmB7AXms8xZ-CDmMQEiXllY_Rzyp9pr80ES9nxS-h8ON_jqEPM3bFAhSEaOVKblFnwHvoV3AATTE1JOqgNcNUa-gvpdA3vnJT85CiuFOZdiiZbIXrxzDl5J7wMFmZDn5dr6uQ"
+    ]
+   ],
+   "t": 1794894385,
+   "link": "t.me/SourceShit/33286",
+   "key": "b2a6a8ff4b"
+  },
+  {
+   "text": "\u06af\u0631\u0641\u062a\u06cc \u06a9\u0647\u061f\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "https://cdn1.telesco.pe/file/I2nTycQTgwkqwLC5XDOloYLyD6lI-J08tUIcH1YKadEFQ2QlX_Vf-rqHo_ZR58pICiiRWAmMn6U5K5v0BTO0DrTGmZmkL9-08GlGBvf307hWGdgCs5tbu5WHpza9O0bEoiVeXZfZh1pOPbe-QDnET9AufaLFBMN-SC0Hv_pQ5GMKBy2oDSQTluUe5mvNs207cH0578tL1EWQs-Vyvj5s-O0C9eEH-VIiF-AybeK5r4SAnklCQr33duN1hb1n-WQVYJPE_C_KayAa_2uIXSr6VKqzSr_THqq9Z9uTmpihT6Un5CyZKx5kpBixhw9oUPc9CwagtLE5q0Kb-l1_h1kTmQ.jpg"
+    ]
+   ],
+   "t": 1794894385,
+   "link": "t.me/Radiokocsher/83287",
+   "key": "d07f631318"
+  }
+ ]
 }
