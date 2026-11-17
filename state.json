@@ -15472,19 +15472,6 @@
  "next_run_ts": 1794939273.9676893,
  "review_off": false,
  "pending": {
-  "3a677a97": {
-   "text": "\u0634\u0627\u0647\u06a9\u0627\u0631\ud83d\ude02\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/oMr5GHg7nFPETscv9jSS_z7NjIKQRqgseMm0-DynQenTY7r3s9yA44n7Eipx78DMI1oIRfyOb3JuA3e_y0Dt23BsDeQzJICu8PwrFXQ7GM1by0XigFctl3aABSqhw534NvDjz63lut7R_sipwqkddaAfG9pmQuurrxPBLLuwazF_Ig-qSzD1X5bJw6K5Tlnu-XrkgZHig0fr9oy7_dn51Pvz3h_maWw-kwIBSdn-oOptj8MUms3FbYEFYmyBYAsAAWetg2L65K_VpR4r0mdtNEsb1WZoOhPpqvSkfvxF5R6hDfxO5HF8_qv0joedowy7wmDQwFo9leKCdNwdKcZWMA.jpg"
-    ]
-   ],
-   "t": 1794930570,
-   "mid": 658,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  },
   "42b44808": {
    "text": "\u0627\u0648\u062c \u0644\u0627\u06a9\u0686\u0631\u06cc \u0628\u0648\u062f\u0646 \u06cc\u06a9 \u06a9\u0648\u062f\u06a9 \u062f\u0647\u0647 \u0647\u0641\u062a\u0627\u062f/\u0647\u0634\u062a\u0627\u062f\u06cc:\n\n@Wimapro",
    "media": [
@@ -15788,7 +15775,7 @@
    "21": 3
   },
   "rounds": 29,
-  "rev_exp": 6,
+  "rev_exp": 7,
   "rev_ok": 6,
   "appr": 6,
   "fwd": 5,
