@@ -2988,6 +2988,31 @@ def crisis_eval(cfg, net, state, now, counts):
     return mode == "on" or (mode == "auto" and bool(state.get("crisis_auto")))
 
 
+SERVING = [False]          # True while the bot stays alive (--serve): buttons are answered even between two posts
+
+
+def pause_serving(cfg, net, state, state_path, seconds):
+    """The pause between two posts of a round. In stay-alive mode it listens for your buttons / messages
+    meanwhile (instant answers). What you change (speed, sources, ...) counts from the NEXT round;
+    the posts of the running round are already chosen."""
+    end = time.time() + max(0.0, seconds)
+    if not SERVING[0]:
+        time.sleep(max(0.0, seconds))
+        return
+    while True:
+        left = end - time.time()
+        if left <= 0:
+            return
+        tag, t0 = TAG[0], time.time()
+        try:
+            process_updates(cfg, net, state, state_path, wait=max(1, min(15, left)))
+        except Exception:
+            log.exception("bot check between two posts failed (continuing)")
+        TAG[0] = tag
+        if time.time() - t0 < 1:
+            time.sleep(min(1.0, max(0.0, end - time.time())))
+
+
 def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     """One posting round: the newest post of every source (in crisis mode the newest few), if new and
     not an ad, duplicates removed, random order, at most max_posts_per_run posts, then a pause."""
@@ -3255,7 +3280,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             note(lab2key.get(tag.split("/")[0], ""), p["id"], "ارسال نشد: تلگرام نپذیرفت (%s)" % e.desc)
         save_state(state_path, state)
         if i < len(chosen) - 1:
-            time.sleep(random.uniform(float(lo), float(hi)))
+            pause_serving(cfg, net, state, state_path, random.uniform(float(lo), float(hi)))
     if posted and not dry:
         stat_add(state, cfg, "send_now" if manual else "rounds")
     if not dry and (rec["found"] or posted):      # what the bot's "status" button shows
@@ -3474,6 +3499,7 @@ def main():
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
              "your channel" if IN_CLOUD else cfg["target_channel"])
     deadline = time.time() + args.serve * 60
+    SERVING[0] = bool(args.serve) and not args.dry_run
     saved = state_digest(state)
     first = True
     while True:
