@@ -496,7 +496,11 @@ def parse_page(page):
         for mm in MEDIA_RE.finditer(chunk):
             if mm.group(1):
                 media.append(("photo", html.unescape(mm.group(1))))
-                PHOTO_SRC[html.unescape(mm.group(1))] = (chan_, int(m.group(2)))
+                # an album is ONE block in the page: every photo's own message id is in its link (…/14591?single)
+                a0 = chunk.rfind("<a", 0, mm.start(1))
+                hm = re.search(r'href="[^"]*?/(\d+)(?:\?[^"]*)?"', chunk[a0:mm.start(1)]) if a0 >= 0 else None
+                if hm:
+                    PHOTO_SRC[html.unescape(mm.group(1))] = (chan_, int(hm.group(1)))
             elif mm.group(2):
                 tag = mm.group(2)
                 cm = re.search(r'\bclass="([^"]*)"', tag)
