@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951835,
+ "update_offset": 774951837,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15786,24 +15786,8 @@
    "t": 1794922329
   }
  ],
- "approved": [],
- "next_run_ts": 1794924154.4298449,
- "review_off": false,
- "pending": {
-  "975d772e": {
-   "text": "<b>\ud83e\udd10\u06a9\u062a\u0648\u0646\u06cc \u0645\u0633\u062a\u0631 \u06a9\u0648\u0627\u0644\u06cc\u062a\u06cc\u061f \u0645\u0627\u0647\u06cc \u0641\u0642\u0637 \u06f2/\u06f9\u06f0\u06f0 \u062a\u0648\u0645\u0646!!!\n\n\u2795\n\ud83d\udd34\u0627\u0631\u0633\u0627\u0644 \u0631\u0627\u06cc\u06af\u0627\u0646 \u0648 \u062c\u0648\u0631\u0627\u0628 \u0647\u062f\u06cc\u0647\n\n\u00ab\u0628\u0627 \u0628\u06cc\u0634 \u0627\u0632 \u0647\u0632\u0627\u0631 \u0631\u0636\u0627\u06cc\u062a \u0645\u0634\u062a\u0631\u06cc \u0622\u0646\u0644\u0627\u06cc\u0646\u00bb</b>\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/tbNQoFqiIrB1TKef3PhWD_RD3W5_VVaTXoaGmTrUXZrGHWTMUya7Guxf_XMPz-9NUm5RBZQQS49LtaCZORzXdrkIcHJ5a4L5d_XI-EvtOP68rOwph6DRDiFVttHMBQC7HdHN5IRdBE2As_asX0kK-QlgUJJd6_pVPokZ1_vgyiO-Wc6WG_jb7nKvQWdEusiihUUvuJq11wyYf9b-VZ682hpIYRK8Il5s118X9iJ1oeSFy5QEniVrd5fqXxzE5nMf7370XeqncjTHXT2sfKb6aC1A53ucYQMa9-3QRu9MJomHuShqhQRG1o7j69ATtcf_Rqg5CBsBuoar8utAJkOFqg.jpg"
-    ]
-   ],
-   "t": 1794922253,
-   "mid": 618,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@iransneak)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 ParsTwt.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  },
-  "89bd9286": {
+ "approved": [
+  {
    "text": "\u062f\u06cc\u062a \u0627\u0648\u0644 \u0645\u0648\u0641\u0642 \u0628\u0648\u062f \u0686\u0648\u0646 \u0627\u0648\u0646 \u0631\u0641\u062a \u0633\u0641\u0627\u0631\u0634\u0645\u0648\u0646\u0648 \u062a\u062d\u0648\u06cc\u0644 \u06af\u0631\u0641\u062a\n\n@Wimapro",
    "media": [
     [
@@ -15811,12 +15795,15 @@
      "https://cdn4.telesco.pe/file/Sr1phIsSpucLB06RM3kX066EaCFoP7PIm6QML7yjASrMIki2xxTTq1KXkwY52fcDg11gvJFkD6TvmdHKpiNFyJhu3VfgEnrY_2C4et-rr2zRj4EL-b5hyMfTQkMMTGcutMT1GxHEd38fsOx3isik2XKkq_kWCv_HK6heYBNmEIcTCHkR08IlcGRJSFTIEYWCcbA65Rql-6MNNe2uXhw0DyTzYLeujrYg4D3WU5tsnC59F4qIYhrAUmYfknrte7U7OS5g3sKjLbEnduI5lENt6pj48Z3paNC5uO7U-ytEYJhiPYlOZitZJcuBNyVuAjQLYY6uZ8KLf4mYcIYhBawevg.jpg"
     ]
    ],
-   "t": 1794922259,
+   "t": 1794922333,
    "mid": 620,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1794924154.4298449,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1794663435,
   1794664012,
@@ -16076,9 +16063,10 @@
   },
   "rounds": 21,
   "rev_exp": 5,
-  "rev_ok": 4,
+  "rev_ok": 5,
   "appr": 4,
-  "fwd": 3
+  "fwd": 3,
+  "rev_no": 1
  },
  "arrivals": [
   [
