@@ -771,10 +771,15 @@ def find_dup_why(fp, entries):
                 return e, "همان خبر است با جمله‌بندی دیگر (کلمه‌های اصلی یکی است)"
         if fp.get("m") and set(fp["m"]) & set(e.get("m", [])):
             return e, "همان عکس یا ویدیو است"
-        if fp.get("p") and e.get("p") and (fp.get("man") or e.get("man")):
-            # a picture you sent by hand: the same picture in another size still counts as a duplicate
-            if any(hamming(a, b) <= 3 for a in fp["p"] for b in e["p"]):
+        if fp.get("p") and e.get("p"):
+            # the same picture in another size / quality / with a label is the same picture
+            matched = sum(1 for a in fp["p"] if any(hamming(a, b) <= 3 for b in e["p"]))
+            need = 1 if (fp.get("man") or e.get("man") or len(fp["p"]) == 1) else (len(fp["p"]) + 1) // 2
+            if matched >= need:
                 return e, "همان عکس است با اندازه‌ی دیگر"
+        if fp.get("v") and e.get("v"):
+            if any(hamming(a[0], b[0]) <= 4 and abs(a[1] - b[1]) <= 1 for a in fp["v"] for b in e["v"]):
+                return e, "همان ویدیو است (کاور و مدتش یکی است)"
     return None, None
 
 
@@ -844,6 +849,22 @@ def media_info(net, media):
         except Exception:
             pass
     return exact, look
+
+
+def video_look(net, media):
+    """[(cover look-alike hash, seconds)] of the first 3 videos: a re-uploaded clip has the same cover and length."""
+    out = []
+    for kind, url in media[:3]:
+        if kind != "video":
+            continue
+        meta = VIDEO_META.get(url) or {}
+        if not meta.get("thumb") or not meta.get("d"):
+            continue
+        try:
+            out.append([dhash(net.get(meta["thumb"], binary=True, timeout=30)), int(meta["d"])])
+        except Exception:
+            pass
+    return out
 
 
 def media_hashes(net, media):
@@ -994,7 +1015,7 @@ def watermark_photo(data, text):
 # Off unless TG_API_ID, TG_API_HASH and TG_SESSION exist. Any trouble -> the old way (public web page).
 # --------------------------------------------------------------------------- #
 PHOTO_SRC = {}                 # photo url of the public web page -> (channel, message id)
-HD = {"root": None, "client": None, "ents": {}, "run_off": False, "notify": None, "used": 0}
+HD = {"root": None, "cfg": None, "client": None, "ents": {}, "run_off": False, "notify": None, "used": 0, "streak": 0}
 HD_DEAD_ERRORS = ("AuthKey", "SessionRevoked", "SessionExpired", "UserDeactivated", "PhoneNumberBanned",
                   "Unauthorized", "ApiId", "AuthBytes")
 
@@ -1020,6 +1041,19 @@ def hd_enabled():
     return True
 
 
+def hd_status_line():
+    if not _hd_secret():
+        return ""
+    st = (HD["root"] or {}).get("hd") or {}
+    sec = _hd_secret()
+    bad = st.get("fp") == _hd_fp(sec[2])
+    if bad and st.get("dead"):
+        return "عکس با کیفیت (اکانت کمکی): ⛔ از کار افتاده؛ عکس‌ها از صفحه‌ی وب (روش قبلی)"
+    if bad and st.get("off_until", 0) > time.time():
+        return "عکس با کیفیت (اکانت کمکی): ⚠️ موقتاً کنار گذاشته شده؛ عکس‌ها فعلاً از صفحه‌ی وب"
+    return "عکس با کیفیت (اکانت کمکی): ✅ فعال"
+
+
 def _hd_say(msg):
     try:
         if HD["notify"]:
@@ -1028,39 +1062,54 @@ def _hd_say(msg):
         pass
 
 
-def _hd_fail(e):
-    """Decide what an error means. Never raises."""
+def _hd_alarm(why, detail, extra=""):
+    """The helper account is out of the game: three messages in a row so it cannot be mistaken for a normal notification."""
+    _hd_say("🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\n⛔ هشدار مهم ⛔\nاکانت کمکی (عکس با کیفیت) کنار گذاشته شد\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨")
+    time.sleep(2)
+    _hd_say("🔎 چه شد؟\n%s\n\nجزئیات فنی: %s%s" % (why, detail or "-", ("\n\n" + extra) if extra else ""))
+    time.sleep(2)
+    _hd_say("✅ ربات خودش سالم است و همین الان به روش قبلی برگشت (عکس از صفحه‌ی عمومی منبع). "
+            "هیچ پستی گم نمی‌شود؛ فقط کیفیت عکس‌ها مثل قبل از اکانت کمکی است.\n"
+            "نیازی به کاری از شما نیست. اگر خواستید دوباره فعال شود: با make_session.py یک TG_SESSION تازه بسازید "
+            "و در GitHub Secrets جایگزین کنید.")
+
+
+def _hd_off(st, name, e, hard, wait=0):
     sec = _hd_secret()
-    st = HD["root"].setdefault("hd", {}) if HD["root"] is not None else {}
-    name = type(e).__name__
-    if name in ("RuntimeError", "Exception"):
-        name = str(e).split(":")[0][:40] or name
     st["fp"] = _hd_fp(sec[2]) if sec else ""
     HD["run_off"] = True
-    detail = str(e).strip().replace("\n", " ")[:200]
-    tail = "\n\nربات خودکار برگشت به روش قبلی (عکس از صفحه‌ی عمومی) و مثل همیشه کار می‌کند؛ هیچ پستی گم نمی‌شود و نیازی به کاری از شما نیست."
-    if any(k in name for k in HD_DEAD_ERRORS):
+    detail = ("%s: %s" % (name, str(e).strip().replace("\n", " ")[:180])).strip()
+    if hard:
         st["dead"] = True
         st["why"] = name
         log.info("userbot account unusable (%s) - back to the normal way for good", name)
         if not st.get("told"):
             st["told"] = True
-            _hd_say("⚠️ اکانت کمکی (برای عکس با کیفیت) از کار افتاد؛ احتمالاً بن، ریزش نشست یا خروج از دستگاه‌ها.\n"
-                    "نوع خطا: %s\n%s%s\n\nاگر خواستید دوباره فعالش کنید: یک session تازه با make_session.py بسازید و در GitHub Secrets (TG_SESSION) جایگزین کنید؛ خودش فعال می‌شود." % (name, detail, tail))
-    elif "FloodWait" in name:
-        wait = min(6 * 3600, int(getattr(e, "seconds", 600) or 600) + 120)
-        st["off_until"] = time.time() + wait
-        log.info("userbot asked to wait (%s) - normal way for a while", name)
-        _hd_say("⚠️ تلگرام به اکانت کمکی محدودیت موقت داد (FloodWait، حدود %d دقیقه).\n"
-                "بعد از پایان محدودیت خودش دوباره امتحان می‌کند؛ تا آن موقع:%s" % (wait // 60, tail))
+            _hd_alarm("اکانت کمکی از کار افتاد (احتمالاً بن شده، session باطل شده یا از دستگاه‌ها خارج شده).", detail)
     else:
-        st["fails"] = int(st.get("fails", 0)) + 1
-        log.info("userbot failed (%s: %s) - normal way for now", name, str(e)[:120])
-        if st["fails"] >= 3:
-            st["off_until"] = time.time() + 6 * 3600
-            st["fails"] = 0
-            _hd_say("⚠️ اکانت کمکی چند بار پشت‌سرهم خطا داد (آخرین خطا: %s — %s).\n"
-                    "۶ ساعت کنارش می‌گذارم و بعد دوباره امتحان می‌کنم؛ تا آن موقع:%s" % (name, detail, tail))
+        st["off_until"] = time.time() + wait
+        log.info("userbot paused for %d min (%s)", wait // 60, name)
+        _hd_alarm("تلگرام به اکانت کمکی محدودیت داد یا چند بار پشت‌سرهم ارتباط خطا داد؛ "
+                  "حدود %d دقیقه کنارش می‌گذارم و بعد دوباره امتحان می‌کنم." % max(1, wait // 60), detail)
+
+
+def _hd_fail(e):
+    """One failed attempt. Never raises. A hiccup only costs this one photo; a real problem switches the account off."""
+    st = HD["root"].setdefault("hd", {}) if HD["root"] is not None else {}
+    name = type(e).__name__
+    if name in ("RuntimeError", "Exception"):
+        name = str(e).split(":")[0][:40] or name
+    if any(k in name for k in HD_DEAD_ERRORS):
+        _hd_off(st, name, e, True)
+    elif "FloodWait" in name:
+        _hd_off(st, name, e, False, min(6 * 3600, int(getattr(e, "seconds", 600) or 600) + 120))
+    else:
+        HD["streak"] = HD.get("streak", 0) + 1
+        log.info("userbot hiccup %d/3 (%s: %s) - this photo uses the normal way", HD["streak"], name, str(e)[:120])
+        hd_close()                                   # next photo starts a fresh connection
+        if HD["streak"] >= 3:
+            HD["streak"] = 0
+            _hd_off(st, name, e, False, 6 * 3600)
 
 
 def _hd_client():
@@ -1104,9 +1153,7 @@ def hd_photo(url):
         data = c.download_media(msg, file=bytes)
         if not data or len(data) < 3000 or data[:2] != b"\xff\xd8":
             return None
-        st = (HD["root"] or {}).get("hd")
-        if st and (st.get("fails") or st.get("off_until")):
-            st["fails"], st["off_until"] = 0, 0
+        HD["streak"] = 0
         HD["used"] += 1
         return data
     except Exception as e:
@@ -1129,6 +1176,8 @@ def marked_photo(net, cfg, url):
     except Exception as e:
         log.info("could not download a photo (%s) - sending it as it is", e)
         return None
+    if _hd_secret() and HD["root"] is not None and HD["cfg"] is not None:
+        stat_add(HD["root"], HD["cfg"], "hd_ok" if hd else "hd_web")
     if not wm_on(cfg):
         return data if hd else None
     try:
@@ -1370,8 +1419,9 @@ BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW = "📋 منبع‌ها", "🚫 کلمات 
 SEED_SOURCES = ["Daneshjoo", "FilmFarsiOrg", "Radiokocsher"]
 BTN_SPEED, BTN_CRMENU, BTN_MORE = "🎚 سرعت ارسال", "🚨 بحران", "⚙️ بیشتر"
 BTN_DEST = "🎯 مقصدها"
+BTN_SUGG = "🔭 پیشنهاد کانال"
 ALL_BTNS = {BTN_OFF, BTN_ON, BTN_STATUS, BTN_REVIEW, BTN_CR_ON, BTN_CR_OFF, BTN_CR_AUTO, BTN_SP_NORMAL, BTN_SP_BOOST,
-            BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW, BTN_SPEED, BTN_CRMENU, BTN_MORE, BTN_DEST}
+            BTN_SRC, BTN_BAN, BTN_HOURS, BTN_NOW, BTN_SPEED, BTN_CRMENU, BTN_MORE, BTN_DEST, BTN_SUGG}
 HELP_TEXT = ("📖 راهنما\n"
              "• 📊 وضعیت: حال ربات و توضیح آخرین دور\n"
              "• ⚡ ارسال همین الان: یک دور فوری\n"
@@ -1396,7 +1446,8 @@ def btn(t):
 MENU_KB = {"keyboard": [[btn(BTN_STATUS), btn(BTN_NOW)],
                         [btn(BTN_ON), btn(BTN_OFF)],
                         [btn(BTN_SPEED), btn(BTN_CRMENU)],
-                        [btn(BTN_SRC), btn(BTN_DEST), btn(BTN_MORE)]],
+                        [btn(BTN_SRC), btn(BTN_DEST), btn(BTN_MORE)],
+                        [btn(BTN_SUGG)]],
            "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
 
 
@@ -1560,13 +1611,14 @@ def crisis_menu():
 
 def more_menu(state):
     return {"inline_keyboard": [[{"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}, {"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}],
+                                [{"text": "🔭 پیشنهاد کانال", "callback_data": "tx:sugg"}],
                                 [{"text": "🔍 بررسی مشکوک‌ها (روشن/خاموش)", "callback_data": "tx:review"}],
                                 [{"text": "📖 راهنما و دستورها", "callback_data": "tx:help"}]]}
 
 
 TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
           "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
-          "dest_add": "/dest add", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
+          "dest_add": "/dest add", "sugg": "🔭 پیشنهاد کانال", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 
 
 def hours_update(cfg, net, state, now):
@@ -1748,6 +1800,179 @@ def _img_info(data):
         return "%d کیلوبایت" % (len(data) // 1024)
 
 
+# --------------------------------------------------------------------------- #
+# channel suggestions (needs the helper account): similar channels of your sources, checked by our own filters
+# --------------------------------------------------------------------------- #
+def persian_share(texts):
+    letters = fa_ = 0
+    for t in texts:
+        for ch in t:
+            if ch.isalpha():
+                letters += 1
+                if "\u0600" <= ch <= "\u06ff":
+                    fa_ += 1
+    return (fa_ / float(letters)) if letters else 0.0
+
+
+def check_candidate(cfg, net, name, now):
+    """None if the channel is not good enough, else {score, sample, n}: public page, alive, Persian, mostly postable."""
+    try:
+        posts = parse_page(net.get(cfg["web_base"] + name))
+    except NetError:
+        return None
+    if len(posts) < 6:
+        return None
+    last = posts[-12:]
+    newest = max((p["ts"] or 0) for p in last)
+    if not newest or now - newest > 3 * 86400:
+        return None
+    texts = [plain(p["text_html"]) for p in last if p["text_html"]]
+    if texts and persian_share(texts) < 0.5:
+        return None
+    good = [p for p in last if (p["media"] or plain(p["text_html"]).strip()) and not skip_reason(cfg, p)]
+    score = len(good) / float(len(last))
+    if score < 0.5:
+        return None
+    sample = ""
+    for p in reversed(good):
+        t = plain(p["text_html"]).strip().replace("\n", " ")
+        sample = (t[:90] + ("…" if len(t) > 90 else "")) if t else ("[عکس]" if p["media"] else "")
+        if sample:
+            break
+    return {"score": score, "sample": sample, "n": len(good)}
+
+
+def find_suggestions(cfg, net, state, want=3, budget=75):
+    """(list of suggestions, problem text or None)."""
+    sec = _hd_secret()
+    if not sec:
+        return [], "اکانت کمکی وصل نیست (TG_API_ID / TG_API_HASH / TG_SESSION)."
+    if not hd_enabled():
+        return [], "اکانت کمکی الان کنار گذاشته شده؛ پیشنهاد کانال فقط وقتی اکانت سالم است ممکن است."
+    root = hub_of(cfg, state)[1]
+    seen = root.setdefault("sugg", {})
+    known = {s.lower() for s in cfg["sources"]}
+    for pid_, pcfg, _ in profiles(hub_of(cfg, state)[0], root):
+        known.add(str(pcfg["target_channel"]).lower().lstrip("@"))
+    t0 = time.time()
+    cands = {}
+    try:
+        c = _hd_client()
+        from telethon.tl.functions.channels import GetChannelRecommendationsRequest
+        seeds = list(cfg["sources"])
+        random.shuffle(seeds)
+        for sname in seeds[:5]:
+            if time.time() - t0 > budget / 2:
+                break
+            try:
+                res = c(GetChannelRecommendationsRequest(channel=c.get_entity(sname)))
+            except Exception as e:
+                nm = type(e).__name__
+                if any(k in nm for k in HD_DEAD_ERRORS) or "FloodWait" in nm:
+                    raise
+                continue
+            for ch in getattr(res, "chats", []) or []:
+                un = (getattr(ch, "username", None) or "").strip()
+                if not un or getattr(ch, "megagroup", False) or un.lower() in known:
+                    continue
+                if (seen.get(un.lower()) or {}).get("st") in ("no", "added"):
+                    continue
+                if time.time() - (seen.get(un.lower()) or {}).get("t", 0) < 30 * 86400:
+                    continue
+                cands.setdefault(un, {"title": getattr(ch, "title", un), "members": getattr(ch, "participants_count", None),
+                                      "seed": sname})
+    except Exception as e:
+        _hd_fail(e)
+        return [], "ارتباط با اکانت کمکی خطا داد: %s" % type(e).__name__
+    out = []
+    now = time.time()
+    for un, info in list(cands.items())[:14]:
+        if time.time() - t0 > budget or len(out) >= want:
+            break
+        ck = check_candidate(cfg, net, un, now)
+        if ck:
+            out.append(dict(info, name=un, **ck))
+    out.sort(key=lambda x: -x["score"])
+    return out[:want], None
+
+
+def send_suggestions(cfg, net, state, owner, want=3):
+    """Sends each suggestion as its own message with two buttons. Returns the number sent (or an explanation text)."""
+    sg, problem = find_suggestions(cfg, net, state, want)
+    if problem:
+        return problem
+    root = hub_of(cfg, state)[1]
+    pid = cfg.get("_pid") or "p1"
+    for x in sg:
+        root.setdefault("sugg", {})[x["name"].lower()] = {"t": int(time.time()), "st": "shown"}
+        lines = ["🔭 کانال پیشنهادی: @%s" % x["name"], "نام: %s" % x["title"]]
+        if x.get("members"):
+            lines.append("تعداد عضو: %s" % fa(x["members"]))
+        lines.append("شبیه به منبع شما: %s" % x["seed"])
+        lines.append("از %d پست آخرش، %s به درد ما می‌خورد (بدون تبلیغ/لینک/ریپلای/فوروارد)" % (
+            12, fa("%d%%" % int(x["score"] * 100))))
+        if x.get("sample"):
+            lines.append("نمونه: " + x["sample"])
+        lines.append("لینک: t.me/%s" % x["name"])
+        kb = {"inline_keyboard": [[{"text": "✅ اضافه کن", "callback_data": "sa:%s|%s" % (pid, x["name"])},
+                                   {"text": "❌ نه", "callback_data": "sn:%s|%s" % (pid, x["name"])}]]}
+        tell(net, owner, "\n".join(lines), kb)
+        time.sleep(1)
+    return len(sg)
+
+
+def suggest_now(cfg, net, state):
+    owner = owner_of(cfg, state)
+    tell(net, owner, "🔭 دارم کانال‌های مشابه منبع‌هات را پیدا و بررسی می‌کنم (حدود یک دقیقه)…")
+    r = send_suggestions(cfg, net, state, owner)
+    if isinstance(r, str):
+        return "🔭 " + r, None
+    if not r:
+        return "🔭 این بار کانالِ مناسب و تازه‌ای پیدا نکردم (یا همه‌ی مناسب‌ها قبلاً پیشنهاد شده‌اند). بعداً دوباره امتحان کنید.", None
+    return "🔭 %s پیشنهاد فرستادم؛ با دکمه‌ی «✅ اضافه کن» یا «❌ نه» تصمیم بگیرید." % fa(r), None
+
+
+def suggest_daily(cfg, net, state, now):
+    """Once a day (daytime, Iran), at most 3 suggestions, only while the helper account is healthy."""
+    if not _hd_secret() or not hd_enabled():
+        return
+    day, lt = iran_day(cfg, now)
+    if 11 <= lt.tm_hour < 22 and now - state.get("sugg_ts", 0) > 20 * 3600 and owner_of(cfg, state):
+        state["sugg_ts"] = int(now)
+        try:
+            send_suggestions(cfg, net, state, owner_of(cfg, state))
+        except Exception:
+            log.exception("channel suggestions failed (continuing)")
+
+
+def suggest_button(cfg0, net, root, cb, act, arg):
+    pid, _, name = arg.partition("|")
+    p = next((q for q in profiles(cfg0, root) if q[0] == pid), None) or active_profile(cfg0, root)
+    note_ = ""
+    try:
+        if act == "sa":
+            note_ = add_source(p[1], net, p[2], name)
+            root.setdefault("sugg", {})[name.lower()] = {"t": int(time.time()), "st": "added" if note_.startswith("✅") else "shown"}
+        else:
+            root.setdefault("sugg", {})[name.lower()] = {"t": int(time.time()), "st": "no"}
+            note_ = "باشه، دیگر @%s را پیشنهاد نمی‌دهم." % name
+    except Exception:
+        log.exception("suggestion button failed")
+        note_ = "خطا در انجام کار؛ دوباره امتحان کنید."
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
+    except (ApiError, NetError):
+        pass
+    m0 = cb.get("message") or {}
+    if m0.get("chat"):
+        try:
+            net.api("editMessageReplyMarkup", {"chat_id": m0["chat"]["id"], "message_id": m0["message_id"],
+                                                "reply_markup": {"inline_keyboard": []}})
+        except (ApiError, NetError):
+            pass
+        tell(net, m0["chat"]["id"], note_)
+
+
 def qtest(cfg, net, state, arg=""):
     """Photo-quality probe (private chat only, nothing goes to any channel): compares the small picture of the
     public web page with the full photo the spare account gets from Telegram."""
@@ -1811,6 +2036,8 @@ def manage_command(cfg, net, state, text):
         return t + "\n\n✏️ تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که همین‌جا بفرستید را «منبع» همین مقصد حساب می‌کنم.", kb
     if cmd == "/qtest":
         return qtest(cfg, net, state, arg), None
+    if text == BTN_SUGG or cmd == "/suggest":
+        return suggest_now(cfg, net, state)
     if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
         return hours_text(state), None
     if text == BTN_BAN or cmd == "/bans":
@@ -1916,6 +2143,9 @@ def status_text(cfg, state):
     mode = state.get("crisis_mode", "auto")
     lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
         mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
+    hl = hd_status_line()
+    if hl:
+        lines.append(hl)
     lr, lm = state.get("last_round"), state.get("last_manual")
     if lr:
         lines.append("\n" + round_text(cfg, lr, "آخرین دور ارسال"))
@@ -2477,6 +2707,9 @@ def handle_update(cfg, net, state, u):
         if act in ("dp", "dd", "d2", "d3", "dc", "dx"):
             dest_button(cfg0, net, root, cb, act, pid)
             return
+        if act in ("sa", "sn"):
+            suggest_button(cfg0, net, root, cb, act, pid)
+            return
         if act == "tx":
             cmd = TX_MAP.get(pid)
             m0 = cb.get("message") or {}
@@ -2848,7 +3081,7 @@ def skip_group(what):
     return "تکراری" if what == "dup" else next((g for p, g in SKIP_GROUPS if what.startswith(p)), "سایر")
 
 
-COUNTERS = ("crisis", "seen", "found", "rounds", "send_now", "fwd", "appr", "carried", "rev_ask", "rev_ok", "rev_no", "rev_exp")
+COUNTERS = ("hd_ok", "hd_web", "crisis", "seen", "found", "rounds", "send_now", "fwd", "appr", "carried", "rev_ask", "rev_ok", "rev_no", "rev_exp")
 
 
 def stat_add(state, cfg, what, key=None, n=1):
@@ -2925,6 +3158,8 @@ def report_text(cfg, st):
           "• ارسال فوری (⚡): %s" % fa(g("send_now"))]
     if hh:
         L.append("• پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh))
+    if g("hd_ok") or g("hd_web"):
+        L.append("• کیفیت عکس‌ها: %s با کیفیت کامل (از خود تلگرام)، %s با کیفیت معمولی (صفحه‌ی وب)" % (fa(g("hd_ok")), fa(g("hd_web"))))
     if g("crisis"):
         L.append("• حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis")))
     return "\n".join(L)
@@ -3032,6 +3267,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         apply_overrides(cfg, state)                # sources / banned words changed from the bot
         daily_report(cfg, net, state, now)
         hours_update(cfg, net, state, now)
+        if not isinstance(state, SubState):
+            suggest_daily(cfg, net, state, now)
         state["posted_log"] = [t for t in state.get("posted_log", []) if now - t < 3 * 86400]
         if state.get("paused"):
             state.pop("run_now", None)
@@ -3194,6 +3431,9 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             fp["m"], look = media_info(net, p["media"]) if p["media"] else ([], [])
             if look:
                 fp["p"] = look
+            vl = video_look(net, p["media"]) if p["media"] else []
+            if vl:
+                fp["v"] = vl
             d, dwhy = find_dup_why(fp, hist + [c[3] for c in eligible])
             if d:
                 log.info("[%s] skipped: duplicate of a post already sent/selected", tag)
@@ -3500,6 +3740,7 @@ def main():
     state = load_state(args.state)
     apply_overrides(cfg, state)
     HD["root"] = state
+    HD["cfg"] = cfg
     HD["notify"] = lambda m: net.api("sendMessage", {"chat_id": owner_of(cfg, state), "text": m}) if owner_of(cfg, state) else None
     force = args.force
     log.info("Started. %d source channel(s) -> %s", len(cfg["sources"]),
