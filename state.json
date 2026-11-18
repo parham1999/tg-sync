@@ -43,7 +43,7 @@
    "last_id": 96817
   }
  },
- "update_offset": 774951885,
+ "update_offset": 774951886,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15781,21 +15781,7 @@
  "approved": [],
  "next_run_ts": 1794990048.4927738,
  "review_off": false,
- "pending": {
-  "fcac0ae0": {
-   "text": "<b>\u0646\u062a\u0627\u06cc\u062c \u0646\u0647\u0627\u06cc\u06cc \u06a9\u0646\u06a9\u0648\u0631 \u0633\u0631\u0627\u0633\u0631\u06cc 1405 \u0627\u0639\u0644\u0627\u0645 \u0634\u062f!</b>\n\n\u0645\u0634\u0627\u0647\u062f\u0647 \u0631\u06cc\u062f\u0645\u0627\u0646\u062a\u0648\u0646:\n<a href=\"https://my.sanjesh.org/\">https://my.sanjesh.org</a>\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn1.telesco.pe/file/jcMImRgSgMXtNCW20h4hubuON2zu3ijnZVexK8FtuKIjDxAu-j40z5nbqtkC6NNnM_NKmI7G8AGUYaGKb_VMgG1aOIX8X3T997Jx_XMmyu1K8A1oRX0IjSWYapLHVbgw1QwqwIg5NzRnQJYXLpdKgCe8FAnRu1nNICJm28y5b-X32HgIHcyvd_5IEX7aAemFPHU_OYv1JTpFV4nzOPrqb5_G4_bIeuA0LBhehfjW3hnzY_K_K4Kd6DnbjzENzUXjTPBRly74T2XusqJpuz24A4oY296A7nkUZo00ohPjDGAO7INZiFBEln2K3rEaz9g3305iLc4PdTxzwL0TX6CUXA.jpg"
-    ]
-   ],
-   "t": 1794988088,
-   "mid": 734,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (contains a link to a site/app (my.sanjesh.org)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CloseFriend3.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  }
- },
+ "pending": {},
  "posted_log": [
   1794729429,
   1794731534,
@@ -16048,7 +16034,7 @@
   },
   "rounds": 10,
   "rev_exp": 4,
-  "rev_no": 3,
+  "rev_no": 4,
   "skip": {
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 3,
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 3,
