@@ -38,9 +38,12 @@
   },
   "363a9cab3d": {
    "last_id": 2
+  },
+  "6cf615e62c": {
+   "last_id": 96813
   }
  },
- "update_offset": 774951875,
+ "update_offset": 774951876,
  "owner_id": 138180578,
  "fp": [
   {
@@ -16328,7 +16331,8 @@
   "dodollism",
   "ParsTwt",
   "FilmFarsiOrg",
-  "Radiokocsher"
+  "Radiokocsher",
+  "Krolejudg"
  ],
  "last_round": {
   "found": 8,
@@ -16523,8 +16527,8 @@
    "st": "shown"
   },
   "krolejudg": {
-   "t": 1794985935,
-   "st": "shown"
+   "t": 1794986033,
+   "st": "added"
   }
  },
  "last_kind": "media"
