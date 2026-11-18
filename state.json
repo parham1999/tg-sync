@@ -40,7 +40,7 @@
    "last_id": 2
   }
  },
- "update_offset": 774951863,
+ "update_offset": 774951866,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15791,8 +15791,6 @@
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1794725302,
-  1794725344,
   1794727400,
   1794727431,
   1794729429,
@@ -16517,5 +16515,11 @@
    "link": "t.me/Khartox/8971",
    "key": "ee6c8e519c"
   }
- ]
+ ],
+ "sugg": {
+  "unnurmal": {
+   "t": 1794984893,
+   "st": "shown"
+  }
+ }
 }
