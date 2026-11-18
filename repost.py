@@ -2123,36 +2123,45 @@ def owner_of(cfg, state):
 
 def status_text(cfg, state):
     on = not state.get("paused")
-    lines = ["وضعیت ربات: " + ("🟢 روشن" if on else "🔴 خاموش")]
+    lines = ["🤖 وضعیت ربات: " + ("🟢 روشن" if on else "🔴 خاموش")]
     root = hub_of(cfg, state)[1]
     if root.get("dests"):
-        lines.insert(0, "🎯 مقصد در حال مدیریت: %s (از %d مقصد؛ تغییر: «🎯 مقصدها»)" % (
+        lines.insert(0, "🎯 مقصد در حال مدیریت: %s (از %d مقصد؛ تغییر: «🎯 مقصدها»)\n" % (
             cfg["target_channel"], len(root["dests"]) + 1))
+    lines.append("")
     nxt = state.get("next_run_ts", 0) - time.time()
     if on:
-        lines.append("دور بعدی ارسال: " + ("به‌زودی" if nxt <= 0 else "حدود %d دقیقه دیگر" % (nxt // 60 + 1)))
-    lines.append("پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
-    lines.append("تاییدشده و منتظر ارسال: %d" % len(state.get("approved", [])))
-    lines.append("بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+        lines.append("⏰ دور بعدی ارسال: " + ("به‌زودی" if nxt <= 0 else "حدود %s دقیقه دیگر" % fa(int(nxt // 60 + 1))))
+        lines.append("")
+    q = state.get("approved", [])
+    nf = sum(1 for a in q if a.get("fwd"))
+    lines.append("⏳ پست‌های منتظر تصمیم شما: %d" % len(state.get("pending", {})))
+    lines.append("")
+    lines.append("📥 تاییدشده و منتظر ارسال: %d" % len(q) + (" (%s فوروارد شما)" % fa(nf) if nf else ""))
+    lines.append("")
+    lines.append("🧐 بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+    lines += ["", SEP, ""]
     lines.append(speed_line(cfg, state))
     if speed_mode(state) == "auto":
         lo, hi, hol, h = auto_rate(cfg, time.time())
+        lines.append("")
         lines.append("   ↳ این ساعت %s پست در ساعت ≈ %s پست در هر دور (فرمول کامل: 🎚 سرعت ارسال ← خودکار)" % (
             ("%d تا %d" % (lo, hi)) if lo != hi else str(lo),
             ("%.1f تا %.1f" % (lo * mean_gap(cfg, hi <= 1) / 60, hi * mean_gap(cfg, hi <= 1) / 60))))
     mode = state.get("crisis_mode", "auto")
-    lines.append("حالت بحران: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
-        mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"))
+    lines += ["", "🚨 حالت بحران: " + {"on": "روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
+        mode, "فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)")]
     hl = hd_status_line()
     if hl:
-        lines.append(hl)
+        lines += ["", hl]
     lr, lm = state.get("last_round"), state.get("last_manual")
+    lines += ["", SEP, ""]
     if lr:
-        lines.append("\n" + round_text(cfg, lr, "آخرین دور ارسال"))
+        lines.append(round_text(cfg, lr, "آخرین دور ارسال"))
     if lm and (not lr or lm.get("t", 0) > lr.get("t", 0)):
-        lines.append("\n" + round_text(cfg, lm, "آخرین ارسال فوری (⚡)"))
+        lines += ["", round_text(cfg, lm, "آخرین ارسال فوری (⚡)")]
     if not lr and not lm:
-        lines.append("\nهنوز دوری با پست تازه انجام نشده.")
+        lines.append("هنوز دوری با پست تازه انجام نشده.")
     return "\n".join(lines)
 
 
@@ -2161,45 +2170,54 @@ def round_text(cfg, r, title):
     ago = max(0, int((time.time() - r["t"]) / 60))
     when = "%d دقیقه پیش" % ago if ago < 60 else "%d ساعت و %d دقیقه پیش" % (ago // 60, ago % 60)
     names = {src_key(n): n for n in cfg["sources"]}
-    out = ["📦 %s (ساعت %02d:%02d، %s%s):" % (title, tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else ("، سرعت %s" % r["mode"]) if r.get("mode") else ""),
-           "• پست تازه پیدا شد: %d" % r["found"]]
+    out = ["📦 %s" % title,
+           "🕒 ساعت %02d:%02d (%s)%s" % (tm.tm_hour, tm.tm_min, when, "، حالت بحران" if r.get("crisis") else ("، سرعت %s" % r["mode"]) if r.get("mode") else ""),
+           "",
+           "🆕 پست تازه پیدا شد: %d" % r["found"]]
     ignored = r["found"] - r.get("considered", r["found"])
     if ignored > 0:
-        out.append("• نادیده (بعد از رسیدن به تعداد هدف، پست‌های قدیمی‌تر بررسی نمی‌شوند): %d" % ignored)
+        out += ["", "👁 نادیده (بعد از رسیدن به تعداد هدف، پست‌های قدیمی‌تر بررسی نمی‌شوند): %d" % ignored]
     if r.get("target") is not None and r.get("mode"):
-        out.append("• هدف این دور: %d پست%s" % (r["target"], (" — %d پست کمتر از هدف قابل‌ارسال بود (پست تازه‌ی تکراری/ردشده/نبود)" % r["short"]) if r.get("short") else ""))
+        out += ["", "🎯 هدف این دور: %d پست%s" % (r["target"], ("\n    ⚠️ %d پست کمتر از هدف قابل‌ارسال بود (پست تازه‌ی تکراری/ردشده/نبود)" % r["short"]) if r.get("short") else "")]
     if r.get("rej"):
-        out.append("• ردشده: %d (%s)" % (sum(r["rej"].values()), "، ".join("%s %d" % kv for kv in sorted(r["rej"].items()))))
+        out += ["", "⛔ ردشده: %d (%s)" % (sum(r["rej"].values()), "، ".join("%s %d" % kv for kv in sorted(r["rej"].items())))]
     if r.get("over"):
-        out.append("• جا نشد (سقف پست در هر دور): %d" % r["over"])
-    out.append("• ریپوست شد: %d" % r.get("posted", 0))
+        out += ["", "🚫 جا نشد (سقف پست در هر دور): %d" % r["over"]]
+    out += ["", "✅ ریپوست شد: %d" % r.get("posted", 0)]
     if r.get("carry"):
-        out.append("• جا نشد و برای دور بعد نگه داشته شد: %d" % r["carry"])
+        out += ["", "⏳ جا نشد و برای دور بعد نگه داشته شد: %d" % r["carry"]]
     rows = sorted(r.get("src", {}).items(), key=lambda kv: (-kv[1][1], -kv[1][0]))
     if rows:
-        out.append("سهم کانال‌ها (تازه ← ریپوست):")
+        out += ["", "📡 سهم کانال‌ها (تازه ← ریپوست):"]
         for key, (new, sent) in rows:
-            out.append("  %s %s: %d ← %d" % ("✅" if sent else "▫️", names.get(key, "(کانال حذف‌شده)"), new, sent))
+            out.append("   %s %s: %d ← %d" % ("✅" if sent else "▫️", names.get(key, "(کانال حذف‌شده)"), new, sent))
     if r.get("appr"):
-        out.append("  + %d پست تاییدشده‌ی شما" % r["appr"])
+        out.append("   + %d پست تاییدشده‌ی شما" % r["appr"])
+    if r.get("fwd"):
+        out.append("   + %d پست فوروارد شما" % r["fwd"])
     sent = r.get("sent") or []
     if sent:
-        out.append("\n✅ پست‌هایی که ارسال شد:")
+        out += ["", SEP, "", "✅ پست‌هایی که ارسال شد:", ""]
         for n, (link, note_) in enumerate(sent[:15], 1):
             out.append("%d) %s" % (n, "\n    ".join(x for x in (link or "پست بدون لینک منبع", note_) if x)))
+            out.append("")
+        out.pop()
     why = r.get("why") or []
     ign = r.get("ign") or {}
     if why or ign:
-        out.append("\n🔎 علت هر پستی که نرفت:")
+        out += ["", SEP, "", "🔎 علت هر پستی که نرفت:", ""]
         for n, (key, pid, text) in enumerate(why[:12], 1):
             name = names.get(key)
             out.append("%d) %s\n    %s" % (n, ("t.me/%s/%s" % (name, pid)) if name and pid else
                                               (name or "کانال نامشخص"), text))
+            out.append("")
         if len(why) > 12:
             out.append("... و %d مورد دیگر" % (len(why) - 12))
         if ign:
             out.append("• پست‌های قدیمی‌تر که نادیده ماندند (فقط تازه‌ترینِ هر کانال بررسی می‌شود): " + "، ".join(
                 "%s %d" % (names.get(k, "؟"), v) for k, v in ign.items()))
+        elif out and out[-1] == "":
+            out.pop()
     return "\n".join(out)
 
 
@@ -2291,7 +2309,7 @@ def _handle_update(cfg, net, state, u):
         if act in ("mt", "dl"):
             source_button(cfg, net, state, cb)
             return
-        if act in ("fw", "rm"):
+        if act in ("fw", "rm", "fn", "fq"):
             forward_button(cfg, net, state, cb, act, pid)
             return
         pend = state.setdefault("pending", {}).pop(pid, None)
@@ -2733,6 +2751,8 @@ def handle_update(cfg, net, state, u):
             target = next((p for p in ps if pid in (p[2].get("fwd") or {})), None)
         elif act == "rm":
             target = next((p for p in ps if pid in (p[2].get("undo") or {})), None)
+        elif act in ("fn", "fq"):
+            target = next((p for p in ps if any(a.get("pid") == pid for a in p[2].get("approved", []))), None)
         target = target or active_profile(cfg0, root)
         set_tag(target[1], target[2])
         _handle_update(target[1], net, target[2], dict(u, callback_query=cb))
@@ -2810,6 +2830,9 @@ def crisis_active(state):
 
 
 def forward_kb(pid, kind):
+    if kind == "q":                               # waiting in the queue for its round
+        return {"inline_keyboard": [[{"text": "⚡ ارسال فوری", "callback_data": "fn:%s" % pid},
+                                     {"text": "🗑 حذف از صف", "callback_data": "fq:%s" % pid}]]}
     return {"inline_keyboard": [[{"text": "🔁 ارسال به‌هرحال" if kind == "fw" else "🗑 حذف از کانال",
                                   "callback_data": "%s:%s" % (kind, pid)}]]}
 
@@ -2834,6 +2857,7 @@ def publish_forward(cfg, net, state, owner, ttext, media, fp, pid):
         return "⚠️ مشکل شبکه، ارسال نشد: %s" % e, None
     hist = state.setdefault("fp", [])
     hist.append(dict(fp, t=now, man=True, pid=pid))
+    state["last_kind"] = "media" if media else "text"
     state.setdefault("posted_log", []).append(now)
     stat_add(state, cfg, "posted")
     stat_add(state, cfg, "fwd")
@@ -2893,8 +2917,19 @@ def _handle_forward(cfg, net, state, owner, msgs):
         tell(net, owner, "⛔ تکراری است: مشابه همین پست قبلاً در کانال گذاشته شده (%s پیش). نفرستادم.\n"
              "اگر مطمئنید دوباره بفرستد، دکمه‌ی زیر را بزنید." % hours_ago(dup.get("t", now)), forward_kb(pid, "fw"))
         return
-    msg, kb = publish_forward(cfg, net, state, owner, ttext, media, fp, pid)
-    tell(net, owner, msg, kb or MENU_KB)
+    queued = [dict(a.get("fp") or {}) for a in state.get("approved", [])]
+    qd = find_dup(fp, queued) if queued else None
+    if qd:
+        tell(net, owner, "⛔ مشابه همین پست از قبل در صف ارسال است. دوباره اضافه‌اش نکردم.", MENU_KB)
+        return
+    q = state.setdefault("approved", [])
+    q.append({"text": ttext, "media": [list(x) for x in media], "t": int(now), "fwd": True,
+              "pid": pid, "fp": fp, "mid": msgs[0].get("message_id")})
+    n = len(q)
+    tell(net, owner, "✅ پذیرفته شد و در صف ارسال قرار گرفت.\n\n"
+         "📥 جایگاه در صف: %s\n"
+         "🕒 در دور بعدی (یا دورهای بعدی، اگر صف پر باشد) همراه پست‌های عادی در کانال گذاشته می‌شود.\n\n"
+         "اگر همین حالا لازم است، دکمه‌ی «⚡ ارسال فوری» را بزنید." % fa(n), forward_kb(pid, "q"))
 
 
 def flush_forwards(cfg, net, state):
@@ -2916,7 +2951,26 @@ def forward_button(cfg, net, state, cb, act, pid):
     owner = owner_of(cfg, state)
     note = "این مورد منقضی شده"
     m = cb.get("message") or {}
-    if act == "fw":
+    if act in ("fn", "fq"):
+        q = state.get("approved", [])
+        item = next((a for a in q if a.get("pid") == pid), None)
+        if not item:
+            note = "این مورد دیگر در صف نیست (شاید همین الان ارسال شده)."
+        elif act == "fq":
+            q.remove(item)
+            note = "🗑 از صف ارسال برداشته شد."
+        else:
+            q.remove(item)
+            REPLY_TO[0] = item.get("mid")
+            msg, kb = publish_forward(cfg, net, state, owner, item["text"],
+                                      [tuple(x) for x in item["media"]], item.get("fp") or {}, pid)
+            REPLY_TO[0] = None
+            note = msg
+            if kb:
+                tell(net, owner, msg, kb)
+            else:
+                q.insert(0, item)                 # sending failed: it stays in the queue
+    elif act == "fw":
         item = (state.get("fwd") or {}).pop(pid, None)
         if item:
             REPLY_TO[0] = item.get("mid")
@@ -3035,7 +3089,7 @@ def spread_by_channel(items):
     return out + carried
 
 
-def pick_and_order(items, limit):
+def pick_and_order(items, limit, prev_text=False):
     """Take up to `limit` items (random order already) and arrange them so that no two
     text-only posts (no photo/video) are next to each other."""
     media = [i for i in items if i[1]["media"]]
@@ -3048,13 +3102,13 @@ def pick_and_order(items, limit):
     pm = [i for i in pick if i[1]["media"]]
     pt = [i for i in pick if not i[1]["media"]]
     spare = [i for i in media if i not in pick]
-    while len(pt) > len(pm) + 1:                  # too many text posts to separate
-        pt.pop()
+    while len(pt) > len(pm) + (0 if prev_text else 1):   # too many text posts to separate
+        pt.pop()                                  # (prev_text: the last post in the channel was text, so media must open the round)
         if spare:
             pm.append(spare.pop(0))
-    # alternate, starting with whichever group is bigger (media first on a tie)
+    # alternate, starting with whichever group is bigger (media first on a tie or after a text post)
     out = []
-    a, b = (pt, pm) if len(pt) > len(pm) else (pm, pt)
+    a, b = (pt, pm) if (len(pt) > len(pm) and not prev_text) else (pm, pt)
     while a or b:
         if a:
             out.append(a.pop(0))
@@ -3111,6 +3165,9 @@ def fa(n):
     return str(n).translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
 
 
+SEP = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄"
+
+
 def report_text(cfg, st):
     names = {src_key(n): n for n in cfg["sources"]}
     g = lambda k: int(st.get(k, 0))
@@ -3122,46 +3179,50 @@ def report_text(cfg, st):
     seen = g("seen")
     left = max(0, seen - mine - rej)
     L = ["🟢 ربات فعال است", "",
-         "📊 گزارش ۲۴ ساعت گذشته", "🗓 روز %s (از ۰۰:۰۰ تا ۲۴:۰۰ به وقت ایران)" % st["day"], "",
-         "━━━━━━━━━━━━", "📤 ۱) کل پست‌های ارسال‌شده به کانال: %s" % fa(posted), "",
-         "• %s پست را خودِ ربات از منبع‌ها فرستاد" % fa(mine)]
+         "📊 گزارش ۲۴ ساعت گذشته",
+         "🗓 روز %s" % st["day"],
+         "(از ۰۰:۰۰ تا ۲۴:۰۰ به وقت ایران)", "",
+         SEP, "",
+         "📤 ۱) کل پست‌های ارسال‌شده به کانال: %s" % fa(posted), "",
+         "   • %s پست را خودِ ربات از منبع‌ها فرستاد" % fa(mine)]
     if appr:
-        L.append("   (%s مستقیم + %s مشکوکِ تاییدشده‌ی شما)" % (fa(auto), fa(appr)))
-    L.append("• %s پست را شما فوروارد کردید و ربات فرستاد" % fa(fwd))
+        L.append("      (%s مستقیم + %s مشکوکِ تاییدشده‌ی شما)" % (fa(auto), fa(appr)))
+    L += ["", "   • %s پست را شما فوروارد کردید و ربات فرستاد" % fa(fwd)]
     if g("carried"):
-        L.append("• (%s پست از این‌ها در دور قبل جا نشده بود و در دور بعد رفت)" % fa(g("carried")))
-    L += ["", "━━━━━━━━━━━━", "🔎 ۲) پست‌هایی که خودِ ربات بررسی کرد: %s" % fa(seen),
-          "(فورواردهای شما جزو این عدد نیست)", "",
-          "• ارسال شد: %s" % fa(mine),
-          "• ردشد: %s" % fa(rej),
-          "• ارسال نشد (سقف تعداد هر دور / مانده برای دور بعد): %s" % fa(left), "",
-          "• پست تازه‌ای که در منبع‌ها آمد: %s" % fa(g("found"))]
-    L += ["", "━━━━━━━━━━━━", "⛔ ردشده‌ها", ""]
+        L += ["", "   • %s پست از این‌ها در دور قبل جا نشده بود و در دور بعد رفت" % fa(g("carried"))]
+    L += ["", SEP, "",
+          "🔎 ۲) پست‌هایی که خودِ ربات بررسی کرد: %s" % fa(seen),
+          "   (فورواردهای شما جزو این عدد نیست)", "",
+          "   ✅ ارسال شد: %s" % fa(mine), "",
+          "   ⛔ ردشد: %s" % fa(rej), "",
+          "   ⏳ ارسال نشد (سقف هر دور / مانده برای دور بعد): %s" % fa(left), "",
+          "   🆕 پست تازه‌ای که در منبع‌ها آمد: %s" % fa(g("found")),
+          "", SEP, "", "⛔ ردشده‌ها", ""]
     if sk:
-        L += ["• %s: %s" % ("فورواردِ خودِ منبع (از جای دیگر)" if k == "فوروارد" else k, fa(v))
+        L += ["   • %s: %s" % ("فورواردِ خودِ منبع (از جای دیگر)" if k == "فوروارد" else k, fa(v))
               for k, v in sorted(sk.items(), key=lambda x: -x[1])]
     else:
-        L.append("• هیچ‌کدام")
+        L.append("   • هیچ‌کدام")
     if g("rev_ask"):
-        L += ["", "━━━━━━━━━━━━", "🧐 پست‌های مشکوک (برای تصمیم شما)", "",
-              "• فرستاده شد برای شما: %s" % fa(g("rev_ask")),
-              "• شما تایید کردید: %s" % fa(g("rev_ok")),
-              "• شما رد کردید: %s" % fa(g("rev_no")),
-              "• بدون جواب ماند و رد شد: %s" % fa(g("rev_exp"))]
+        L += ["", SEP, "", "🧐 پست‌های مشکوک (برای تصمیم شما)", "",
+              "   • فرستاده شد برای شما: %s" % fa(g("rev_ask")),
+              "   • شما تایید کردید: %s" % fa(g("rev_ok")),
+              "   • شما رد کردید: %s" % fa(g("rev_no")),
+              "   • بدون جواب ماند و رد شد: %s" % fa(g("rev_exp"))]
     by = sorted(st.get("by_src", {}).items(), key=lambda x: -x[1])
     if by:
-        L += ["", "━━━━━━━━━━━━", "📡 سهم منبع‌ها از ارسال", ""]
-        L += ["• %s: %s" % (names.get(k, "(حذف‌شده)"), fa(v)) for k, v in by]
+        L += ["", SEP, "", "📡 سهم منبع‌ها از ارسال", ""]
+        L += ["   • %s: %s" % (names.get(k, "(حذف‌شده)"), fa(v)) for k, v in by]
     hh = sorted(st.get("by_hour", {}).items(), key=lambda x: -x[1])[:3]
-    L += ["", "━━━━━━━━━━━━", "⚙️ جزئیات اجرا", "",
-          "• دورهای ارسال: %s" % fa(g("rounds")),
-          "• ارسال فوری (⚡): %s" % fa(g("send_now"))]
+    L += ["", SEP, "", "⚙️ جزئیات اجرا", "",
+          "   • دورهای ارسال: %s" % fa(g("rounds")),
+          "   • ارسال فوری (⚡): %s" % fa(g("send_now"))]
     if hh:
-        L.append("• پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh))
+        L += ["", "   • پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh)]
     if g("hd_ok") or g("hd_web"):
-        L.append("• کیفیت عکس‌ها: %s با کیفیت کامل (از خود تلگرام)، %s با کیفیت معمولی (صفحه‌ی وب)" % (fa(g("hd_ok")), fa(g("hd_web"))))
+        L += ["", "   • کیفیت عکس‌ها: %s با کیفیت کامل (از خود تلگرام)، %s با کیفیت معمولی (صفحه‌ی وب)" % (fa(g("hd_ok")), fa(g("hd_web")))]
     if g("crisis"):
-        L.append("• حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis")))
+        L += ["", "   • حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis"))]
     return "\n".join(L)
 
 
@@ -3367,12 +3428,18 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
     for a in appr:                                # posts you approved in the bot go first
         if now - a.get("t", 0) > 2 * 86400:
             continue
-        fp = text_fp(norm_for_dedupe(a["text"], rules.own))
-        fp["m"] = []
+        fp = dict(a["fp"]) if a.get("fp") else text_fp(norm_for_dedupe(a["text"], rules.own))
+        if not a.get("fp"):
+            fp["m"] = []
+        if a.get("fwd"):
+            fp["man"] = True
+            fp["pid"] = a.get("pid")
         if find_dup(fp, hist):
             continue
         eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
-                         {"id": 0, "media": a["media"]}, a["text"], fp, None))
+                         {"id": 0, "media": [tuple(x) for x in a["media"]] if a.get("fwd") else a["media"],
+                          "fwd": bool(a.get("fwd")), "pid": a.get("pid"), "afp": a.get("fp"), "mid": a.get("mid")},
+                         a["text"], fp, None))
     carried_in = state.get("carry", [])
     state["carry"] = []
     if custom and not crisis and cfg["carry_over"]:
@@ -3447,7 +3514,7 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             eligible.append((tag, p, text, fp, st))
         if not crisis:
             eligible = spread_by_channel(eligible)
-        chosen = pick_and_order(eligible, limit)
+        chosen = pick_and_order(eligible, limit, state.get("last_kind") == "text")
         if custom and not crisis and len(chosen) >= limit:
             break                                 # the wanted number is reached: no need to look further back
         if custom and not crisis and layer == 2 and len(chosen) < limit:
@@ -3479,7 +3546,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                                            "key": kk or None})
                     rec["carry"] = rec.get("carry", 0) + 1
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
-                state["approved"].append({"text": item[2], "media": item[1]["media"], "t": int(now)})
+                keep = {"text": item[2], "media": [list(x) for x in item[1]["media"]], "t": int(now)}
+                if item[1].get("fwd"):
+                    keep.update(fwd=True, pid=item[1].get("pid"), fp=item[1].get("afp"), mid=item[1].get("mid"))
+                state["approved"].append(keep)
     if not dry:
         save_state(state_path, state)
     lo, hi = cfg["crisis_delay_seconds"] if crisis else cfg["random_delay_seconds"]
@@ -3494,8 +3564,12 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             deliver(net, dcfg, p, text)
             log.info("[%s] posted", tag)
             hist.append(dict(fp, t=int(time.time())))
+            state["last_kind"] = "media" if p["media"] else "text"
             state.setdefault("posted_log", []).append(int(time.time()))
             stat_add(state, cfg, "posted", tag.split("/")[0] if tag.split("/")[0] in keys else None)
+            if p.get("fwd") and p.get("pid"):
+                und = state.setdefault("undo", {})
+                und[p["pid"]] = {"ids": [list(x) for x in getattr(net, "last_sent", [])], "t": int(time.time())}
             posted += 1
             head = tag.split("/")[0]
             if head in lab2key:
@@ -3511,6 +3585,15 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 rec["carried"] = rec.get("carried", 0) + 1
                 stat_add(state, cfg, "carried")
                 rec.setdefault("sent", []).append([p.get("link") or "", "از دور قبل مانده بود"])
+            elif p.get("fwd"):
+                rec["fwd"] = rec.get("fwd", 0) + 1
+                stat_add(state, cfg, "fwd")
+                rec.setdefault("sent", []).append(["", "پست فورواردیِ شما"])
+                try:
+                    tell(net, owner_of(cfg, state), "✅ پستی که فوروارد کرده بودید در کانال گذاشته شد.",
+                         forward_kb(p["pid"], "rm"))
+                except Exception:
+                    log.exception("could not tell the owner about a sent forward")
             else:
                 rec["appr"] += 1
                 stat_add(state, cfg, "appr")
