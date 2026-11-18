@@ -15889,25 +15889,8 @@
  "approved": [],
  "next_run_ts": 1795025927.5308828,
  "review_off": false,
- "pending": {
-  "75403667": {
-   "text": "\u0628\u0627\u0644\u0623\u062e\u0631\u0647 \u0648\u06cc\u062f\u06cc\u0648\u0647\u0627\u06cc \u0644\u0648\u06a9\u06cc\u0634\u0646\u06cc \u0627\u0632 GTA VI \u06a9\u0647 \u0647\u0645\u0647 \u0645\u0646\u062a\u0638\u0631\u0634 \u0628\u0648\u062f\u0646 \u06cc\u0639\u0646\u06cc \u06a9\u0641\u0634\u200c\u0641\u0631\u0648\u0634\u06cc \ud83d\udc60 \u0631\u0633\u06cc\u062f!\n\n<tg-spoiler>\u0647\u0631\u0686\u06cc \u067e\u0648\u0644 \u0628\u06cc\u0634\u062a\u0631\u06cc \u0628\u0647 \u0627\u0648\u0646 \u062e\u0627\u0646\u0645\u200c\u0647\u0627\u06cc \u0631\u0642\u0627\u0635 \u0628\u062f\u06cc\u060c \u0628\u06cc\u0634\u062a\u0631 \u0648\u0627\u0633\u062a \u0644\u062e\u062a \u0645\u06cc\u0634\u0646 \u0648 \u062d\u062a\u06cc \u0645\u06cc\u062a\u0648\u0646\u06cc...</tg-spoiler>\ud83d\udd1e\n\n+ <b>\u062e\u0637\u0631 \u0627\u0633\u067e\u0648\u06cc\u0644</b>\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/FZl2c2hwosWu8ZHfCwBlgp_NW8TyGHNVi6FFtmcrp61irXpU-seWi4TQxmBSHAsyGJguXKHlthNIiZOFqBoisilvRPN2nEt1zXnNCtauSkAKn1WGOUhRyYoory1Axdm20cDUNidgP-sw9b43M2SOAmliZITa8-a1weSCP1ecRDzQ3z4WTi6e52K-7PZc54-ujlVp9Yc8WLnAjm78gpK5PpkRlTejMc3cljrMYlzr2UqgbEogyv_c9E4TTxFtak6Eu78NuaF94GPcSaOQZ5IonocF8UMO2q_a2D5PhPSV0exG1gfpD_VRN0RSvCpZPa0k-d3ydPTS3U3Z_4k9ffdhqQ.jpg"
-    ]
-   ],
-   "t": 1795017536,
-   "mid": 765,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@closefriend3bot)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CloseFriend3.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  }
- },
+ "pending": {},
  "posted_log": [
-  1794764539,
-  1794764578,
-  1794764624,
   1794766930,
   1794766958,
   1794767011,
@@ -16158,7 +16141,7 @@
    "21": 2
   },
   "rounds": 26,
-  "rev_exp": 6,
+  "rev_exp": 7,
   "rev_no": 4,
   "skip": {
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 11,
