@@ -43,7 +43,7 @@
    "last_id": 96849
   }
  },
- "update_offset": 774951898,
+ "update_offset": 774951902,
  "owner_id": 138180578,
  "fp": [
   {
@@ -16837,13 +16837,15 @@
  "speed": "auto",
  "kb_v": 4,
  "rep_day": "2026-11-17",
- "muted": {},
+ "muted": {
+  "drtel": 1795114469
+ },
  "seeded_src2": 1,
  "seed_tries": 1,
  "active": "p1",
  "dest_n": 4,
  "dests": [],
- "await_src": 1794986334,
+ "await_src": 1795028060,
  "carry": [
   {
    "text": "\ud83d\ude02\ud83d\ude02\ud83d\ude02\ud83d\ude02\ud83d\ude02\ud83d\ude02\ud83d\ude02\ud83d\ude02\n\n\u270d NO CONTEXT\n\n@Wimapro",
