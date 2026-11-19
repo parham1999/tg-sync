@@ -46,51 +46,9 @@
    "last_id": 2275
   }
  },
- "update_offset": 774951916,
+ "update_offset": 774951917,
  "owner_id": 138180578,
  "fp": [
-  {
-   "m": [
-    "276bc16214cf"
-   ],
-   "man": true,
-   "t": 1794619888,
-   "pid": "bbafc9e9"
-  },
-  {
-   "x": "7aa25fcd89a5",
-   "m": [
-    "fefe75d4b175"
-   ],
-   "t": 1794627239
-  },
-  {
-   "x": "7b0eba021065",
-   "h": [
-    "041efe3d",
-    "0c4afbbd",
-    "21c42af3",
-    "288b6d7c",
-    "5183e69f",
-    "6564a2de",
-    "bb1591d3"
-   ],
-   "m": [
-    "7ad244f0c96d",
-    "c28ca5b7f327",
-    "a70b88409c17"
-   ],
-   "t": 1794629172
-  },
-  {
-   "m": [
-    "ecbf21b16528"
-   ],
-   "p": [
-    "171f1733676c4d52"
-   ],
-   "t": 1794631201
-  },
   {
    "x": "fccf7fa2a38c",
    "h": [
@@ -15800,7 +15758,30 @@
    "t": 1795106436
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDM2r_Jv_7v6NuqqqbY7F1ERN43Pl4AAL5EGsbCoj5U1yurmA59mu9AQADAgADeQADPQQ"
+    ]
+   ],
+   "t": 1795106559,
+   "fwd": true,
+   "pid": "f962b4b1",
+   "fp": {
+    "m": [
+     "288e1d5778fb"
+    ],
+    "p": [
+     "3b10086331151581"
+    ],
+    "man": true
+   },
+   "mid": 819
+  }
+ ],
  "next_run_ts": 1795108340.4111876,
  "review_off": false,
  "pending": {},
