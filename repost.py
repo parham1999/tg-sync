@@ -1139,7 +1139,12 @@ def hd_close():
 def hd_photo(url):
     """The photo exactly as Telegram holds it (bytes), or None -> caller uses the public web copy."""
     info = PHOTO_SRC.get(url)
-    if not info or not hd_enabled():
+    HD["why"] = ""
+    if not info:
+        HD["why"] = "no_map"                      # not a photo of a public page (carried over / sent by you / link lost)
+        return None
+    if not hd_enabled():
+        HD["why"] = "off"
         return None
     chan, mid = info
     try:
@@ -1149,14 +1154,18 @@ def hd_photo(url):
             ent = HD["ents"][chan] = c.get_entity(chan)
         msg = c.get_messages(ent, ids=mid)
         if not msg or not getattr(msg, "photo", None):
+            HD["why"] = "no_photo"                # message not found / is not a photo for the helper account
             return None
         data = c.download_media(msg, file=bytes)
         if not data or len(data) < 3000 or data[:2] != b"\xff\xd8":
+            HD["why"] = "bad_data"
             return None
         HD["streak"] = 0
         HD["used"] += 1
         return data
     except Exception as e:
+        HD["why"] = "error"
+        HD["why_err"] = type(e).__name__
         _hd_fail(e)
         return None
 
@@ -1178,6 +1187,11 @@ def marked_photo(net, cfg, url):
         return None
     if _hd_secret() and HD["root"] is not None and HD["cfg"] is not None:
         stat_add(HD["root"], HD["cfg"], "hd_ok" if hd else "hd_web")
+        if not hd:
+            w = HD.get("why") or "other"
+            if w == "error":
+                w = "error:" + str(HD.get("why_err") or "?")[:30]
+            stat_add(HD["root"], HD["cfg"], "hd_why", w)
     if not wm_on(cfg):
         return data if hd else None
     try:
@@ -3152,6 +3166,9 @@ def stat_add(state, cfg, what, key=None, n=1):
         hh = st.setdefault("by_hour", {})
         hk = str(iran_day(cfg, time.time())[1].tm_hour)
         hh[hk] = hh.get(hk, 0) + n
+    elif what == "hd_why":
+        d = st.setdefault("hd_why", {})
+        d[key] = d.get(key, 0) + n
     elif what in COUNTERS:
         st[what] = st.get(what, 0) + n
     else:
@@ -3166,6 +3183,13 @@ def fa(n):
 
 
 SEP = "┄┄┄┄┄┄┄┄┄┄┄┄┄┄"
+
+
+HD_WHY = {"no_map": "عکس از صفحه‌ی عمومی نیامده بود (مثلاً از دور قبل مانده یا فوروارد شما)",
+          "off": "اکانت کمکی موقتاً/دائماً کنار گذاشته شده بود",
+          "no_photo": "اکانت کمکی پیام/عکس را پیدا نکرد",
+          "bad_data": "فایل دریافتی خراب یا خیلی کوچک بود",
+          "error": "خطای ارتباط با تلگرام", "other": "نامشخص"}
 
 
 def report_text(cfg, st):
@@ -3190,6 +3214,17 @@ def report_text(cfg, st):
     L += ["", "   • %s پست را شما فوروارد کردید و ربات فرستاد" % fa(fwd)]
     if g("carried"):
         L += ["", "   • %s پست از این‌ها در دور قبل جا نشده بود و در دور بعد رفت" % fa(g("carried"))]
+    if g("hd_ok") or g("hd_web"):
+        tot = g("hd_ok") + g("hd_web")
+        L += ["", SEP, "", "🖼 کیفیت عکس‌ها (با اکانت کمکی)", "",
+              "   📷 کل عکس‌های ارسال‌شده: %s" % fa(tot), "",
+              "   ✅ با کیفیت اصلی (از خود تلگرام): %s" % fa(g("hd_ok")), "",
+              "   ⚠️ با کیفیت معمولی (صفحه‌ی وب): %s" % fa(g("hd_web"))]
+        wy = st.get("hd_why") or {}
+        if wy:
+            L += ["", "   علتِ کیفیت معمولی:"]
+            for k, v in sorted(wy.items(), key=lambda x: -x[1]):
+                L.append("      • %s: %s" % (HD_WHY.get(k.split(":")[0], k.split(":")[0]) + (" (%s)" % k.split(":", 1)[1] if ":" in k else ""), fa(v)))
     L += ["", SEP, "",
           "🔎 ۲) پست‌هایی که خودِ ربات بررسی کرد: %s" % fa(seen),
           "   (فورواردهای شما جزو این عدد نیست)", "",
@@ -3219,8 +3254,6 @@ def report_text(cfg, st):
           "   • ارسال فوری (⚡): %s" % fa(g("send_now"))]
     if hh:
         L += ["", "   • پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh)]
-    if g("hd_ok") or g("hd_web"):
-        L += ["", "   • کیفیت عکس‌ها: %s با کیفیت کامل (از خود تلگرام)، %s با کیفیت معمولی (صفحه‌ی وب)" % (fa(g("hd_ok")), fa(g("hd_web")))]
     if g("crisis"):
         L += ["", "   • حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis"))]
     return "\n".join(L)
