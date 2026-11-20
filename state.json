@@ -52,7 +52,7 @@
    "last_id": 83470
   }
  },
- "update_offset": 774951968,
+ "update_offset": 774951969,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15976,25 +15976,9 @@
    "mid": 931,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@moviecottage)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CottageOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  },
-  "7b3a752d": {
-   "text": "\u0634\u06a9\u0648\u0641\u0647\u200c\u0647\u0627\u06cc \u06af\u06cc\u0644\u0627\u0633 \u062f\u0631 \u0698\u0627\u067e\u0646\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "https://cdn4.telesco.pe/file/f74f1da093.mp4?token=cq0K0QAUT0Sf5MfEZ0hR3kxEVTNypHZDTn_wY-L0SG7_-vmCAv9hfVUv1aCQu5iluPUHvZ6H3wYYz9TqPwf9iUXY4D5KdSIsQTXJvH-Mf8WhWhkEyeVXTqFqUZHjhF5P1G59aJUWemID2UzD9nr3ZD5ds_SR3VOlpAQkYJz3T0ol41JELDq42z4SdwrrNY5I_TtlCp2ZQRaw_Z2G6dfd3gqmN6w2Pp5vLx4kcn3vzHFkGadN9hV5P8OWbU5W5bvJF3eK7eDihstEA8DX18nI3TH9pH6e_v_nBYI471JpIKcIuzXgT2zKB9nUfSpf1W-9zY48d2BRjAo9eJUbuqRPvw"
-    ]
-   ],
-   "t": 1795208153,
-   "link": "https://t.me/FilmFarsiOrg/26056",
-   "mid": 939,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
  },
  "posted_log": [
-  1794949813,
-  1794949842,
   1794963582,
   1794967685,
   1794976493,
@@ -16249,7 +16233,8 @@
   "hd_why": {
    "no_map": 1
   },
-  "rounds": 1
+  "rounds": 1,
+  "rev_no": 1
  },
  "arrivals": [
   [
