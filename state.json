@@ -52,7 +52,7 @@
    "last_id": 83435
   }
  },
- "update_offset": 774951952,
+ "update_offset": 774951953,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15884,11 +15884,8 @@
    "t": 1795182230
   }
  ],
- "approved": [],
- "next_run_ts": 1795184232.4599066,
- "review_off": false,
- "pending": {
-  "03363bc1": {
+ "approved": [
+  {
    "text": "\u067e\u0627\u0647\u0627\u06cc \u0628\u0646\u062f\u0647 \u062f\u0631 \u0637\u0648\u0644 4 \u0641\u0635\u0644 \u0633\u0627\u0644:\n\n@Wimapro",
    "media": [
     [
@@ -15896,12 +15893,15 @@
      "https://cdn4.telesco.pe/file/MJCI85CzEgXYUuKztTu6R6T9dxa_P7Cpx5mvWWVKAFM__hdspDexss_GgG71l5EeRyd5cdjIAdo_lFDYERw4df0NZ9Rvbr8e9byNWSO0uf1VEFEDzEcfB8aNdg6ujiC0_miZIAtH3N98tl18l0C7nB73JNpVMMZrlTyXkzYAdpRmwb9O3a967KDUp2Rx93iFoX4hjR7aVYkmXSdih7nlCnZd3plNcYwaFC1FMPvtenXtYi1wTZ_Mye3tTvikrVpRY_hh8UqD6MbkSrU1OCocwDC02_h4PocYl7LJt_JeSpCdp1xmqJOzXKcQWXxVxhJDXvYYpI8JkVqQIi4MiTyT_A.jpg"
     ]
    ],
-   "t": 1795182132,
+   "t": 1795182826,
    "mid": 899,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@moviecottage)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CottageOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1795184232.4599066,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1794924198,
   1794924259,
@@ -16191,7 +16191,7 @@
   "rev_no": 5,
   "fwd": 9,
   "rev_exp": 3,
-  "rev_ok": 3,
+  "rev_ok": 4,
   "appr": 3
  },
  "arrivals": [
