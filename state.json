@@ -47,65 +47,14 @@
   },
   "a7439bad46": {
    "last_id": 33546
+  },
+  "8514b98767": {
+   "last_id": 83432
   }
  },
- "update_offset": 774951938,
+ "update_offset": 774951940,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "5c81d9ed73ad",
-   "h": [
-    "08dc489b",
-    "0ace5424",
-    "14e50672",
-    "1a4cb1af",
-    "3696d0b7",
-    "4befd5df",
-    "55e1205d",
-    "59c417e1",
-    "64e1f36b",
-    "7a19dfbc",
-    "82bf31ac",
-    "95f6280f",
-    "98287ef8",
-    "9f39c390",
-    "9fa2dc3c",
-    "a3cb0e5c",
-    "b2a82954",
-    "c9dea876",
-    "eaa5dfa8",
-    "f115b241",
-    "f5a5fcac",
-    "f5c2e832",
-    "f9d1af57"
-   ],
-   "w": [
-    "323b04b9",
-    "4dbe762d",
-    "4e69ccc9",
-    "626cc599",
-    "69cec194",
-    "75e154d0",
-    "904eacdf",
-    "92156ec3",
-    "b10baeb5",
-    "ba3add14",
-    "bf6eb048",
-    "d8012d50",
-    "de5f969c",
-    "e0998733",
-    "ea3d53c9",
-    "fc30c660"
-   ],
-   "m": [],
-   "t": 1794688470
-  },
-  {
-   "m": [
-    "ccd9aff89b35"
-   ],
-   "t": 1794688495
-  },
   {
    "x": "d9c91631191d",
    "m": [
@@ -15872,7 +15821,51 @@
    "t": 1795173515
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "\u062e\u0627\u0646\u0648\u0645 \u062f\u0627\u0631\u0627\u0628\u06cc \u0639\u0632\u06cc\u0632 \u06a9\u0644\u06cc\u0634\u0647 \u062c\u0646\u0633\u06cc\u062a\u06cc \u0628\u0631\u0639\u06a9\u0633 \u0645\u06cc\u06af\u0641\u062a \u0648\u0642\u062a\u06cc \u0647\u0646\u0648\u0632 \u0645\u062f \u0646\u0628\u0648\u062f \ud83d\ude0d\ud83d\ude0d\ud83d\ude02\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkDAAIDY2sAAQs7rjsJPiqB7221BEe3UiTM_AACCCEAAo38AAFQLcgYR4Zvxrc9BA"
+    ]
+   ],
+   "t": 1795174119,
+   "fwd": true,
+   "pid": "5e11f02c",
+   "fp": {
+    "x": "e522a02a6670",
+    "h": [
+     "35661d24",
+     "46b9558d",
+     "49a586ea",
+     "598174b7",
+     "5bbd1315",
+     "6ac4b999",
+     "d0316403",
+     "d9e1bd11",
+     "e6d759ae"
+    ],
+    "w": [
+     "0e8cf5e3",
+     "2fa2f4c9",
+     "7501fb67",
+     "8fdfe1cd",
+     "9e6e2fd6",
+     "b1508972",
+     "b64f4d39",
+     "c1325cda",
+     "c8886e90",
+     "ea6791bb"
+    ],
+    "m": [
+     "44c4f89a502b"
+    ],
+    "man": true
+   },
+   "mid": 878
+  }
+ ],
  "next_run_ts": 1795175428.047519,
  "review_off": false,
  "pending": {
@@ -16673,7 +16666,8 @@
   "Radiokocsher",
   "Krolejudg",
   "stopirani",
-  "Pastwrize"
+  "Pastwrize",
+  "CottageOrg"
  ],
  "last_round": {
   "found": 8,
@@ -16981,8 +16975,8 @@
    "st": "no"
   },
   "cottageorg": {
-   "t": 1795159823,
-   "st": "shown"
+   "t": 1795174113,
+   "st": "added"
   }
  },
  "last_kind": "media",
