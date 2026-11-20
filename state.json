@@ -15946,19 +15946,6 @@
  "next_run_ts": 1795173447.3645074,
  "review_off": false,
  "pending": {
-  "989a8f05": {
-   "text": "\u062e\u0627\u0646\u0648\u0645 \u062f\u0627\u0631\u0627\u0628\u06cc \u0639\u0632\u06cc\u0632 \u06a9\u0644\u06cc\u0634\u0647 \u062c\u0646\u0633\u06cc\u062a\u06cc \u0628\u0631\u0639\u06a9\u0633 \u0645\u06cc\u06af\u0641\u062a \u0648\u0642\u062a\u06cc \u0647\u0646\u0648\u0632 \u0645\u062f \u0646\u0628\u0648\u062f \ud83d\ude0d\ud83d\ude0d\ud83d\ude02\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "https://cdn4.telesco.pe/file/2e987eada7.mp4?token=iHrvu7WTmOX1a293QKGWwYzKe7KMi_d92qskImiAmoq9lro6r5NyUzsvZIq9eweAjFl7bTI_UycenJrVBY5hM6grzWf4Q2QwjjIJLHNB8jgWSagTiUvFQveZWIT_L297wRYfJT645pIAXOjVEPkDhKGXzqovYdZGmcg4LYbXLnUKm3Htum6A89644bRUkscGZ8wqbNVWhVa6HwA8gyuYA2WxhTx1cHzUP7xOAMcGNdrJFndao-N6EZrFcatM71PgV6mNSHs17Z8DraGttI1Yq1NXafjuu2cnhj6chkQPsUlgSWJ1geiH6Xg6AZu3oAP2fGyIrnD6Px120nh-zsJ4pw"
-    ]
-   ],
-   "t": 1795164987,
-   "mid": 868,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  },
   "45322c59": {
    "text": "\u0645\u0646 \u0648\u0642\u062a\u06cc \u062a\u0648 \u0631\u0648 \u0645\u06cc\u200c\u0628\u06cc\u0646\u0645:\n\n@Wimapro",
    "media": [
@@ -16000,7 +15987,6 @@
   }
  },
  "posted_log": [
-  1794912954,
   1794915378,
   1794915419,
   1794917811,
@@ -16279,7 +16265,7 @@
   "rounds": 16,
   "rev_no": 1,
   "fwd": 5,
-  "rev_exp": 1
+  "rev_exp": 2
  },
  "arrivals": [
   [
@@ -16314,7 +16300,7 @@
   ]
  ],
  "last_scan_ts": 1795171181,
- "hv_ts": 1795160575,
+ "hv_ts": 1795171392,
  "hv": {
   "7": [
    400,
