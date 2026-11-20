@@ -15981,7 +15981,7 @@
   }
  ],
  "approved": [],
- "next_run_ts": 1795145216.9847624,
+ "next_run_ts": 1795149353.6100266,
  "review_off": false,
  "pending": {},
  "posted_log": [
@@ -16253,7 +16253,7 @@
   "rev_exp": 1
  },
  "arrivals": [],
- "last_scan_ts": 1795145085,
+ "last_scan_ts": 1795145239,
  "hv_ts": 1795138967,
  "hv": {
   "7": [
@@ -16633,7 +16633,7 @@
   "stopirani"
  ],
  "last_round": {
-  "t": 1795141213,
+  "t": 1795145251,
   "found": 0,
   "considered": 0,
   "posted": 0,
@@ -16642,7 +16642,7 @@
   "rej": {},
   "src": {},
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 5: 0 \u062a\u0627 1 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 6: 0 \u062a\u0627 1 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 0,
   "why": [],
   "ign": {}
