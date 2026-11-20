@@ -1,7 +1,7 @@
 {
  "channels": {
   "ee6c8e519c": {
-   "last_id": 9012
+   "last_id": 9014
   },
   "1c1cb821b4": {
    "last_id": 14701
@@ -10,13 +10,13 @@
    "last_id": 10017
   },
   "46bd0c92df": {
-   "last_id": 123175
+   "last_id": 123176
   },
   "2201e87742": {
    "last_id": 72956
   },
   "b2a6a8ff4b": {
-   "last_id": 33329
+   "last_id": 33330
   },
   "ef680edcd0": {
    "last_id": 18890
@@ -49,44 +49,6 @@
  "update_offset": 774951926,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "0181a848f3a8",
-   "h": [
-    "028e9b05",
-    "0d813859",
-    "10a90573",
-    "1e25cb95",
-    "44eea451",
-    "49a43f5e",
-    "68133ff3",
-    "88d5d397",
-    "b3179393",
-    "b91536f8",
-    "ba551380",
-    "cb4fd635",
-    "eaf728bb",
-    "efc3fb25",
-    "fa7ee757"
-   ],
-   "w": [
-    "0f2d92ce",
-    "214df607",
-    "28fa93e8",
-    "45dd06ba",
-    "484dcd99",
-    "538ecc7e",
-    "5aa0e0b8",
-    "620d8afa",
-    "6a77d99a",
-    "7574540e",
-    "7b28680c",
-    "a1e0c7bf",
-    "b84dd5c0",
-    "e139e3e3"
-   ],
-   "m": [],
-   "t": 1794673339
-  },
   {
    "x": "b0042552a0ba",
    "h": [
@@ -15995,14 +15957,63 @@
     ]
    ],
    "t": 1795151734
+  },
+  {
+   "m": [
+    "a054287d5c24"
+   ],
+   "p": [
+    "c8c4440f870d0969"
+   ],
+   "t": 1795153940
+  },
+  {
+   "x": "7d92b6e77e9f",
+   "h": [
+    "06412835",
+    "08a255f2",
+    "11f26aba",
+    "2dd8def7",
+    "70527d38",
+    "72f9dabb",
+    "754d9fe8",
+    "87375b24",
+    "90f315a7",
+    "964d8e50",
+    "afdc4d72",
+    "cedf1b7a",
+    "d063ebaa"
+   ],
+   "w": [
+    "04fc6878",
+    "050fd232",
+    "1e949447",
+    "3d037872",
+    "41a7f8ab",
+    "4fb1b483",
+    "54db5eb9",
+    "5b9d08cb",
+    "774159f0",
+    "b71fcfea",
+    "b85aa8df",
+    "c03ea4dd",
+    "c38695be",
+    "d43de19a"
+   ],
+   "m": [
+    "721c08285ff9"
+   ],
+   "p": [
+    "1f1f8e86360e1655"
+   ],
+   "t": 1795153969
   }
  ],
  "approved": [],
- "next_run_ts": 1795153909.053067,
+ "next_run_ts": 1795155978.701979,
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1794894400,
   1794896369,
   1794896429,
   1794898801,
@@ -16226,14 +16237,16 @@
   1795136811,
   1795149386,
   1795149433,
-  1795151734
+  1795151734,
+  1795153940,
+  1795153969
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-20",
-  "posted": 16,
-  "found": 46,
-  "seen": 36,
+  "posted": 18,
+  "found": 49,
+  "seen": 39,
   "skip": {
    "\u0644\u06cc\u0646\u06a9/\u0633\u0627\u06cc\u062a": 2,
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 4,
@@ -16241,12 +16254,12 @@
    "\u062a\u0628\u0644\u06cc\u063a": 3,
    "\u062a\u06a9\u0631\u0627\u0631\u06cc": 1
   },
-  "hd_ok": 3,
+  "hd_ok": 5,
   "rev_ask": 2,
   "by_src": {
    "d07f631318": 2,
    "1b77124c19": 1,
-   "b2a6a8ff4b": 1,
+   "b2a6a8ff4b": 2,
    "7aa4235d7c": 1,
    "f20a53f3a3": 1,
    "1c1cb821b4": 1,
@@ -16254,43 +16267,45 @@
    "2201e87742": 2,
    "7f69010262": 2,
    "6cf615e62c": 1,
-   "a198fa18c9": 2
+   "a198fa18c9": 2,
+   "46bd0c92df": 1
   },
   "by_hour": {
    "0": 3,
    "1": 8,
    "2": 1,
    "4": 1,
-   "8": 3
+   "8": 3,
+   "9": 2
   },
   "hd_web": 10,
   "hd_why": {
    "no_map": 10
   },
-  "rounds": 7,
+  "rounds": 8,
   "rev_no": 1,
   "fwd": 1,
   "rev_exp": 1
  },
  "arrivals": [
   [
-   1795149366,
-   3,
-   {
-    "a198fa18c9": 1,
-    "ee6c8e519c": 1,
-    "7f69010262": 1
-   }
-  ],
-  [
    1795151718,
    1,
    {
     "a198fa18c9": 1
    }
+  ],
+  [
+   1795153923,
+   3,
+   {
+    "b2a6a8ff4b": 1,
+    "ee6c8e519c": 1,
+    "46bd0c92df": 1
+   }
   ]
  ],
- "last_scan_ts": 1795151718,
+ "last_scan_ts": 1795153923,
  "hv_ts": 1795149768,
  "hv": {
   "7": [
@@ -16679,31 +16694,49 @@
   "stopirani"
  ],
  "last_round": {
-  "found": 1,
-  "considered": 1,
-  "posted": 1,
-  "over": 0,
+  "found": 3,
+  "considered": 3,
+  "posted": 2,
+  "over": 1,
   "appr": 0,
   "rej": {},
   "src": {
-   "a198fa18c9": [
+   "b2a6a8ff4b": [
+    1,
+    1
+   ],
+   "ee6c8e519c": [
+    1,
+    0
+   ],
+   "46bd0c92df": [
     1,
     1
    ]
   },
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 8: 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 9: 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 2,
-  "why": [],
+  "why": [
+   [
+    "ee6c8e519c",
+    9014,
+    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 2 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+   ]
+  ],
   "ign": {},
-  "short": 1,
+  "carry": 1,
   "sent": [
    [
-    "t.me/dodollism/20811",
+    "t.me/SourceShit/33330",
+    ""
+   ],
+   [
+    "t.me/Daneshjoo/123176",
     ""
    ]
   ],
-  "t": 1795151734
+  "t": 1795153969
  },
  "last_manual": {
   "found": 1,
@@ -16742,7 +16775,20 @@
  "dest_n": 4,
  "dests": [],
  "await_src": 1795065623,
- "carry": [],
+ "carry": [
+  {
+   "text": "\u062d\u0627\u0644\u0627 \u0628\u0647 \u0647\u0645\u06cc\u0646\u0627 \u0632\u0646\u06af \u0628\u0632\u0646\u06cc \u0646\u0648\u0628\u062a \u0628\u062f\u0647 \u0645\u06cc\u06af\u0647 \u062a\u0627 \u06f3 \u0631\u0648\u0632 \u0645\u0627\u0634\u06cc\u0646 \u062f\u0627\u0631\u0645 \u0648\u0642\u062a \u0646\u062f\u0627\u0631\u0645\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "https://cdn4.telesco.pe/file/f650124262.mp4?token=vNDWIoCl6PpjKDLw3P-eZwQKfFCYmik_d7IbSfwmcnLfG8BhricZ2kud7hltH5Rno44sLuCv8ZxAzOJvTcmN450K8L5XuHB-L-OJ1flrEeldznCmdUY3Rynd0YMGwLVAwJuVP-xjzSKCv2OppyRgRYE2hIS4AI4UhV7ozRKUrHKhGgjgFlWf2Rn3cbh3GDnxUDtkx593N28Navs709Tm7yix3JPVyaEUN8GgQhXWVIiIpf6BPwXzGX742fcqSzdC-779CrkcTMMW32ZNF96vQUCAoA7cAxDgDIXcW7Xs0ZJLUfPGvS9dH-yn-yT_G6vi65sSHUEU1xzER6Hb1DYFKQ"
+    ]
+   ],
+   "t": 1795153923,
+   "link": "t.me/Khartox/9014",
+   "key": "ee6c8e519c"
+  }
+ ],
  "sugg": {
   "unnurmal": {
    "t": 1794984893,
