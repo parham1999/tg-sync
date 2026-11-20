@@ -49,7 +49,7 @@
    "last_id": 33545
   }
  },
- "update_offset": 774951935,
+ "update_offset": 774951938,
  "owner_id": 138180578,
  "fp": [
   {
@@ -16026,13 +16026,120 @@
     "man": true
    },
    "mid": 851
+  },
+  {
+   "text": "\u0628\u0627\u0632\u06cc\u06af\u0631 \u0634\u062e\u0635\u06cc\u062a \u0645\u0646\u062f\u06cc \u066c \u0627\u06a9\u0633\u0650 \u062c\u06cc\u0633\u0648\u0646 \u062a\u0648\u06cc GTA VI \u0627\u06cc\u0646 \u062e\u0627\u0646\u0648\u0645 \u0647\u0633\u062a\u0646\n\n\u0627\u0633\u0645\u0634 \u0644\u06a9\u0633\u06cc \u0634\u0639\u06cc\u0628\u06cc \u0647\u0633\u062a\u0634\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDWWr_5sSPWKMjhLiJ6FgI2YTUuuieAAKJEWsb-50AAVB7BGXzH6vGdwEAAwIAA3cAAz0E"
+    ],
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDWmr_5sQc6KGRwicclCv91zZF6a23AAKKEWsb-50AAVCaIBFS4DNjSgEAAwIAA3cAAz0E"
+    ]
+   ],
+   "t": 1795155654,
+   "fwd": true,
+   "pid": "55a2c9d8",
+   "fp": {
+    "x": "46e55e206508",
+    "h": [
+     "0688f296",
+     "0aa5df28",
+     "198ba6d8",
+     "360659ce",
+     "3a5a2404",
+     "85ab823a",
+     "a1f7f059",
+     "a6622f5e",
+     "b7a05f9d",
+     "ba827924",
+     "c003b995",
+     "da18f8a2",
+     "dc2cb5d5"
+    ],
+    "w": [
+     "0b65a9b4",
+     "24c95ede",
+     "3b9e49d3",
+     "5d89f8d1",
+     "74b9739e",
+     "7501fb67",
+     "82ab5915",
+     "93b61229",
+     "a82c357a",
+     "b85aa8df",
+     "bfa71f79",
+     "e59045c6",
+     "f2ecd2b8",
+     "f398eb34"
+    ],
+    "m": [
+     "c345e15eb113",
+     "d6e960bd571f"
+    ],
+    "p": [
+     "38746c586337334b",
+     "c9d4d4cec4ccd494"
+    ],
+    "man": true
+   },
+   "mid": 857
+  },
+  {
+   "text": "\u0628\u0627\u0632\u06cc\u06af\u0631/\u0635\u062f\u0627\u067e\u06cc\u0634\u0647\u200c \u0634\u062e\u0635\u06cc\u062a \u0647\u0627\u06cc \u0644\u0648\u0633\u06cc\u0627 \u0648 \u062c\u06cc\u0633\u0646 \u062c\u0644\u0648\u06cc \u062a\u0627\u0628\u0644\u0648\u06cc \u062a\u0628\u0644\u06cc\u063a\u0627\u062a\u06cc \u0628\u0627\u0632\u06cc GTA\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDXGr_5tI1BAUSuC341QJGPpJc4n_RAAKkEWsb-50AAVAc17NquA28agEAAwIAA3cAAz0E"
+    ]
+   ],
+   "t": 1795155666,
+   "fwd": true,
+   "pid": "dbefe194",
+   "fp": {
+    "x": "126d378c0e0f",
+    "h": [
+     "36222477",
+     "3ecf101e",
+     "41e155d8",
+     "803467c1",
+     "82c21a86",
+     "9bddd67a",
+     "9e0277e8",
+     "c3ee50cd",
+     "d88bbe44",
+     "e241be2f"
+    ],
+    "w": [
+     "21934dc9",
+     "301fa426",
+     "5d89f8d1",
+     "69a36bbf",
+     "6b75eca3",
+     "74b9739e",
+     "9200b13f",
+     "9920e2fd",
+     "b3468660",
+     "ce073b43",
+     "f2ecd2b8"
+    ],
+    "m": [
+     "0a318714e28c"
+    ],
+    "p": [
+     "640f0f0f1fc74564"
+    ],
+    "man": true
+   },
+   "mid": 860
   }
  ],
  "next_run_ts": 1795155978.701979,
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1794896429,
   1794898801,
   1794898862,
   1794900732,
