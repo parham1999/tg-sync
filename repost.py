@@ -498,9 +498,13 @@ def parse_page(page):
                 media.append(("photo", html.unescape(mm.group(1))))
                 # an album is ONE block in the page: every photo's own message id is in its link (…/14591?single)
                 a0 = chunk.rfind("<a", 0, mm.start(1))
-                hm = re.search(r'href="[^"]*?/(\d+)(?:\?[^"]*)?"', chunk[a0:mm.start(1)]) if a0 >= 0 else None
+                tag_end = chunk.find(">", mm.start(1))
+                atag = chunk[a0:tag_end] if a0 >= 0 and tag_end > 0 else ""        # the whole <a ...> tag: href may come after style
+                hm = re.search(r'href="[^"]*?/(\d+)(?:\?[^"]*)?"', atag)
                 if hm:
                     PHOTO_SRC[html.unescape(mm.group(1))] = (chan_, int(hm.group(1)))
+                else:                                 # no link found: a single-photo post is the post itself
+                    PHOTO_SRC.setdefault(html.unescape(mm.group(1)), (chan_, int(m.group(2))))
             elif mm.group(2):
                 tag = mm.group(2)
                 cm = re.search(r'\bclass="([^"]*)"', tag)
@@ -1153,7 +1157,8 @@ def hd_photo(url):
         if ent is None:
             ent = HD["ents"][chan] = c.get_entity(chan)
         msg = c.get_messages(ent, ids=mid)
-        if not msg or not getattr(msg, "photo", None):
+        mime = getattr(getattr(msg, "document", None), "mime_type", "") or ""
+        if not msg or not (getattr(msg, "photo", None) or mime.startswith("image/")):
             HD["why"] = "no_photo"                # message not found / is not a photo for the helper account
             return None
         data = c.download_media(msg, file=bytes)
@@ -2326,6 +2331,9 @@ def _handle_update(cfg, net, state, u):
         if act in ("fw", "rm", "fn", "fq"):
             forward_button(cfg, net, state, cb, act, pid)
             return
+        if act == "ca":
+            crisis_button(cfg, net, state, cb, pid)
+            return
         pend = state.setdefault("pending", {}).pop(pid, None)
         if pend is None:
             try:
@@ -2424,7 +2432,7 @@ def _handle_update(cfg, net, state, u):
         mode = state.get("crisis_mode", "auto")
         tell(net, owner, "🚨 حالت بحران: وقتی کانال‌ها ناگهان پر از پست تازه می‌شوند (مثلاً خبر مهم)، ربات از هر کانال تا ۳ پست آخر "
              "را با فاصله‌ی کم (هر ۱۰ تا ۱۵ دقیقه، تا ۱۵ پست در هر دور) می‌فرستد و لیبل عکس را نمی‌گذارد.\n"
-             "🚨 روشن = همیشه بحران • 🛑 خاموش = هرگز بحران • 🤖 خودکار = با هجوم پست‌ها خودش روشن و خاموش می‌شود.\n\n"
+             "🚨 روشن = همیشه بحران • 🛑 خاموش = هرگز بحران • 🤖 خودکار = با هجوم پست‌ها فقط از شما می‌پرسد «فعال شوم؟» و با تأیید شما روشن می‌شود (با آرام شدن اوضاع خودش خاموش می‌شود).\n\n"
              "الان: " + {"on": "🚨 روشن (دستی)", "off": "🛑 خاموش (دستی)"}.get(
                  mode, "🚨 فعال (خودکار)" if state.get("crisis_auto") else "🤖 خودکار (الان عادی)"), crisis_menu())
         return
@@ -2765,6 +2773,8 @@ def handle_update(cfg, net, state, u):
             target = next((p for p in ps if pid in (p[2].get("fwd") or {})), None)
         elif act == "rm":
             target = next((p for p in ps if pid in (p[2].get("undo") or {})), None)
+        elif act == "ca":
+            target = next((p for p in ps if p[2].get("crisis_ask")), None)
         elif act in ("fn", "fq"):
             target = next((p for p in ps if any(a.get("pid") == pid for a in p[2].get("approved", []))), None)
         target = target or active_profile(cfg0, root)
@@ -2870,7 +2880,8 @@ def publish_forward(cfg, net, state, owner, ttext, media, fp, pid):
     except NetError as e:
         return "⚠️ مشکل شبکه، ارسال نشد: %s" % e, None
     hist = state.setdefault("fp", [])
-    hist.append(dict(fp, t=now, man=True, pid=pid))
+    hist.append(dict(fp, t=now, man=True, pid=pid, me=True, src=""))
+    remember_origin(state, net, "", True)
     state["last_kind"] = "media" if media else "text"
     state.setdefault("posted_log", []).append(now)
     stat_add(state, cfg, "posted")
@@ -2891,7 +2902,45 @@ def handle_forward(cfg, net, state, owner, msgs):
         REPLY_TO[0] = None
 
 
+def forward_from_target(cfg, msgs):
+    """Message ids of the channel when these forwarded messages come from my own channel, else None."""
+    tgt = str(cfg.get("target_channel") or "").lstrip("@").lower()
+    ids = []
+    for m in msgs:
+        fo = m.get("forward_origin") or {}
+        ch = fo.get("chat") or m.get("forward_from_chat") or {}
+        uname = str(ch.get("username") or "").lower()
+        mid = fo.get("message_id") or m.get("forward_from_message_id")
+        if ch and mid and ((tgt and uname == tgt) or str(ch.get("id")) == str(cfg.get("target_channel"))):
+            ids.append(int(mid))
+    return ids or None
+
+
+def origin_reply(state, mids):
+    o = state.get("origins") or {}
+    lines, seen = [], set()
+    for mid in mids:
+        e = o.get(str(mid))
+        if not e:
+            return None
+        key = (e.get("l") or "", bool(e.get("me")))
+        if key in seen:
+            continue
+        seen.add(key)
+        lines.append(e["l"] if e.get("l") else "✋ این پست را خودتان فرستاده بودید (فوروارد شما)؛ لینک مبدا ندارد.")
+    return lines
+
+
 def _handle_forward(cfg, net, state, owner, msgs):
+    mids = forward_from_target(cfg, msgs)
+    if mids:                                      # a post of MY channel: "where did this come from?"
+        lines = origin_reply(state, mids)
+        if lines:
+            tell(net, owner, "🔗 منبع این پست:\n\n" + "\n\n".join(lines), MENU_KB)
+        else:
+            tell(net, owner, "🔍 منبعِ این پست را پیدا نکردم: یا بیش از ۷ روز از ارسالش گذشته، یا قبل از شروع این قابلیت "
+                 "ارسال شده، یا ربات آن را نفرستاده است. (چون از کانال خودتان است، دوباره در صف ارسال نگذاشتمش.)", MENU_KB)
+        return
     media, text, ents = [], "", []
     for m in msgs:
         if any(m.get(k) for k in FWD_BAD):
@@ -3035,7 +3084,8 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
         log.warning("[%s] could not show it to the owner: %s", tag, getattr(e, "desc", e))
         return False
     state.setdefault("pending", {})[pid] = {
-        "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time())}
+        "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time()),
+        "link": ("https://t.me/%s/%s" % (src, p["id"])) if src and p.get("id") else ""}
     ask = "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟\n(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)" % (reason, src)
     r = tell(net, owner, ask, {
         "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
@@ -3101,6 +3151,25 @@ def spread_by_channel(items):
         out.append(it)
         last = g
     return out + carried
+
+
+def full_link(l):
+    l = (l or "").strip()
+    return ("https://" + l) if l.startswith("t.me/") else l
+
+
+def remember_origin(state, net, link, me=False):
+    """Which source post became which message of the channel (kept 7 days) - for the 'where is this from?' lookup."""
+    now = int(time.time())
+    o = state.setdefault("origins", {})
+    for ch_, mid_ in getattr(net, "last_sent", None) or []:
+        o[str(mid_)] = {"l": full_link(link), "t": now, "me": bool(me)}
+    for k in [k for k, v in o.items() if now - v.get("t", 0) > 7 * 86400]:
+        o.pop(k)
+
+
+def psrc_of(media):
+    return {u: list(PHOTO_SRC[u]) for k, u in media if k == "photo" and u in PHOTO_SRC}
 
 
 def pick_and_order(items, limit, prev_text=False):
@@ -3255,7 +3324,7 @@ def report_text(cfg, st):
     if hh:
         L += ["", "   • پرارسال‌ترین ساعت‌ها: " + "، ".join("%s (%s پست)" % (fa("%02d" % int(h)), fa(v)) for h, v in hh)]
     if g("crisis"):
-        L += ["", "   • حالت بحران: %s بار خودکار فعال شد" % fa(g("crisis"))]
+        L += ["", "   • حالت بحران: %s بار فعال شد (با تأیید شما)" % fa(g("crisis"))]
     return "\n".join(L)
 
 
@@ -3296,15 +3365,29 @@ def crisis_eval(cfg, net, state, now, counts):
     owner = owner_of(cfg, state)
     if mode == "auto":
         if not state.get("crisis_auto"):
-            if total >= int(cfg["crisis_on_rate"]) or hot >= int(cfg["crisis_on_channels"]):
-                state["crisis_auto"] = int(now)
-                state.pop("crisis_calm_since", None)
-                stat_add(state, cfg, "crisis")
-                log.info("crisis mode switched ON automatically (%d new posts in 30 min)", total)
+            ask = state.get("crisis_ask")
+            if ask and now - ask.get("t", 0) > 30 * 60:       # no answer for 30 min = "no"; ask again later if it is still hot
+                state.pop("crisis_ask", None)
+                state["crisis_snooze"] = int(now) + 30 * 60
+                ask = None
+            if (total >= int(cfg["crisis_on_rate"]) or hot >= int(cfg["crisis_on_channels"])) and not ask \
+                    and now >= state.get("crisis_snooze", 0):
+                # it never switches itself on: it only asks you
+                log.info("crisis detected (%d new posts in 30 min) - asking the owner", total)
                 if owner:
-                    tell(net, owner, "🚨 تعداد پست‌ها ناگهان بالا رفت (%d پست تازه در ۳۰ دقیقه). حالت بحران "
-                         "خودکار روشن شد. دورها کوتاه‌تر، تا ۳ پست آخر هر کانال و لیبل عکس‌ها غیرفعال. "
-                         "با دکمه‌ی «بحران: خاموش» می‌توانید خاموشش کنید." % total, MENU_KB)
+                    try:
+                        r = net.api("sendMessage", {"chat_id": owner, "text": (TAG[0] + "\n" if TAG[0] else "") +
+                            "🚨 تعداد پست‌ها ناگهان بالا رفته (%s پست تازه در ۳۰ دقیقه).\n\n"
+                            "حالت بحران فعال بشه؟\n"
+                            "• بله: دورها کوتاه‌تر، تا ۳ پست آخر هر کانال و لیبل عکس‌ها غیرفعال\n"
+                            "• نه: همین‌طور عادی ادامه می‌دهم (حدود یک ساعت دوباره نمی‌پرسم)" % fa(total),
+                            "reply_markup": {"inline_keyboard": [[
+                                {"text": "✅ بله، فعال شو", "callback_data": "ca:y"},
+                                {"text": "❌ نه", "callback_data": "ca:n"}]]}})
+                        state["crisis_ask"] = {"t": int(now), "total": total,
+                                               "mid": (r.get("result") or {}).get("message_id") if isinstance(r, dict) else None}
+                    except (ApiError, NetError) as e:
+                        log.warning("could not ask about crisis mode: %s", e)
         else:
             off = False
             if total < int(cfg["crisis_off_rate"]):
@@ -3321,6 +3404,33 @@ def crisis_eval(cfg, net, state, now, counts):
                 if owner:
                     tell(net, owner, "✅ اوضاع آرام شد؛ حالت بحران خودکار خاموش شد و ربات به حالت عادی برگشت.", MENU_KB)
     return mode == "on" or (mode == "auto" and bool(state.get("crisis_auto")))
+
+
+def crisis_button(cfg, net, state, cb, ans):
+    now = int(time.time())
+    ask = state.pop("crisis_ask", None)
+    m = cb.get("message") or {}
+    if not ask:
+        note = "این سؤال دیگر معتبر نیست."
+    elif ans == "y":
+        state["crisis_auto"] = now
+        state["crisis_mode"] = "auto"
+        state.pop("crisis_calm_since", None)
+        state["next_run_ts"] = 0
+        stat_add(state, cfg, "crisis")
+        note = "🚨 حالت بحران فعال شد. با آرام شدن اوضاع خودش خاموش می‌شود (یا با «بحران: خاموش»)."
+    else:
+        state["crisis_snooze"] = now + 3600
+        note = "❌ باشه، عادی ادامه می‌دهم. حدود یک ساعت دوباره نمی‌پرسم."
+    try:
+        net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"],
+                                    "text": (m.get("text") or "") + "\n\n" + note})
+    except (ApiError, NetError, KeyError):
+        pass
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note[:150]})
+    except (ApiError, NetError):
+        pass
 
 
 SERVING = [False]          # True while the bot stays alive (--serve): buttons are answered even between two posts
@@ -3471,7 +3581,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             continue
         eligible.append(("approved/" + hashlib.sha1(a["text"].encode()).hexdigest()[:6],
                          {"id": 0, "media": [tuple(x) for x in a["media"]] if a.get("fwd") else a["media"],
-                          "fwd": bool(a.get("fwd")), "pid": a.get("pid"), "afp": a.get("fp"), "mid": a.get("mid")},
+                          "fwd": bool(a.get("fwd")), "pid": a.get("pid"), "afp": a.get("fp"), "mid": a.get("mid"),
+                          "alink": a.get("link") or ""},
                          a["text"], fp, None))
     carried_in = state.get("carry", [])
     state["carry"] = []
@@ -3483,8 +3594,11 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             fp["m"] = []
             if find_dup(fp, hist):
                 continue
+            for u_, v_ in (c.get("ps") or {}).items():      # carried photos keep their original-quality source
+                PHOTO_SRC.setdefault(u_, tuple(v_))
             eligible.append(("carry/" + hashlib.sha1(c["text"].encode()).hexdigest()[:6],
-                             {"id": 0, "media": c["media"], "link": c.get("link"), "ckey": c.get("key"), "ct": c.get("t", now)},
+                             {"id": 0, "media": c["media"], "link": c.get("link"), "ckey": c.get("key"), "ct": c.get("t", now),
+                              "ps": c.get("ps")},
                              c["text"], fp, None))
     elif carried_in:
         state["carry"] = carried_in               # crisis / dry run: keep them for a normal round
@@ -3564,7 +3678,8 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             if item[0].startswith("carry/"):
                 if carry_it and len(state["carry"]) < 12:   # still no place: wait for the next round (until it is too old)
                     state["carry"].append({"text": item[2], "media": item[1]["media"], "t": item[1].get("ct", int(now)),
-                                           "link": item[1].get("link"), "key": item[1].get("ckey")})
+                                           "link": item[1].get("link"), "key": item[1].get("ckey"),
+                                           "ps": psrc_of(item[1]["media"])})
                 continue
             if not item[0].startswith("approved/"):
                 rec["over"] += 1
@@ -3576,10 +3691,11 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
                 if carry_it and len(state["carry"]) < 12:
                     state["carry"].append({"text": item[2], "media": item[1]["media"], "t": int(now),
                                            "link": ("t.me/%s/%s" % (nm, item[1]["id"])) if nm and item[1].get("id") else None,
-                                           "key": kk or None})
+                                           "key": kk or None, "ps": psrc_of(item[1]["media"])})
                     rec["carry"] = rec.get("carry", 0) + 1
             if item[0].startswith("approved/"):   # approved by you: keep it for the next round
-                keep = {"text": item[2], "media": [list(x) for x in item[1]["media"]], "t": int(now)}
+                keep = {"text": item[2], "media": [list(x) for x in item[1]["media"]], "t": int(now),
+                        "link": item[1].get("alink") or ""}
                 if item[1].get("fwd"):
                     keep.update(fwd=True, pid=item[1].get("pid"), fp=item[1].get("afp"), mid=item[1].get("mid"))
                 state["approved"].append(keep)
@@ -3596,7 +3712,18 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
         try:
             deliver(net, dcfg, p, text)
             log.info("[%s] posted", tag)
-            hist.append(dict(fp, t=int(time.time())))
+            _head = tag.split("/")[0]
+            if _head in lab2key:
+                _link = "https://t.me/%s/%s" % (names_by_key.get(lab2key[_head]), p["id"]) if names_by_key.get(lab2key[_head]) and p.get("id") else ""
+            elif _head == "carry":
+                _link = full_link(p.get("link"))
+            elif p.get("fwd"):
+                _link = ""
+            else:
+                _link = full_link(p.get("alink"))
+            _me = bool(p.get("fwd"))
+            hist.append(dict(fp, t=int(time.time()), src=_link, **({"me": True} if _me else {})))
+            remember_origin(state, net, _link, _me)
             state["last_kind"] = "media" if p["media"] else "text"
             state.setdefault("posted_log", []).append(int(time.time()))
             stat_add(state, cfg, "posted", tag.split("/")[0] if tag.split("/")[0] in keys else None)
