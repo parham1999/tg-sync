@@ -108,6 +108,9 @@ DEFAULTS = {
     "blocked_domains": [],
     "incomplete_post": "skip",     # "skip" or "text_only" when media cannot be copied
     "proxy": "",                   # e.g. "http://127.0.0.1:10809" (empty = system settings)
+    "greeting_filter": True,       # empty "date + good-morning + wishes" posts: sure ones are skipped, unsure ones go to review
+    "greeting_block_score": 5,     # score at/above this: skipped without asking
+    "greeting_review_score": 2,    # score at/above this (but below the block score): sent to you with Send / Reject buttons
     "api_base": "https://api.telegram.org",
     "web_base": "https://t.me/s/",
 }
@@ -815,6 +818,10 @@ def explain_skip(reason, post):
         return "رسانه‌ی غیرقابل‌کپی دارد: %s" % (post.get("ukind") or "نامشخص")
     if reason == "empty":
         return "پست خالی است (نه متن دارد نه عکس و ویدیو)"
+    m = re.match(r"greeting (spam|maybe) \((.*)\)", reason)
+    if m:
+        return "پیام تبریک و صبح‌بخیرِ بی‌محتوا (%s)%s" % (
+            m.group(2), "؛ اگر نمی‌خواهید این نوع پست‌ها رد شوند: /greet" if m.group(1) == "spam" else "")
     return reason
 
 
@@ -875,6 +882,60 @@ def media_hashes(net, media):
     return media_info(net, media)[0]
 
 
+# --------------------------------------------------------------------------- #
+# empty greeting posts: a date line + a wall of wishes ("good morning" spam) - scored, not guessed
+# --------------------------------------------------------------------------- #
+GREET_MONTHS = ("فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند")
+GREET_DATE_FILL = ("شنبه", "یکشنبه", "دوشنبه", "سهشنبه", "چهارشنبه", "پنجشنبه", "جمعه", "یک", "دو", "سه", "چهار", "پنج",
+                   "امروز", "تاریخ", "ماه", "مورخ", "سال")
+GREET_WISH = [r"بخیر", r"موفق", r"زیبا", r"شاد", r"آرام", r"عشق|عاشق", r"رویا", r"برکت", r"سلامت", r"پناه خدا|خدا نگهدار",
+              r"امیدوار|آرزو", r"دعا", r"انرژی", r"خوش", r"مبارک", r"پر ?از|پرشور", r"نغمه", r"سرنوشت", r"لبخند", r"عزیز"]
+GREET_TOKEN = re.compile(r"[\u0621-\u06FFA-Za-z0-9]+")
+GREET_MENTION_LINE = re.compile(r"[^\u0621-\u06FFA-Za-z0-9_@]*@[A-Za-z0-9_]+[^\u0621-\u06FFA-Za-z0-9_]*$")
+
+
+def greeting_score(text_html):
+    """(score, reason in Persian). 0 = an ordinary post. The more a post looks like a date line plus a wall of
+    greetings / wishes with no real content, the higher the score. Only the text is judged. A plain
+    'good morning' scores 0."""
+    t = plain(text_html or "").translate(_DIG).replace("\u200c", " ").replace("ي", "ی").replace("ك", "ک")
+    lines = [l.strip() for l in t.split("\n") if l.strip()]
+    if not lines:
+        return 0, ""
+
+    def is_date(l):
+        tk = GREET_TOKEN.findall(l)
+        return (0 < len(tk) <= 7 and any(x.isdigit() for x in tk) and any(x in GREET_MONTHS for x in tk)
+                and all(x.isdigit() or x in GREET_MONTHS or x in GREET_DATE_FILL for x in tk))
+
+    date_lines = [l for l in lines if is_date(l)]
+    body = [l for l in lines if l not in date_lines and not GREET_MENTION_LINE.match(l)]
+    score, why = 0, []
+    words = [w for l in body for w in GREET_TOKEN.findall(l)]
+    tun = sum(1 for w in words if w.endswith("تون"))
+    joined = " ".join(body)
+    wish = sum(1 for p in GREET_WISH if re.search(p, joined))
+    # a date line counts when the rest of the post is short, or when it also carries greeting words:
+    # a match preview or a news item with a date line and a long body is not a greeting post
+    if date_lines and (len(body) <= 3 or tun >= 1 or wish >= 2):
+        score += 2
+        why.append("خط تاریخ")
+    if tun >= 2:
+        score += 2 if tun >= 4 else 1
+        why.append("%d کلمه‌ی «ـتون»" % tun)
+    if wish >= 2:
+        score += 2 if wish >= 4 else 1
+        why.append("%d نوع کلمه‌ی تبریک و دعا" % wish)
+    if len(body) >= 6 and sum(1 for l in body if not re.match(r"[\u0621-\u06FFA-Za-z0-9]", l)) >= 0.6 * len(body):
+        score += 1
+        why.append("خط‌های کوتاه و دکوری")
+    if body and len(words) / float(len(body)) >= 8:        # long sentences: real text, not a wall of wishes
+        score -= 2
+    if any(ch.isdigit() for ch in joined):                 # numbers outside the date line: prices, news ...
+        score -= 1
+    return score, "، ".join(why)
+
+
 def skip_reason(cfg, post):
     text = plain(post["text_html"]).lower()
     if post["reply"] and cfg["skip_replies"]:
@@ -910,6 +971,12 @@ def skip_reason(cfg, post):
             return "mentions another channel/bot (@%s)" % others[0]
     if cfg["skip_invite_links"] and INVITE_RE.search(post["text_html"]):
         return "contains a channel invite link"
+    if cfg.get("greeting_filter", True):
+        gs, gw = greeting_score(post["text_html"])
+        if gs >= int(cfg.get("greeting_block_score", 5)):
+            return "greeting spam (%s)" % gw
+        if gs >= int(cfg.get("greeting_review_score", 2)):
+            return "greeting maybe (%s)" % gw
     if post["unsupported"] and cfg["incomplete_post"] == "skip":
         return "media type cannot be copied (voice/file/poll/sticker/large video)"
     if not post["text_html"].strip() and not post["media"]:
@@ -1450,6 +1517,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• 📋 منبع‌ها: لیست کانال‌های مبدا؛ اضافه کردن: /add name ، حذف: /del name ، بی‌صدا: /mute name 3\n"
              "• ⚙️ بیشتر: کلمات ممنوع، ساعت‌های پربازدید، بررسی مشکوک‌ها\n"
              "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
+             "• 🌅 فیلتر پیام تبریک بی‌محتوا (تاریخ + دعا و صبح‌بخیر): قطعی‌ها رد می‌شوند، مرزی‌ها برای تأیید شما می‌آیند؛ روشن/خاموش: /greet\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
 
@@ -1632,12 +1700,14 @@ def more_menu(state):
     return {"inline_keyboard": [[{"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}, {"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}],
                                 [{"text": "🔭 پیشنهاد کانال", "callback_data": "tx:sugg"}],
                                 [{"text": "🔍 بررسی مشکوک‌ها (روشن/خاموش)", "callback_data": "tx:review"}],
+                                [{"text": "🌅 فیلتر پیام تبریک (روشن/خاموش)", "callback_data": "tx:greet"}],
                                 [{"text": "📖 راهنما و دستورها", "callback_data": "tx:help"}]]}
 
 
 TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
           "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
           "dest_add": "/dest add", "sugg": "🔭 پیشنهاد کانال", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
+TX_MAP["greet"] = "/greet"
 
 
 def hours_update(cfg, net, state, now):
@@ -1707,6 +1777,8 @@ def apply_overrides(cfg, state):
     ads = [w for w in base_ad if w.lower() not in off]
     ads += [w for w in state.get("ban_words", []) if w.lower() not in {a.lower() for a in ads}]
     cfg["ad_keywords"] = ads
+    cfg.setdefault("_base_greet", bool(cfg.get("greeting_filter", True)))
+    cfg["greeting_filter"] = cfg["_base_greet"] and not state.get("greet_off")
 
 
 def is_muted(state, name):
@@ -2111,6 +2183,20 @@ def manage_command(cfg, net, state, text):
             r = "✅ «%s» از کلمات ممنوع برداشته شد." % w
         apply_overrides(cfg, state)
         return r, None
+    if cmd == "/greet":
+        a = arg.strip().lower()
+        if a in ("off", "خاموش"):
+            state["greet_off"] = True
+        elif a in ("on", "روشن"):
+            state.pop("greet_off", None)
+        elif state.get("greet_off"):
+            state.pop("greet_off", None)
+        else:
+            state["greet_off"] = True
+        apply_overrides(cfg, state)
+        return ("🌅 فیلتر پیام‌های تبریک بی‌محتوا: " + ("🛑 خاموش شد؛ این نوع پست‌ها مثل بقیه ارسال می‌شوند." if state.get("greet_off") else "روشن شد.")
+                + "\n\nپست‌هایی که تاریخ و دیوار دعا و تبریک دارند: قطعی‌ها رد می‌شوند و مرزی‌ها (مثلاً فقط خط تاریخ) با دکمه‌ی ارسال/رد برای شما می‌آیند. "
+                "یک «صبح بخیر» ساده مشکلی ندارد و ارسال می‌شود.\nخاموش: /greet off ، روشن: /greet on"), None
     return None
 
 
@@ -2159,6 +2245,8 @@ def status_text(cfg, state):
     lines.append("📥 تاییدشده و منتظر ارسال: %d" % len(q) + (" (%s فوروارد شما)" % fa(nf) if nf else ""))
     lines.append("")
     lines.append("🧐 بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
+    lines.append("")
+    lines.append("🌅 فیلتر پیام‌های تبریک بی‌محتوا: " + ("🛑 خاموش" if state.get("greet_off") else "روشن"))
     lines += ["", SEP, ""]
     lines.append(speed_line(cfg, state))
     if speed_mode(state) == "auto":
@@ -3071,6 +3159,8 @@ def review_worthy(cfg, reason):
         return False
     if reason.startswith("ad keyword"):
         return bool(cfg["review_keyword_ads"])
+    if reason.startswith("greeting maybe"):
+        return True
     return reason.startswith(("ad word", "contains a link", "mentions another", "contains a channel invite"))
 
 
@@ -3087,6 +3177,9 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
         "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time()),
         "link": ("https://t.me/%s/%s" % (src, p["id"])) if src and p.get("id") else ""}
     ask = "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟\n(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)" % (reason, src)
+    if reason.startswith("greeting"):
+        ask = ("☝️ این پست شبیه پیام تبریک/صبح‌بخیرِ بی‌محتوا بود (%s) از کانال %s.\nارسال شود؟\n"
+               "(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)") % (reason.split("(", 1)[-1].rstrip(")"), src)
     r = tell(net, owner, ask, {
         "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
                              {"text": "❌ رد", "callback_data": "no:" + pid}]]})
@@ -3203,6 +3296,7 @@ def pick_and_order(items, limit, prev_text=False):
 SKIP_GROUPS = (("ad ", "تبلیغ"), ("link to blocked", "لینک/سایت"), ("contains a link", "لینک/سایت"),
                ("mentions another", "کانال یا ربات دیگر"), ("contains a channel invite", "کانال یا ربات دیگر"),
                ("it is forwarded", "فوروارد"), ("it is a reply", "ریپلای"), ("media type", "رسانه‌ی نامناسب"))
+SKIP_GROUPS = SKIP_GROUPS + (("greeting", "پیام تبریک و صبح‌بخیر"),)
 
 
 def iran_day(cfg, now):
@@ -3621,6 +3715,10 @@ def run_cycle_latest(cfg, net, rules, state, state_path, dry, force=False):
             if not dry:
                 stat_add(state, cfg, "seen")
             reason = skip_reason(cfg, p)
+            if reason and reason.startswith("greeting maybe") and not (
+                    not dry and owner_of(cfg, state) and not state.get("review_off") and cfg["review_suspicious"]
+                    and reviewed < int(cfg["review_max_per_round"])):
+                reason = None                 # nobody can be asked right now: an unsure post is posted, not lost
             if reason:
                 g = skip_group(reason)
                 rec["rej"][g] = rec["rej"].get(g, 0) + 1
