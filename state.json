@@ -52,7 +52,7 @@
    "last_id": 83497
   }
  },
- "update_offset": 774951975,
+ "update_offset": 774951976,
  "owner_id": 138180578,
  "fp": [
   {
@@ -16008,22 +16008,7 @@
  "approved": [],
  "next_run_ts": 1795261151.019128,
  "review_off": false,
- "pending": {
-  "26e58bc2": {
-   "text": "\u0627\u06cc\u0646 \u062f\u06cc\u0648\u0648\u0646\u0647 \u0647\u0645 \u0628\u0639\u062f \u0627\u0632 52\u0633\u0627\u0639\u062a \u0628\u06cc\u062e\u0648\u0627\u0628\u06cc \u0648 \u0627\u0633\u062a\u0631\u06cc\u0645 \u0646\u0627\u0646 \u0627\u0633\u062a\u0627\u067e \u0648 \u06af\u0631\u0641\u062a\u0646 \u0628\u06cc\u0634\u062a\u0631 \u0627\u0632 100 \u0645\u06cc\u0644\u06cc\u0648\u0646 \u0648\u06cc\u0648 \u0648 600\u0647\u0632\u0627\u0631 \u0633\u0627\u0628\u0633\u06a9\u0631\u0627\u06cc\u0628\u060c \u062a\u0628\u062f\u06cc\u0644 \u0628\u0647 \u0627\u0648\u0644\u06cc\u0646 \u06a9\u0633\u06cc \u0634\u062f \u06a9\u0647 \u062a\u0648\u0646\u0633\u062a GTA VI \u0631\u0648 \u062a\u0645\u0648\u0645 \u06a9\u0646\u0647.\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/ArQYESIVqsdXUaoaQfq-COgFalimHbJlmqoUyL-2IKpLK37ArxDeJ0vYNbn3zroDQfD8dm-jpJ3yNrlJThyZpMWNUFL1ugz2t-rOFwXn97vNu6KYP0-XJhP1fripMRepTy-alQjUzuFcY0b9sO4kdF15IjWp425ICaNTcswfgPEDJiCmvM0RaK46-HZKTOR228nZqlyebWATpdoAcxT552ASSxv9yoEzn8SplXOlFE4UbO7iAs2yw9-IqcPhokfnP_6nbszlBoowvQ8FRmE3UFs7m1Z_b_5rTL83jG1He8Jq4Xgn2fcplLiN_7pBk92HLCl4UxiNTR9iF0XoYx3rTQ.jpg"
-    ]
-   ],
-   "t": 1795258977,
-   "link": "https://t.me/CottageOrg/83497",
-   "mid": 958,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@moviecottage)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CottageOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
-  }
- },
+ "pending": {},
  "posted_log": [
   1795001396,
   1795001420,
@@ -16304,7 +16289,7 @@
    "no_map": 1
   },
   "rounds": 17,
-  "rev_no": 3,
+  "rev_no": 4,
   "hd_ok": 34,
   "rev_ok": 2,
   "appr": 2
@@ -16341,7 +16326,7 @@
   ]
  ],
  "last_scan_ts": 1795258958,
- "hv_ts": 1795248282,
+ "hv_ts": 1795259088,
  "hv": {
   "7": [
    400,
