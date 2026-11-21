@@ -52,24 +52,9 @@
    "last_id": 83506
   }
  },
- "update_offset": 774951981,
+ "update_offset": 774951983,
  "owner_id": 138180578,
  "fp": [
-  {
-   "m": [
-    "3aaf30c21635"
-   ],
-   "t": 1794808903
-  },
-  {
-   "x": "5650833a4cdf",
-   "m": [
-    "3de8571ce691"
-   ],
-   "man": true,
-   "t": 1794810185,
-   "pid": "5b4533a7"
-  },
   {
    "x": "8a91502279ce",
    "h": [
@@ -16066,6 +16051,45 @@
    "mid": 973,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (contains a link to a site/app (instagram.com)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 SporteHub.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
+  },
+  {
+   "text": "\u0632\u0646 \u062a\u0648 \u0686\u062c\u0648\u0631\u06cc \u062a\u0648 \u0627\u06cc\u0646 \u0633\u0646 \u0633\u0627\u0644 \u0627\u0646\u0642\u062f\u0631 \u0632\u06cc\u0628\u0627\u06cc\u06cc \u0627\u062e\u0647 \u061f\u061f\u061f\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDzmsBvrjl6C73BlXW9QiWyzVpt6H1AAKNEGsb230IUPG4FhGHu3-RAQADAgADeQADPQQ"
+    ],
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIDz2sBvriD3D_1AXjOqMdam0ZdvZHhAAKOEGsb230IUD-nPsxQJUnGAQADAgADeQADPQQ"
+    ]
+   ],
+   "t": 1795276474,
+   "fwd": true,
+   "pid": "9fd8c821",
+   "fp": {
+    "x": "b72b29eb8af2",
+    "h": [
+     "62b0e13a",
+     "93232575",
+     "b04e3d18",
+     "c26b94ba",
+     "c805b27b",
+     "c9da22f2",
+     "cb2d1105",
+     "d9702bdd"
+    ],
+    "m": [
+     "1730b8d5ce39",
+     "dbd43f5f53b6"
+    ],
+    "p": [
+     "bb9a13233736069e",
+     "4e06069433733333"
+    ],
+    "man": true
+   },
+   "mid": 974
   }
  ],
  "next_run_ts": 1795276885.28798,
