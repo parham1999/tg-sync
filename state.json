@@ -52,7 +52,7 @@
    "last_id": 83488
   }
  },
- "update_offset": 774951974,
+ "update_offset": 774951975,
  "owner_id": 138180578,
  "fp": [
   {
@@ -16095,11 +16095,8 @@
    "src": "https://t.me/SporteHub/14745"
   }
  ],
- "approved": [],
- "next_run_ts": 1795250572.9380524,
- "review_off": false,
- "pending": {
-  "ad6a772d": {
+ "approved": [
+  {
    "text": "\u0646\u06af\u0627\u0631 \u062c\u0648\u0627\u0647\u0631\u06cc\u0627\u0646 \u067e\u0634\u062a\u200c\u0635\u062d\u0646\u0647 \u0646\u0645\u0627\u06cc\u0634 \u0645\u06a9\u0628\u062b\n\n@Wimapro",
    "media": [
     [
@@ -16107,13 +16104,16 @@
      "https://cdn4.telesco.pe/file/liBNqeGngx3Xv2XZc3ZvKCO7Wqo72Tp9gOKEHs8mzfQq_4nkLvNsUorJqPNoTazxkYQ0UGv4o3Stm7b3aTnhnOzpidM0SqjAr7tJnlWZQP4Q7Tk9RSQUM00TF1oeQUDuFktJuks-M4SFm6j1YOqL4-tMS9LVQSwTawB_dD5wP45b1ad5MeJoEpyej_-mdU2YQ6ec79m7q6vi-QBBB8Jbz6fUOPHFUDWFNdf1bYx5b8nL5q8KZ1WmWbW3G_1NbWoSyrKb0IEp32hkpGhErasc0l10SIp4xFvgOZkYuI1C2i_wyTwzIcjaGrJnyLwcT3E_wZ1NugFkmxXivvn8UwJHlg.jpg"
     ]
    ],
-   "t": 1795248681,
+   "t": 1795249052,
    "link": "https://t.me/FilmFarsiOrg/26058",
    "mid": 954,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1795250572.9380524,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1794990077,
   1794991924,
@@ -16390,7 +16390,7 @@
   "rounds": 12,
   "rev_no": 3,
   "hd_ok": 23,
-  "rev_ok": 1,
+  "rev_ok": 2,
   "appr": 1
  },
  "arrivals": [
