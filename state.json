@@ -52,7 +52,7 @@
    "last_id": 83545
   }
  },
- "update_offset": 774952012,
+ "update_offset": 774952013,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15175,26 +15175,7 @@
    "src": "https://t.me/Khartox/9068"
   }
  ],
- "approved": [
-  {
-   "text": "\u0648\u0627\u0627\u0627\u0627\u0627\u06cc \u062e\u0627\u0631 \u0627\u06cc\u062f\u0647 \u062f\u0648\u0631\u0628\u06cc\u0646 \u0645\u062e\u0641\u06cc\u060c \u062c\u0631 \u062e\u0648\u0631\u062f\u0645 \ud83e\udd23\ud83e\udd23\ud83e\udd23\ud83e\udd23\ud83e\udd23\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgIAAxkBAAIEJWsDJ0fpE2qTgx-LFwhxOFpjcZu7AAItsAACypYYSCQPT_nVTIx_PQQ"
-    ]
-   ],
-   "t": 1795368775,
-   "fwd": true,
-   "pid": "d2fb4f8f",
-   "fp": {
-    "x": "b7fb3c79517c",
-    "m": [],
-    "man": true
-   },
-   "mid": 1061
-  }
- ],
+ "approved": [],
  "next_run_ts": 1795369002.3974013,
  "review_off": false,
  "pending": {},
