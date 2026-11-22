@@ -7,7 +7,7 @@
    "last_id": 14782
   },
   "7f69010262": {
-   "last_id": 10069
+   "last_id": 10070
   },
   "46bd0c92df": {
    "last_id": 123254
@@ -25,7 +25,7 @@
    "last_id": 17289
   },
   "a198fa18c9": {
-   "last_id": 20875
+   "last_id": 20876
   },
   "3ea375f9c9": {
    "last_id": 17992
@@ -55,113 +55,6 @@
  "update_offset": 774951996,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "6f3916bfe53f",
-   "h": [
-    "09186677",
-    "0fb5befb",
-    "11169a0d",
-    "13264daf",
-    "18048bf9",
-    "1920ec59",
-    "1cb69664",
-    "1cca4307",
-    "2e0105bf",
-    "2fcc903d",
-    "30218ddd",
-    "32244d1b",
-    "328c175b",
-    "34299495",
-    "39c46cb0",
-    "3b5ba40d",
-    "3ca41803",
-    "4082afc1",
-    "44f1e112",
-    "4ed9d748",
-    "506a8a2c",
-    "5128cea6",
-    "5a2ed328",
-    "5d793ea1",
-    "5e464f31",
-    "62db4373",
-    "6919ebf6",
-    "6c9aa6fa",
-    "6e4f1e16",
-    "7a8d2de1",
-    "7b57394e",
-    "7ee8774d",
-    "86ae56fa",
-    "8e011d5e",
-    "90aa7c53",
-    "94d11f87",
-    "95f80be0",
-    "9bc6cd99",
-    "9e52e578",
-    "a07ff9e9",
-    "adc94444",
-    "bd778ecf",
-    "c0f79c2b",
-    "cadfa270",
-    "cf311324",
-    "d4e65437",
-    "de284f27",
-    "e07965d5",
-    "e222b530",
-    "e5248bc3",
-    "f97b6099",
-    "fd1253a8",
-    "ff2abff3"
-   ],
-   "w": [
-    "00d3d1af",
-    "05ac8d7c",
-    "1128fe83",
-    "21934dc9",
-    "23dfc2ff",
-    "2ba3f13b",
-    "2e1a7224",
-    "302de625",
-    "45d5f43a",
-    "469acc25",
-    "48ecf0d1",
-    "507bef05",
-    "50f52fd1",
-    "584d126a",
-    "5eb83b43",
-    "5ee140f8",
-    "6029d251",
-    "69e97220",
-    "69f3469d",
-    "6a85a209",
-    "87185803",
-    "882ce17e",
-    "8b5d826e",
-    "9785f835",
-    "9be4fa4b",
-    "a4e4baf7",
-    "a6ba472c",
-    "b6a4c9db",
-    "b75a88df",
-    "c4b03d12",
-    "d082321d",
-    "d1bccc1d",
-    "dea28ff0",
-    "e137e70c",
-    "ecd4af16",
-    "f69ffd02",
-    "fad9778c",
-    "fc6275be",
-    "fc874786",
-    "fe235c1d"
-   ],
-   "m": [
-    "83b99a85148d"
-   ],
-   "p": [
-    "09a9291c1e12e0f8"
-   ],
-   "t": 1794839751
-  },
   {
    "x": "4a5a8e610794",
    "h": [
@@ -15854,10 +15747,96 @@
    "m": [],
    "t": 1795316741,
    "src": "https://t.me/CloseFriend3/17289"
+  },
+  {
+   "x": "bc17069aaf33",
+   "h": [
+    "25c36c36",
+    "2d7c0c7f",
+    "3d97bd98",
+    "4475acd9",
+    "45645f00",
+    "463928f9",
+    "56597240",
+    "5eec79a9",
+    "67df735e",
+    "8437ef1d",
+    "9d632af1",
+    "b01045fc",
+    "e6cf9a87",
+    "f5d7fa5a",
+    "fd9af632"
+   ],
+   "w": [
+    "46d645bf",
+    "55518965",
+    "5c58e7b3",
+    "64e69cd8",
+    "74b9739e",
+    "79ff3063",
+    "9200b13f",
+    "b78eca4c",
+    "bd1e5be1",
+    "cdbbcd20",
+    "f44c79ae",
+    "fde75873"
+   ],
+   "m": [
+    "1a91e1c0312e"
+   ],
+   "p": [
+    "e53179fe0f0b1b53"
+   ],
+   "t": 1795320921,
+   "src": "https://t.me/besnr/10070"
+  },
+  {
+   "x": "9cd07f775c09",
+   "h": [
+    "0e9c1f19",
+    "29247929",
+    "3cef6e69",
+    "4e09cbbb",
+    "6bc89a77",
+    "84ae9160",
+    "97e37f26",
+    "99c5a56c",
+    "99fafe65",
+    "9e4e7aab",
+    "b72f214e",
+    "c36ce3bc",
+    "f2af8d66",
+    "fcb7666c"
+   ],
+   "w": [
+    "00843709",
+    "5494828a",
+    "5cbb3a6f",
+    "6ce79c16",
+    "82ab5915",
+    "83b729ee",
+    "8de793ab",
+    "abd4aa88",
+    "c6a2c2af",
+    "e748d4f7",
+    "e9234506",
+    "ee8ba032"
+   ],
+   "m": [
+    "f9ce834d2b09"
+   ],
+   "v": [
+    [
+     "0000000000000000",
+     7
+    ]
+   ],
+   "t": 1795320944,
+   "src": "https://t.me/dodollism/20876"
   }
  ],
  "approved": [],
- "next_run_ts": 1795320890.0393143,
+ "next_run_ts": 1795323207.4528992,
  "review_off": false,
  "pending": {},
  "posted_log": [
@@ -16081,14 +16060,16 @@
   1795295540,
   1795295587,
   1795312897,
-  1795316741
+  1795316741,
+  1795320921,
+  1795320944
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-22",
-  "posted": 6,
-  "found": 56,
-  "seen": 33,
+  "posted": 8,
+  "found": 58,
+  "seen": 35,
   "skip": {
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 3,
    "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 6,
@@ -16098,11 +16079,12 @@
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 1
   },
   "rev_ask": 7,
-  "hd_ok": 24,
+  "hd_ok": 25,
   "by_hour": {
    "0": 4,
    "5": 1,
-   "6": 1
+   "6": 1,
+   "7": 2
   },
   "appr": 1,
   "by_src": {
@@ -16110,15 +16092,26 @@
    "d07f631318": 1,
    "1c1cb821b4": 1,
    "7aa4235d7c": 1,
-   "f20a53f3a3": 1
+   "f20a53f3a3": 1,
+   "7f69010262": 1,
+   "a198fa18c9": 1
   },
-  "rounds": 4,
+  "rounds": 5,
   "rev_no": 2,
   "rev_exp": 5,
   "carried": 1
  },
- "arrivals": [],
- "last_scan_ts": 1795316725,
+ "arrivals": [
+  [
+   1795320905,
+   2,
+   {
+    "a198fa18c9": 1,
+    "7f69010262": 1
+   }
+  ]
+ ],
+ "last_scan_ts": 1795320905,
  "hv_ts": 1795313160,
  "hv": {
   "7": [
@@ -16592,31 +16585,38 @@
   "CottageOrg"
  ],
  "last_round": {
-  "found": 0,
-  "considered": 0,
-  "posted": 1,
+  "found": 2,
+  "considered": 2,
+  "posted": 2,
   "over": 0,
   "appr": 0,
   "rej": {},
   "src": {
-   "f20a53f3a3": [
-    0,
+   "a198fa18c9": [
+    1,
+    1
+   ],
+   "7f69010262": [
+    1,
     1
    ]
   },
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 6: 0 \u062a\u0627 1 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
-  "target": 1,
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 7: 3 \u062a\u0627 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "target": 2,
   "why": [],
   "ign": {},
-  "carried": 1,
   "sent": [
    [
-    "t.me/CloseFriend3/17289",
-    "\u0627\u0632 \u062f\u0648\u0631 \u0642\u0628\u0644 \u0645\u0627\u0646\u062f\u0647 \u0628\u0648\u062f"
+    "t.me/besnr/10070",
+    ""
+   ],
+   [
+    "t.me/dodollism/20876",
+    ""
    ]
   ],
-  "t": 1795316741
+  "t": 1795320944
  },
  "last_manual": {
   "found": 1,
@@ -16655,29 +16655,7 @@
  "dest_n": 4,
  "dests": [],
  "await_src": 1795155574,
- "carry": [
-  {
-   "text": "\u062e\u062f\u0627\u0627\u0627\ud83e\udd72\ud83d\ude0d\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "https://cdn4.telesco.pe/file/3fffb1a988.mp4?token=c5BIj40L-ab41eZf319ems3tUoCzWPxM6monUK8lYU6f8Q8Xw7zpkiaAtdA-RQ9SGVQIsZPfg2uEBLQTKl9rzByLJkGuakijOzTrIJDhHzqImliEPfuq--cc1_BBVOPjXvzUg1ZhHW8Wpo8_HSqLAfJYG0VxYT6OcSzVUKuCHP3CX6YjUeu_hG3EZHMHdVTf17KniJdanvPVdRfvpYTMRmEEaQhbXW1P02TJrhw33FqXu5CDQJSDbYXFwmWmaajCXnMZ80qOZkT3lpFsoTXbVLHRgrSvgETBF_CPMjB_9lPhUnw07vLVykD4RKHZny0lF6K8M86Vflm-1mtkx2cZPA"
-    ]
-   ],
-   "t": 1795312869,
-   "link": "t.me/MiowPhone/18930",
-   "key": "ef680edcd0",
-   "ps": {}
-  },
-  {
-   "text": "\u200f\u0647\u0645\u0648\u0646 \u062f\u0648 \u0633\u0647 \u0633\u0627\u0644 \u067e\u06cc\u0634 \u0647\u0645 \u0627\u06af\u0647 \u062a\u0648 \u0627\u06cc\u0631\u0627\u0646 \u0634\u0627\u062f \u0628\u0648\u062f\u06cc \u0645\u0634\u06a9\u0644 \u0631\u0648\u0627\u0646\u06cc \u062f\u0627\u0634\u062a\u06cc. \u062f\u06cc\u06af\u0647 \u0627\u06af\u0647 \u0627\u0644\u0627\u0646 \u0634\u0627\u062f\u06cc \u0628\u0627\u06cc\u062f \u0628\u0627 \u0632\u0646\u062c\u06cc\u0631 \u0628\u0628\u0646\u062f\u0646\u062a \u0628\u0647 \u0627\u0633\u0628 \u0648 \u0686\u0646\u062f \u06a9\u06cc\u0644\u0648\u0645\u062a\u0631 \u0631\u0648 \u0632\u0645\u06cc\u0646 \u0628\u0650\u06a9\u0650\u0634\u0646\u062a \u0628\u0644\u06a9\u0647 \u06cc\u0647 \u0630\u0631\u0647 \u0627\u062d\u0633\u0627\u0633\u0627\u062a\u062a \u0641\u0639\u0627\u0644 \u0634\u0646.\n\n@Wimapro",
-   "media": [],
-   "t": 1795312869,
-   "link": "t.me/CottageOrg/83531",
-   "key": "8514b98767",
-   "ps": {}
-  }
- ],
+ "carry": [],
  "sugg": {
   "unnurmal": {
    "t": 1794984893,
@@ -17367,6 +17345,16 @@
   "4681": {
    "l": "https://t.me/CloseFriend3/17289",
    "t": 1795316741,
+   "me": false
+  },
+  "4682": {
+   "l": "https://t.me/besnr/10070",
+   "t": 1795320921,
+   "me": false
+  },
+  "4683": {
+   "l": "https://t.me/dodollism/20876",
+   "t": 1795320944,
    "me": false
   }
  }
