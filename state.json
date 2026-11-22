@@ -52,56 +52,9 @@
    "last_id": 83541
   }
  },
- "update_offset": 774952005,
+ "update_offset": 774952006,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "8222371826f2",
-   "h": [
-    "01b428fb",
-    "0a9a4e7b",
-    "0d80e35a",
-    "0ff65ba2",
-    "1ff2d655",
-    "256c68ef",
-    "2d00051a",
-    "398a3044",
-    "4a992176",
-    "5ccad327",
-    "68c99f1e",
-    "7cb383e1",
-    "aafcde2d",
-    "b2cec143",
-    "b77b28f4",
-    "e40cc2c7",
-    "e88a5541",
-    "f0bcb0e8",
-    "f6972931"
-   ],
-   "w": [
-    "0a17d07a",
-    "0fdb09cf",
-    "1c5bbd2c",
-    "1eab2301",
-    "278b23f7",
-    "45f7629a",
-    "5214fbf6",
-    "6710833c",
-    "83c620f7",
-    "849a52a3",
-    "8b851efb",
-    "8bd0035c",
-    "8d89e662",
-    "bed17bc4",
-    "e18a00c7",
-    "ea6791bb",
-    "effa614c"
-   ],
-   "m": [],
-   "man": true,
-   "t": 1794857073,
-   "pid": "05f1eaa7"
-  },
   {
    "m": [],
    "t": 1794857108
@@ -15886,6 +15839,26 @@
    },
    "t": 1795327910,
    "mid": 1031
+  },
+  "b6f44bdc": {
+   "text": "\u0647\u0645\u06cc\u0634\u0647 \u0647\u0645\u06cc\u0646\u0637\u0648\u0631\u06cc\u0647:\n\n- pouya_og\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIEGWsC4qrjjy6pXWP4RNiA6LiEluisAAK1EGsbGIkcUFoC9ce8noT0AQADAgADeQADPQQ"
+    ]
+   ],
+   "fp": {
+    "m": [
+     "9d40cedf08ec"
+    ],
+    "p": [
+     "5862e42181916dd9"
+    ],
+    "man": true
+   },
+   "t": 1795351210,
+   "mid": 1049
   }
  },
  "undo": {
