@@ -52,7 +52,7 @@
    "last_id": 83563
   }
  },
- "update_offset": 774952018,
+ "update_offset": 774952019,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15065,11 +15065,8 @@
    "src": "https://t.me/Radiokocsher/83430"
   }
  ],
- "approved": [],
- "next_run_ts": 1795423237.7030897,
- "review_off": false,
- "pending": {
-  "43f6faa0": {
+ "approved": [
+  {
    "text": "\u0628\u0632\u0631\u06af\u0633\u0627\u0644\u06cc \u062f\u0642\u06cc\u0642\u0627 \u0628\u0631\u0639\u06a9\u0633 \u0627\u06cc\u0646 \u0645\u0648\u0636\u0648\u0639 \u0631\u0648 \u0628\u0647 \u062a\u0648 \u062b\u0627\u0628\u062a \u0645\u06cc\u06a9\u0646\u0647.\n\n@Wimapro",
    "media": [
     [
@@ -15077,16 +15074,17 @@
      "https://cdn4.telesco.pe/file/Fygdf2FyFq_daN8PWlTRpDUXl9ND9brfSR-lY388XPSppo8VmqU7sXFu_SKlNm_6YFbiWdp2G8dyy8CIgXG-VNzblqtZkgrcoqXI9PksQWBmZXiEjVGpugT1U65oq5VlR2SFuoCJx7jme0R9BW90bMkFoFW6mZ3XZKFZ1hI_bi71X-ht30mfKQUSiyzhnUhfVlx8n5vIr_K2OiAx9zjKvYCtc4QJzXmFloAUtRh9vUy7i2dY-HBE-hm6c0j4AI9FI5jUp0Gz_zKLT7_644yMuLCI-zd6VmO_vo1v7wdnrWKj-svwNHvjRoDPUuINdxQ9gAfzssziDCHbPVgaEBMK_A.jpg"
     ]
    ],
-   "t": 1795421091,
+   "t": 1795422807,
    "link": "https://t.me/FilmFarsiOrg/26089",
    "mid": 1098,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@filmserialfarsi)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 FilmFarsiOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1795423237.7030897,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
-  1795162716,
-  1795162734,
   1795165002,
   1795165049,
   1795165083,
@@ -15330,7 +15328,8 @@
   "rev_no": 2,
   "rev_exp": 7,
   "fwd": 2,
-  "carried": 2
+  "carried": 2,
+  "rev_ok": 1
  },
  "arrivals": [
   [
@@ -15362,7 +15361,7 @@
   ]
  ],
  "last_scan_ts": 1795421018,
- "hv_ts": 1795411004,
+ "hv_ts": 1795421814,
  "hv": {
   "7": [
    400,
