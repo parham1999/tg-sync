@@ -52,7 +52,7 @@
    "last_id": 83576
   }
  },
- "update_offset": 774952031,
+ "update_offset": 774952033,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15025,6 +15025,27 @@
    "m": [],
    "t": 1795446610,
    "src": "https://t.me/stopirani/2355"
+  },
+  {
+   "m": [
+    "6a91a95cb917"
+   ],
+   "man": true,
+   "t": 1795447412,
+   "pid": "4295f84b",
+   "me": true,
+   "src": ""
+  },
+  {
+   "x": "7d1ee00fb6ff",
+   "m": [
+    "7a38f14195c1"
+   ],
+   "man": true,
+   "t": 1795447414,
+   "pid": "1f3efa01",
+   "me": true,
+   "src": ""
   }
  ],
  "approved": [
@@ -15114,45 +15135,6 @@
     "man": true
    },
    "mid": 1139
-  },
-  {
-   "text": "Happy #Espresso Day \u2615\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgQAAxkBAAIEdWsEWmLAQ8iXVYlvIpygTxOuaHHIAAKrJQACAd0hUEMpcYJZKuG_PQQ"
-    ]
-   ],
-   "t": 1795447394,
-   "fwd": true,
-   "pid": "4295f84b",
-   "fp": {
-    "m": [
-     "6a91a95cb917"
-    ],
-    "man": true
-   },
-   "mid": 1141
-  },
-  {
-   "text": "still dat flagship killer\nwe knew \ud83d\ude2e\u200d\ud83d\udca8\ud83d\ude4f\ud83c\udfff\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgQAAxkBAAIEd2sEWmeBOWPg_tRbwKpd6PaR7L3kAALrJQACAd0hUMGUw_VYO1g-PQQ"
-    ]
-   ],
-   "t": 1795447399,
-   "fwd": true,
-   "pid": "1f3efa01",
-   "fp": {
-    "x": "7d1ee00fb6ff",
-    "m": [
-     "7a38f14195c1"
-    ],
-    "man": true
-   },
-   "mid": 1143
   }
  ],
  "next_run_ts": 1795448754.993053,
@@ -15389,12 +15371,14 @@
   1795444164,
   1795444223,
   1795446571,
-  1795446610
+  1795446610,
+  1795447412,
+  1795447414
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-23",
-  "posted": 42,
+  "posted": 44,
   "found": 230,
   "seen": 165,
   "skip": {
@@ -15436,12 +15420,12 @@
    "15": 2,
    "16": 4,
    "17": 3,
-   "18": 3
+   "18": 5
   },
   "rounds": 23,
   "rev_no": 2,
   "rev_exp": 15,
-  "fwd": 4,
+  "fwd": 6,
   "carried": 2,
   "rev_ok": 3,
   "appr": 3,
@@ -15751,6 +15735,14 @@
     ]
    ],
    "t": 1795440309
+  },
+  "4295f84b": {
+   "ids": [],
+   "t": 1795447412
+  },
+  "1f3efa01": {
+   "ids": [],
+   "t": 1795447414
   }
  },
  "src_del": [
@@ -16151,7 +16143,7 @@
    "st": "no"
   }
  },
- "last_kind": "text",
+ "last_kind": "media",
  "sugg_ts": 1795419017,
  "origins": {
   "4552": {
