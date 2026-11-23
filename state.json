@@ -52,71 +52,9 @@
    "last_id": 83576
   }
  },
- "update_offset": 774952024,
+ "update_offset": 774952026,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "639ac58f63f9",
-   "h": [
-    "064dce99",
-    "0f2c8ae5",
-    "186f1b52",
-    "19d50713",
-    "1fc339ae",
-    "20a612e4",
-    "22159248",
-    "28989cbd",
-    "297ba964",
-    "393a23e7",
-    "3ab363d7",
-    "3b04a000",
-    "3e503c9c",
-    "56a76ef8",
-    "57c59084",
-    "629a0027",
-    "675180fd",
-    "8b466cc9",
-    "8f138cc7",
-    "b7612166",
-    "c6708aa4",
-    "cd50e939",
-    "da56e8b5"
-   ],
-   "w": [
-    "018f2cb7",
-    "4b3e86df",
-    "5e8786a6",
-    "6dcf3ea2",
-    "7bc6e9e1",
-    "849a52a3",
-    "858769bd",
-    "8e1505a4",
-    "9ef3792f",
-    "b4ee0527",
-    "baaea1ab",
-    "d0aedb0b",
-    "d2caa852",
-    "eea09733",
-    "f1d5c131",
-    "fd83672a"
-   ],
-   "m": [],
-   "t": 1794937292
-  },
-  {
-   "x": "f072583bbd84",
-   "m": [
-    "bb190f232af3",
-    "e64fe157ba2d",
-    "6ef842d8e43b"
-   ],
-   "p": [
-    "c0909896b2facfc5",
-    "c32e2dea72d26e1e",
-    "a323a1b466c66307"
-   ],
-   "t": 1794937328
-  },
   {
    "m": [
     "f62fa2fb86cf"
@@ -15089,7 +15027,58 @@
    "src": "https://t.me/stopirani/2355"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "\u0622\u067e\u0627\u0631\u062a\u0645\u0627\u0646\u200c\u0647\u0627\u06cc \u062f\u0627\u0646\u0634\u062c\u0648\u06cc\u06cc \u062f\u0631 \u0641\u0646\u0644\u0627\u0646\u062f\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEa2sEWM-Fe_CzghECbI0YD6uolgODAALmHQACmdYwUUNwpHfKnY-BPQQ"
+    ]
+   ],
+   "t": 1795446992,
+   "fwd": true,
+   "pid": "b213a767",
+   "fp": {
+    "x": "48bf2aeb7992",
+    "m": [],
+    "man": true
+   },
+   "mid": 1131
+  },
+  {
+   "text": "\u0627\u0633\u062a\u0627\u06cc\u0644 \u0627\u0648\u0644\u062f\u0645\u0627\u0646\u06cc \u0631\u0648 \u06a9\u0647 \u062a\u0648\u06cc \u06f4 \u0642\u0633\u0637 \u0646\u0645\u06cc\u200c\u062e\u0631\u0646.\n\n- mobina\n\n@Wimapro",
+   "media": [],
+   "t": 1795446998,
+   "fwd": true,
+   "pid": "2c58caae",
+   "fp": {
+    "x": "84632f725c0d",
+    "h": [
+     "136e2a05",
+     "19333442",
+     "24b0dbe9",
+     "5f7e601c",
+     "67bda273",
+     "69097240",
+     "a04f95a8",
+     "fc981e8e"
+    ],
+    "w": [
+     "362e0446",
+     "40d8260c",
+     "48fbddba",
+     "b85aa8df",
+     "cbb506df",
+     "d673bbfe",
+     "e7ac1ea6"
+    ],
+    "m": [],
+    "man": true
+   },
+   "mid": 1133
+  }
+ ],
  "next_run_ts": 1795448754.993053,
  "review_off": false,
  "pending": {
