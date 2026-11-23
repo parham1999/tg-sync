@@ -15158,50 +15158,31 @@
    ],
    "t": 1795405004,
    "src": "https://t.me/besnr/10198"
-  }
- ],
- "approved": [
-  {
-   "text": "\u0634\u0628\u0631\u0646\u06af\u200c\u0647\u0627 \u0631\u0648 \u0627\u06cc\u0646\u062c\u0648\u0631\u06cc \u0645\u06cc\u0632\u0646\u0646 \u062a\u0648 \u062e\u06cc\u0627\u0628\u0648\u0646\u0627\n\n@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgQAAxkBAAIEQWsDvAqhPah9qDnUCSeiKPFRP5t_AAJ_IwACX2oYUNEGNqDFUFdwPQQ"
-    ]
-   ],
-   "t": 1795406858,
-   "fwd": true,
-   "pid": "0e5078b5",
-   "fp": {
-    "x": "589e41205bb4",
-    "m": [
-     "14fba0bf11a3"
-    ],
-    "man": true
-   },
-   "mid": 1089
   },
   {
-   "text": "@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgQAAxkBAAIEQ2sDvBEX9y5Sb6Y7DHLMW4BqIMk0AAKAIwACX2oYUK9eOkZFvZSzPQQ"
-    ]
+   "x": "589e41205bb4",
+   "m": [
+    "14fba0bf11a3"
    ],
-   "t": 1795406865,
-   "fwd": true,
+   "man": true,
+   "pid": "0e5078b5",
+   "t": 1795407411,
+   "src": "",
+   "me": true
+  },
+  {
+   "m": [
+    "f3b70a3ea3b3"
+   ],
+   "man": true,
    "pid": "cd7556a9",
-   "fp": {
-    "m": [
-     "f3b70a3ea3b3"
-    ],
-    "man": true
-   },
-   "mid": 1091
+   "t": 1795407437,
+   "src": "",
+   "me": true
   }
  ],
- "next_run_ts": 1795407394.0417056,
+ "approved": [],
+ "next_run_ts": 1795409323.177655,
  "review_off": false,
  "pending": {},
  "posted_log": [
@@ -15403,12 +15384,14 @@
   1795381926,
   1795384004,
   1795404954,
-  1795405004
+  1795405004,
+  1795407411,
+  1795407437
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-23",
-  "posted": 8,
+  "posted": 10,
   "found": 67,
   "seen": 36,
   "skip": {
@@ -15431,11 +15414,12 @@
   "by_hour": {
    "0": 5,
    "1": 1,
-   "7": 2
+   "7": 4
   },
-  "rounds": 4,
+  "rounds": 5,
   "rev_no": 1,
-  "rev_exp": 7
+  "rev_exp": 7,
+  "fwd": 2
  },
  "arrivals": [
   [
@@ -15447,7 +15431,7 @@
    }
   ]
  ],
- "last_scan_ts": 1795404926,
+ "last_scan_ts": 1795407399,
  "hv_ts": 1795400190,
  "hv": {
   "7": [
@@ -15885,6 +15869,24 @@
     ]
    ],
    "t": 1795277008
+  },
+  "0e5078b5": {
+   "ids": [
+    [
+     "@Wimapro",
+     4756
+    ]
+   ],
+   "t": 1795407411
+  },
+  "cd7556a9": {
+   "ids": [
+    [
+     "@Wimapro",
+     4757
+    ]
+   ],
+   "t": 1795407437
   }
  },
  "src_del": [
@@ -15902,38 +15904,30 @@
   "CottageOrg"
  ],
  "last_round": {
-  "found": 2,
-  "considered": 2,
+  "found": 0,
+  "considered": 0,
   "posted": 2,
   "over": 0,
   "appr": 0,
   "rej": {},
-  "src": {
-   "a198fa18c9": [
-    1,
-    1
-   ],
-   "7f69010262": [
-    1,
-    1
-   ]
-  },
+  "src": {},
   "crisis": false,
   "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 7: 3 \u062a\u0627 4 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 2,
   "why": [],
   "ign": {},
+  "fwd": 2,
   "sent": [
    [
-    "t.me/dodollism/20902",
-    ""
+    "",
+    "\u067e\u0633\u062a \u0641\u0648\u0631\u0648\u0627\u0631\u062f\u06cc\u0650 \u0634\u0645\u0627"
    ],
    [
-    "t.me/besnr/10198",
-    ""
+    "",
+    "\u067e\u0633\u062a \u0641\u0648\u0631\u0648\u0627\u0631\u062f\u06cc\u0650 \u0634\u0645\u0627"
    ]
   ],
-  "t": 1795405004
+  "t": 1795407438
  },
  "last_manual": {
   "found": 1,
@@ -17023,6 +17017,16 @@
    "l": "https://t.me/besnr/10198",
    "t": 1795405004,
    "me": false
+  },
+  "4756": {
+   "l": "",
+   "t": 1795407411,
+   "me": true
+  },
+  "4757": {
+   "l": "",
+   "t": 1795407437,
+   "me": true
   }
  }
 }
