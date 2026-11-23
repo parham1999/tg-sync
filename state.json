@@ -52,7 +52,7 @@
    "last_id": 83576
   }
  },
- "update_offset": 774952029,
+ "update_offset": 774952031,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15114,6 +15114,45 @@
     "man": true
    },
    "mid": 1139
+  },
+  {
+   "text": "Happy #Espresso Day \u2615\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEdWsEWmLAQ8iXVYlvIpygTxOuaHHIAAKrJQACAd0hUEMpcYJZKuG_PQQ"
+    ]
+   ],
+   "t": 1795447394,
+   "fwd": true,
+   "pid": "4295f84b",
+   "fp": {
+    "m": [
+     "6a91a95cb917"
+    ],
+    "man": true
+   },
+   "mid": 1141
+  },
+  {
+   "text": "still dat flagship killer\nwe knew \ud83d\ude2e\u200d\ud83d\udca8\ud83d\ude4f\ud83c\udfff\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEd2sEWmeBOWPg_tRbwKpd6PaR7L3kAALrJQACAd0hUMGUw_VYO1g-PQQ"
+    ]
+   ],
+   "t": 1795447399,
+   "fwd": true,
+   "pid": "1f3efa01",
+   "fp": {
+    "x": "7d1ee00fb6ff",
+    "m": [
+     "7a38f14195c1"
+    ],
+    "man": true
+   },
+   "mid": 1143
   }
  ],
  "next_run_ts": 1795448754.993053,
