@@ -52,50 +52,9 @@
    "last_id": 83563
   }
  },
- "update_offset": 774952015,
+ "update_offset": 774952017,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "bc8418f908fb",
-   "h": [
-    "38606710",
-    "474478a0",
-    "66cf8a1a",
-    "6a8c55c3",
-    "70aed2f2",
-    "9e3d72fa",
-    "e7b3636f",
-    "f36ce265"
-   ],
-   "w": [
-    "119e51c5",
-    "278b23f7",
-    "37126c06",
-    "3773ca1c",
-    "3d7bf2be",
-    "c99849f2",
-    "dc9dee4d",
-    "fc632219"
-   ],
-   "m": [
-    "4cd330ab013e"
-   ],
-   "p": [
-    "0f8af8809e923085"
-   ],
-   "t": 1794915419
-  },
-  {
-   "m": [
-    "e7b4deaf6fb4",
-    "fac2ff3794de"
-   ],
-   "p": [
-    "4d7969ece4e48686",
-    "f9b5e4d6cbc7c7e7"
-   ],
-   "t": 1794917811
-  },
   {
    "x": "702644eebda6",
    "h": [
@@ -15201,7 +15160,47 @@
    "src": "https://t.me/besnr/10198"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "\u0634\u0628\u0631\u0646\u06af\u200c\u0647\u0627 \u0631\u0648 \u0627\u06cc\u0646\u062c\u0648\u0631\u06cc \u0645\u06cc\u0632\u0646\u0646 \u062a\u0648 \u062e\u06cc\u0627\u0628\u0648\u0646\u0627\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEQWsDvAqhPah9qDnUCSeiKPFRP5t_AAJ_IwACX2oYUNEGNqDFUFdwPQQ"
+    ]
+   ],
+   "t": 1795406858,
+   "fwd": true,
+   "pid": "0e5078b5",
+   "fp": {
+    "x": "589e41205bb4",
+    "m": [
+     "14fba0bf11a3"
+    ],
+    "man": true
+   },
+   "mid": 1089
+  },
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEQ2sDvBEX9y5Sb6Y7DHLMW4BqIMk0AAKAIwACX2oYUK9eOkZFvZSzPQQ"
+    ]
+   ],
+   "t": 1795406865,
+   "fwd": true,
+   "pid": "cd7556a9",
+   "fp": {
+    "m": [
+     "f3b70a3ea3b3"
+    ],
+    "man": true
+   },
+   "mid": 1091
+  }
+ ],
  "next_run_ts": 1795407394.0417056,
  "review_off": false,
  "pending": {},
