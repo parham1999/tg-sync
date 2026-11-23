@@ -52,99 +52,9 @@
    "last_id": 83576
   }
  },
- "update_offset": 774952033,
+ "update_offset": 774952035,
  "owner_id": 138180578,
  "fp": [
-  {
-   "m": [
-    "f62fa2fb86cf"
-   ],
-   "p": [
-    "ff596727171f9fcf"
-   ],
-   "t": 1794939311
-  },
-  {
-   "x": "c08794b3198a",
-   "h": [
-    "04f8fdd9",
-    "0bc8dfbc",
-    "13f7b11d",
-    "1522fae4",
-    "307849bc",
-    "329c636e",
-    "35b3683e",
-    "36315660",
-    "3f1211c7",
-    "40397285",
-    "408b8c5f",
-    "4455dc79",
-    "4ecf8574",
-    "594db732",
-    "5ff83c4b",
-    "61ff3878",
-    "654d50c3",
-    "73fdfa10",
-    "772dee12",
-    "7f659e94",
-    "970231af",
-    "9be6a900",
-    "a2574a94",
-    "a301495d",
-    "a6be19e2",
-    "a7294443",
-    "a767dc44",
-    "aab8d4d2",
-    "b064e197",
-    "b641d515",
-    "bc26f062",
-    "cabbb282",
-    "d7f638b6",
-    "d9413ee4",
-    "dec2f539",
-    "e625884b",
-    "e7e3e1aa",
-    "e82faa2f",
-    "e85cba89",
-    "e96dfa88",
-    "ebba846d",
-    "eeb0e539"
-   ],
-   "w": [
-    "07e64721",
-    "0d42bfc8",
-    "1e949447",
-    "310b86e0",
-    "411cf0cc",
-    "44fda320",
-    "53fff868",
-    "61b76543",
-    "719ed68e",
-    "8a600595",
-    "8e7b67a7",
-    "92fea192",
-    "9773e814",
-    "9bb20163",
-    "a55e03e7",
-    "ad59be1f",
-    "b0e4ca25",
-    "b10baeb5",
-    "ba30fd97",
-    "bea6a972",
-    "c062bfb0",
-    "c5d0650f",
-    "c8acaf9d",
-    "d34f9de4",
-    "d96adb14",
-    "e547bf55",
-    "ea3dde5c",
-    "f0e8215b"
-   ],
-   "m": [
-    "be4278ccffce"
-   ],
-   "t": 1794939368
-  },
   {
    "x": "3a3ddbd97626",
    "h": [
@@ -15135,6 +15045,70 @@
     "man": true
    },
    "mid": 1139
+  },
+  {
+   "text": "\u062a\u06cc\u06a9\u200c\u062a\u0627\u06a9 \u0641\u0627\u0631\u0633\u06cc \u0627\u0632 \u062f\u0627\u0631\u06a9 \u0648\u0628 \u0647\u0645 \u0633\u0645\u06cc\u200c\u062a\u0631\u0647! \u0628\u0627\u0632 \u062e\u062f\u0627\u0631\u0648\u0634\u06a9\u0631 \u0622\u06cc\u0641\u0648\u0646 Duo \u0646\u0645\u06cc\u062e\u0648\u0627\u0633\u062a \u0648\u06af\u0631\u0646\u0647 \u062a\u0627 \u0622\u0631\u0646\u062c \u062a\u0648 \u0628\u0648\u062f:\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgEAAxkBAAIEe2sEWulnpV6PYdNW0iAMNpzTINaRAALADmsbbo8gRGAJ-qebMHO-AQADAgADeQADPQQ"
+    ],
+    [
+     "photo",
+     "tgfile:AgACAgEAAxkBAAIEfGsEWul9T_82-9mZXz1bgBvKTr4bAALBDmsbbo8gRNwICZKpjf9DAQADAgADeQADPQQ"
+    ]
+   ],
+   "t": 1795447534,
+   "fwd": true,
+   "pid": "4cbff522",
+   "fp": {
+    "x": "2ec0ec431262",
+    "h": [
+     "131c99d8",
+     "2bee8de9",
+     "2d47167e",
+     "2fe903af",
+     "36ac77b0",
+     "38ce0dbd",
+     "4132e0fc",
+     "539e11b1",
+     "810f97a4",
+     "83eab6fc",
+     "a9b89f72",
+     "c2ec9ccd",
+     "c39b2b04",
+     "d182a94a",
+     "d4be30c2",
+     "db641e5e",
+     "f98bcc36"
+    ],
+    "w": [
+     "16ef1d43",
+     "17e121e6",
+     "31c4a8ae",
+     "5e504a43",
+     "6f9f2d77",
+     "7498e147",
+     "a8884738",
+     "d25afd82",
+     "e80796b4",
+     "ef3c392d",
+     "f748643c",
+     "fb0747ac",
+     "fb2cb580",
+     "fc30c660"
+    ],
+    "m": [
+     "7bb71f95d2ba",
+     "4d54c8ad7893"
+    ],
+    "p": [
+     "0093336160198165",
+     "1c665676665e5604"
+    ],
+    "man": true
+   },
+   "mid": 1147
   }
  ],
  "next_run_ts": 1795448754.993053,
