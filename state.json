@@ -52,7 +52,7 @@
    "last_id": 83576
   }
  },
- "update_offset": 774952026,
+ "update_offset": 774952029,
  "owner_id": 138180578,
  "fp": [
   {
@@ -15077,6 +15077,43 @@
     "man": true
    },
    "mid": 1133
+  },
+  {
+   "text": "\u0641\u0631\u0642 \u062f\u062e\u062a\u0631 \u0648 \u067e\u0633\u0631 \u0628\u0631\u0627 \u0627\u06a9\u0633 \u0647\u0627\u0634\u0648\u0646\ud83d\ude02\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEcGsEWbuKNJUZ1Y9D2DRWBtxCIOadAAJADAACY7kUUKooBAZOCoTRPQQ"
+    ]
+   ],
+   "t": 1795447229,
+   "fwd": true,
+   "pid": "cafa2db9",
+   "fp": {
+    "x": "1f502503f5d5",
+    "m": [
+     "f30497c8f62f"
+    ],
+    "man": true
+   },
+   "mid": 1136
+  },
+  {
+   "text": "\u062f\u06cc\u062c\u06cc \u0645\u062f \u0646\u0638\u0631\u0645\u2705\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIEc2sEWcHD6dGBC7_FacdF2beAyhlDAAK7IgACqWkRULdTRjH3Otf3PQQ"
+    ]
+   ],
+   "t": 1795447233,
+   "fwd": true,
+   "pid": "ab3bcae2",
+   "fp": {
+    "m": [],
+    "man": true
+   },
+   "mid": 1139
   }
  ],
  "next_run_ts": 1795448754.993053,
@@ -15605,69 +15642,25 @@
  "crisis_mode": "off",
  "crisis_auto": 0,
  "fwd": {
-  "c117b4d6": {
-   "text": "\u0648\u0642\u062a\u06cc \u0646\u06cc\u0645 \u0633\u0627\u0639\u062a \u0642\u0628\u0644 \u0645\u06cc\u0627\u0646\u062a\u0631\u0645 \u0628\u0647 \u0645\u0637\u0627\u0644\u0628 \u062c\u062f\u064a\u062f \u0628\u0631 \u0645\u064a\u062e\u0648\u0631\u0649 :\n\n- la arena\n\n@Wimapro",
+  "0a8d7296": {
+   "text": "@Wimapro",
    "media": [
     [
      "photo",
-     "tgfile:AgACAgQAAxkBAAIEB2sCh6Zl9zzB35q26ITrNboWLWpOAAJTuDEbIYs4UVjJ64v0UZGlAQADAgADeAADPQQ"
-    ]
-   ],
-   "fp": {
-    "x": "40664cb78465",
-    "h": [
-     "147e01cb",
-     "19334835",
-     "31d5dc71",
-     "47b19ab4",
-     "5da8fd02",
-     "6971d41e",
-     "7663584e",
-     "8ac92335",
-     "92c21fbd",
-     "e64be882"
-    ],
-    "w": [
-     "4dbe762d",
-     "5db3c9c7",
-     "64dfbb8d",
-     "78b26afc",
-     "7e69ace9",
-     "b56fdb3e",
-     "bbcfcdbc",
-     "ea6791bb",
-     "edd7da62"
-    ],
-    "m": [
-     "5246eb75c8fb"
-    ],
-    "p": [
-     "78fa786d5f43f1bf"
-    ],
-    "man": true
-   },
-   "t": 1795327910,
-   "mid": 1031
-  },
-  "b6f44bdc": {
-   "text": "\u0647\u0645\u06cc\u0634\u0647 \u0647\u0645\u06cc\u0646\u0637\u0648\u0631\u06cc\u0647:\n\n- pouya_og\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "tgfile:AgACAgQAAxkBAAIEGWsC4qrjjy6pXWP4RNiA6LiEluisAAK1EGsbGIkcUFoC9ce8noT0AQADAgADeQADPQQ"
+     "tgfile:AgACAgQAAxkBAAIEb2sEWbV4EhBgLlCwPPl-XRZ2BRE8AAKcEmsb4uYYUB2c97tvZKmWAQADAgADeQADPQQ"
     ]
    ],
    "fp": {
     "m": [
-     "9d40cedf08ec"
+     "a4a0c4062b3f"
     ],
     "p": [
-     "5862e42181916dd9"
+     "30b0e00b1d551098"
     ],
     "man": true
    },
-   "t": 1795351210,
-   "mid": 1049
+   "t": 1795447222,
+   "mid": 1135
   }
  },
  "undo": {
