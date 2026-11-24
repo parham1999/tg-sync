@@ -109,7 +109,7 @@ DEFAULTS = {
     "incomplete_post": "skip",     # "skip" or "text_only" when media cannot be copied
     "proxy": "",                   # e.g. "http://127.0.0.1:10809" (empty = system settings)
     "source_aliases": {},           # {"sourcechannel": ["theirsecondid"]}: a second ID that a source puts under its posts is treated as ITS OWN ID (removed, yours added)
-    "suggest_v2": True,             # wider channel suggestions (second-level, forwards/mentions, keyword search, topics, newness)
+    "suggest_v2": True,             # channel suggestions that keep finding new channels (a growing map of related channels), only new + clean ones
     "greeting_filter": True,       # empty "date + good-morning + wishes" posts: sure ones are skipped, unsure ones go to review
     "greeting_block_score": 5,     # score at/above this: skipped without asking
     "greeting_review_score": 2,    # score at/above this (but below the block score): sent to you with Send / Reject buttons
@@ -1547,7 +1547,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
              "• 🌅 فیلتر پیام تبریک بی‌محتوا (تاریخ + دعا و صبح‌بخیر): قطعی‌ها رد می‌شوند، مرزی‌ها برای تأیید شما می‌آیند؛ روشن/خاموش: /greet\n"
              "• 📎 آی‌دیِ دومِ یک منبع: اگر کانالی زیر پست‌هایش آی‌دی دومی هم می‌گذارد: /alias کانال آیدی_دوم (لیست: /alias ، حذف: /alias del کانال آیدی_دوم)\n"
-             "• 🔭 پیشنهاد کانال: جست‌وجوی گسترده (مشابه‌ها، فورواردها، کلیدواژه) با فیلتر «تازه‌بودن»؛ موضوع‌های بیشتر: /topics\n"
+             "• 🔭 پیشنهاد کانال: هر بار کانال‌های تازه‌تری پیدا می‌کند (مشابه‌ها، مشابهِ مشابه‌ها، فورواردها)؛ فقط کانالِ تازه و بدون تبلیغ\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
 
@@ -1563,8 +1563,8 @@ def btn(t):
 MENU_KB = {"keyboard": [[btn(BTN_STATUS), btn(BTN_NOW)],
                         [btn(BTN_ON), btn(BTN_OFF)],
                         [btn(BTN_SPEED), btn(BTN_CRMENU)],
-                        [btn(BTN_SRC), btn(BTN_DEST), btn(BTN_MORE)],
-                        [btn(BTN_SUGG)]],
+                        [btn(BTN_SRC), btn(BTN_DEST)],
+                        [btn(BTN_SUGG), btn(BTN_MORE)]],
            "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
 
 
@@ -1707,9 +1707,9 @@ def speed_line(cfg, state, now=None):
 
 def speed_menu():
     kb = {"inline_keyboard": [
-        [{"text": "🐢 کم (۱ تا ۲)", "callback_data": "tx:sp_low"}, {"text": "⚖️ متوسط (۲ تا ۴)", "callback_data": "tx:sp_mid"},
-         {"text": "🚀 زیاد (۶ تا ۸)", "callback_data": "tx:sp_high"}],
-        [{"text": "✏️ تنظیم دستی", "callback_data": "tx:sp_manual"}, {"text": "🤖 خودکار", "callback_data": "tx:sp_auto"}]]}
+        [{"text": "🐢 کم", "callback_data": "tx:sp_low"}, {"text": "⚖️ متوسط", "callback_data": "tx:sp_mid"}],
+        [{"text": "🚀 زیاد", "callback_data": "tx:sp_high"}, {"text": "🤖 خودکار", "callback_data": "tx:sp_auto"}],
+        [{"text": "✏️ تنظیم دستی", "callback_data": "tx:sp_manual"}]]}
     return kb
 
 
@@ -1728,18 +1728,15 @@ def crisis_menu():
 
 def more_menu(state):
     return {"inline_keyboard": [[{"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}, {"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}],
-                                [{"text": "🔭 پیشنهاد کانال", "callback_data": "tx:sugg"}],
-                                [{"text": "🔍 بررسی مشکوک‌ها (روشن/خاموش)", "callback_data": "tx:review"}],
-                                [{"text": "🌅 فیلتر پیام تبریک (روشن/خاموش)", "callback_data": "tx:greet"}],
-                                [{"text": "🧭 موضوع‌های پیشنهاد کانال", "callback_data": "tx:topics"}],
-                                [{"text": "📖 راهنما و دستورها", "callback_data": "tx:help"}]]}
+                                [{"text": "🔍 مرور مشکوک‌ها", "callback_data": "tx:review"}, {"text": "🌅 فیلتر پیام تبریک", "callback_data": "tx:greet"}],
+                                [{"text": "📎 آی‌دی دومِ منبع‌ها", "callback_data": "tx:alias"}, {"text": "📖 راهنما", "callback_data": "tx:help"}]]}
 
 
 TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
           "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
           "dest_add": "/dest add", "sugg": "🔭 پیشنهاد کانال", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 TX_MAP["greet"] = "/greet"
-TX_MAP["topics"] = "/topics"
+TX_MAP["alias"] = "/alias"
 
 
 def hours_update(cfg, net, state, now):
@@ -1832,10 +1829,11 @@ def sources_view(cfg, state):
         left = (state.get("muted") or {}).get(s.lower(), 0) - time.time()
         lines.append("• %s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else ""))
         pre = (cfg["_pid"] + "|") if cfg.get("_pid") else ""
-        rows.append([{"text": ("🔊 باز کردن " if left > 0 else "🔇 بی‌صدا (۱ روز) ") + s, "callback_data": "mt:" + pre + s},
-                     {"text": "🗑 حذف", "callback_data": "dl:" + pre + s}])
+        rows.append([{"text": ("🔊 " if left > 0 else "🔇 ") + s, "callback_data": "mt:" + pre + s},
+                     {"text": "🗑", "callback_data": "dl:" + pre + s}])
     lines.append("\nاضافه کردن منبع (هر شکلی درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr")
     lines.append("\nبی‌صدا برای چند روز: /mute besnr 3")
+    lines.append("دکمه‌ها: 🔇 لمسِ نام = یک روز بی‌صدا (یا 🔊 باز کردن) • 🗑 = حذف منبع")
     return "\n".join(lines), {"inline_keyboard": rows}
 
 
@@ -1970,23 +1968,6 @@ def check_candidate(cfg, net, name, now):
     return {"score": score, "sample": sample, "n": len(good)}
 
 
-SUGG_TOPICS = [
-    ("فناوری و موبایل", ["تکنولوژی", "موبایل و گجت", "هوش مصنوعی"]),
-    ("فیلم و سریال", ["فیلم و سریال", "معرفی فیلم", "سینما"]),
-    ("ورزش و فوتبال", ["فوتبال", "اخبار ورزشی", "ورزش"]),
-    ("اقتصاد و بازار", ["اقتصاد", "بازار ارز و طلا", "کسب و کار"]),
-    ("بازی و گیم", ["گیم", "بازی کامپیوتری", "اخبار بازی"]),
-    ("علم و دانستنی", ["علمی", "دانستنی ها", "کیهان و فضا"]),
-    ("سرگرمی و طنز", ["طنز", "سرگرمی", "کلیپ خنده دار"]),
-    ("خودرو", ["خودرو", "ماشین", "اخبار خودرو"]),
-    ("سلامت و تغذیه", ["سلامت", "تغذیه", "پزشکی"]),
-    ("کتاب و ادبیات", ["کتاب", "شعر و ادب", "داستان کوتاه"]),
-    ("موسیقی", ["موسیقی", "آهنگ جدید"]),
-    ("سفر و طبیعت", ["سفر", "گردشگری", "طبیعت"]),
-    ("تاریخ", ["تاریخ", "تاریخ ایران"]),
-    ("روانشناسی", ["روانشناسی", "انگیزشی"]),
-    ("آشپزی", ["آشپزی", "دستور پخت"]),
-]
 SUGG_STOP = set("این برای است بود شود شده کرد کنید کنند باشد اینکه همچنین بعد قبل بیشتر کمتر خیلی بسیار همه هیچ چند چون "
                 "اما اگر هنوز فقط حتی دیگر روز امروز ایران تهران عضو کانال لینک".split())
 
@@ -2059,10 +2040,38 @@ def sugg_extras(cfg, net, state, name, members=None):
     return r
 
 
+def _g_add(g, name, d, why, title=None, members=None, vote=False):
+    """One channel of the map: d = distance from your sources, v = how many different channels point to it,
+    c = when its own 'similar channels' were read, k = when it was checked, o = 1 good / 0 not good / None unknown."""
+    k = name.lower()
+    n = g.get(k)
+    if n is None:
+        n = g[k] = {"n": name, "d": d, "v": 0, "c": 0, "k": 0, "o": None, "w": why}
+    else:
+        n["d"] = min(n.get("d", d), d)
+    if vote:
+        n["v"] = n.get("v", 0) + 1
+    if title:
+        n["t"] = title
+    if members:
+        n["m"] = members
+    return n
+
+
+def _g_trim(g, keep=1200):
+    if len(g) <= keep:
+        return
+    order = sorted(g.items(), key=lambda kv: (kv[1].get("o") == 1, kv[1].get("v", 0), kv[1].get("k", 0)))
+    for k_, _ in order[:len(g) - int(keep * 0.85)]:
+        g.pop(k_, None)
+
+
 def find_suggestions_v2(cfg, net, state, want=3, budget=90):
-    """(list of suggestions, problem text or None). Wider than the first version: recommendations of the sources AND of
-    earlier suggestions, channels the sources forward from / mention, keyword search (topics you chose + the sources' own
-    main words). Every candidate passes the same quality check, and must bring posts that are new for us."""
+    """(list of suggestions, problem text or None). Instead of asking Telegram once about your few sources, the bot keeps a
+    growing map of related channels (stored in the state): every run it reads the 'similar channels' of a few more channels
+    of the map (good ones first), also adds channels your sources forward from / mention and a keyword search from your
+    sources' own main words, checks a batch of new ones (clean? alive? Persian? NEW for us?) and shows the best. Results of
+    checks are remembered, so each run goes further and the suggestions do not run out."""
     sec = _hd_secret()
     if not sec:
         return [], "اکانت کمکی وصل نیست (TG_API_ID / TG_API_HASH / TG_SESSION)."
@@ -2070,141 +2079,107 @@ def find_suggestions_v2(cfg, net, state, want=3, budget=90):
         return [], "اکانت کمکی الان کنار گذاشته شده؛ پیشنهاد کانال فقط وقتی اکانت سالم است ممکن است."
     root = hub_of(cfg, state)[1]
     seen = root.setdefault("sugg", {})
-    topics = list(root.get("sugg_topics") or [])
+    g = root.setdefault("sugg_graph", {})
+    src_cr = root.setdefault("sugg_src_cr", {})
     known = {s_.lower() for s_ in cfg["sources"]}
     for pid_, pcfg, _ in profiles(hub_of(cfg, state)[0], root):
         known.add(str(pcfg["target_channel"]).lower().lstrip("@"))
     t0 = time.time()
-    cands = {}
+    now = t0
 
-    def add(un, info):
-        un = (un or "").strip()
-        if not un or un.lower() in known or un.lower().endswith("bot"):
-            return
-        sv = seen.get(un.lower()) or {}
-        if sv.get("st") in ("no", "added") or time.time() - sv.get("t", 0) < 30 * 86400:
-            return
-        cands.setdefault(un, info)
+    def usable(k):
+        sv = seen.get(k) or {}
+        return k not in known and sv.get("st") not in ("no", "added") and now - sv.get("t", 0) >= 30 * 86400
 
     def guard(e):
         nm = type(e).__name__
-        if any(k in nm for k in HD_DEAD_ERRORS) or "FloodWait" in nm:
+        if any(x_ in nm for x_ in HD_DEAD_ERRORS) or "FloodWait" in nm:
             raise e
+
+    def take(chats, d, why, vote=True):
+        for ch in chats or []:
+            if getattr(ch, "megagroup", False) or getattr(ch, "broadcast", True) is False:
+                continue
+            un = (getattr(ch, "username", None) or "").strip()
+            if not un or un.lower() in known or un.lower().endswith("bot"):
+                continue
+            _g_add(g, un, d, why, getattr(ch, "title", None), getattr(ch, "participants_count", None), vote)
 
     try:
         c = _hd_client()
         from telethon.tl.functions.channels import GetChannelRecommendationsRequest
         from telethon.tl.functions.contacts import SearchRequest
-
-        def take(chats, why, topic="", seed=""):
-            for ch in chats or []:
-                if getattr(ch, "megagroup", False) or getattr(ch, "broadcast", True) is False:
-                    continue
-                add(getattr(ch, "username", None),
-                    {"title": getattr(ch, "title", None) or getattr(ch, "username", ""),
-                     "members": getattr(ch, "participants_count", None), "seed": seed, "why": why, "topic": topic})
-
-        seeds = list(cfg["sources"])
-        random.shuffle(seeds)
-        later = [n for n, v in seen.items() if v.get("st") in ("added", "shown", "no")]
-        random.shuffle(later)
-        for sname, lvl in [(x_, 1) for x_ in seeds[:4]] + [(x_, 2) for x_ in later[:3]]:
+        # 1) grow the map: read the "similar channels" of a few more channels
+        todo = []
+        for sname in sorted(cfg["sources"], key=lambda x_: src_cr.get(x_.lower(), 0))[:2]:
+            if now - src_cr.get(sname.lower(), 0) > 10 * 86400:
+                todo.append((sname, 0, None))
+        goods = sorted([n for n in g.values() if n.get("o") == 1 and not n.get("c")], key=lambda n: -n.get("v", 0))[:3]
+        todo += [(n["n"], n.get("d", 1), n) for n in goods]
+        if len(todo) < 4:
+            mids = sorted([n for n in g.values() if n.get("o") is None and not n.get("c") and n.get("d", 1) <= 2],
+                          key=lambda n: (n.get("d", 1), -n.get("v", 0)))[:4 - len(todo)]
+            todo += [(n["n"], n.get("d", 1), n) for n in mids]
+        for name, d, node in todo:
             if time.time() - t0 > budget * 0.35:
                 break
+            if node is None:
+                src_cr[name.lower()] = int(now)
+            else:
+                node["c"] = int(now)
             try:
-                res = c(GetChannelRecommendationsRequest(channel=c.get_entity(sname)))
+                res = c(GetChannelRecommendationsRequest(channel=c.get_entity(name)))
             except Exception as e:
                 guard(e)
                 continue
-            take(getattr(res, "chats", None),
-                 "شبیه به منبع شما: %s" % sname if lvl == 1 else "شبیه به کانالی که قبلاً پیشنهاد شده بود: @%s" % sname, seed=sname)
+            take(getattr(res, "chats", None), d + 1,
+                 ("شبیه به منبع شما: %s" % name) if node is None else ("شبیه به یک کانال مرتبط: @%s" % name))
+        # 2) other doors into the map: channels your sources forward from / mention, and a search by their main words
         for un, w in sorted(sugg_from_pages(cfg, net).items(), key=lambda kv: -kv[1])[:8]:
-            add(un, {"title": un, "members": None, "seed": "",
-                     "why": "منبع‌های شما از آن فوروارد می‌کنند یا اسمش را می‌برند", "topic": ""})
-        queries = []
-        for tname, kws in SUGG_TOPICS:
-            if tname in topics:
-                queries += [(kw, tname) for kw in random.sample(kws, min(2, len(kws)))]
-        random.shuffle(queries)
-        queries = queries[:6] + [(kw, "") for kw in sugg_auto_keywords(cfg, net)]
-        for kw, tname in queries:
-            if time.time() - t0 > budget * 0.55:
+            if un.lower() not in known and not un.lower().endswith("bot"):
+                _g_add(g, un, 1, "منبع‌های شما از آن فوروارد می‌کنند یا اسمش را می‌برند", vote=True)
+        for kw in sugg_auto_keywords(cfg, net):
+            if time.time() - t0 > budget * 0.5:
                 break
             try:
                 res = c(SearchRequest(q=kw, limit=15))
             except Exception as e:
                 guard(e)
                 continue
-            take(getattr(res, "chats", None),
-                 "پیداشده با جستجوی «%s»" % kw, topic=tname)
+            take(getattr(res, "chats", None), 2, "پیداشده با جستجوی «%s» (کلمه‌ی پرتکرارِ منبع‌هایت)" % kw, vote=False)
     except Exception as e:
         _hd_fail(e)
         return [], "ارتباط با اکانت کمکی خطا داد: %s" % type(e).__name__
-    out = []
-    now = time.time()
-    order = list(cands.items())
-    random.shuffle(order)
-    for un, info in order[:18]:
-        if time.time() - t0 > budget or len(out) >= want * 3:
+    # 3) check a batch of channels nobody has looked at yet (results are remembered)
+    pend = [n for n in g.values() if usable(n["n"].lower()) and (
+        n.get("o") is None or (n.get("o") == 0 and now - n.get("k", 0) > 45 * 86400)
+        or (n.get("o") == 1 and now - n.get("k", 0) > 7 * 86400))]
+    pend.sort(key=lambda n: (-(n.get("v", 0) * 2 - n.get("d", 1)), n.get("k", 0)))
+    for n in pend[:14]:
+        if time.time() - t0 > budget:
             break
-        ck = check_candidate(cfg, net, un, now)
+        n["k"] = int(now)
+        ck = check_candidate(cfg, net, n["n"], now)
         if not ck:
+            n["o"] = 0
             continue
-        ex = sugg_extras(cfg, net, state, un, info.get("members"))
+        ex = sugg_extras(cfg, net, state, n["n"], n.get("m"))
         if ex.get("uniq") is not None and ex["uniq"] < 0.4:
-            continue                                   # mostly a copy of what we already post: nothing new
-        rank = ck["score"] + (ex["uniq"] if ex.get("uniq") is not None else 0.5) + min(ex.get("vr") or 0, 0.5)
-        out.append(dict(info, name=un, rank=rank, **dict(ck, **ex)))
-    out.sort(key=lambda x: -x["rank"])
-    res, per = [], {}
-    if topics:                                          # when topics are on, at least one suggestion is from them
-        first = next((x for x in out if x.get("topic")), None)
-        if first:
-            res.append(first)
-            per[first["topic"]] = 1
-    for x in out:
-        if x in res:
+            n["o"] = 0                                     # mostly a copy of what we already post: nothing new
             continue
-        k = x.get("topic") or ""
-        if per.get(k, 0) >= 2:
-            continue
-        per[k] = per.get(k, 0) + 1
-        res.append(x)
-    return res[:want], None
-
-
-def topics_view(root):
-    cur = set(root.get("sugg_topics") or [])
-    btns = [{"text": ("✅ " if n in cur else "⬜ ") + n, "callback_data": "tp:%d" % i} for i, (n, _) in enumerate(SUGG_TOPICS)]
-    txt = ("🧭 موضوع‌های پیشنهاد کانال\n"
-           "پیش‌فرض: فقط کانال‌های هم‌موضوع با منبع‌هایت. موضوعی که روشن کنی، ربات از همان موضوع هم کانال جدید پیشنهاد می‌دهد "
-           "(هر پیشنهاد برچسب موضوع و نمونه‌ی پست دارد). هر بار حداقل یکی از موضوع‌های روشن می‌آید.\n"
-           "با لمس هر موضوع روشن/خاموش می‌شود؛ بعد «🔭 پیشنهاد کانال» را بزن.")
-    return txt, {"inline_keyboard": [btns[i:i + 2] for i in range(0, len(btns), 2)]}
-
-
-def topic_button(cfg0, net, root, cb, idx):
-    try:
-        name = SUGG_TOPICS[int(idx)][0]
-        cur = list(root.get("sugg_topics") or [])
-        if name in cur:
-            cur.remove(name)
-        else:
-            cur.append(name)
-        root["sugg_topics"] = cur
-    except (ValueError, IndexError):
-        pass
-    try:
-        net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
-    except (ApiError, NetError):
-        pass
-    m0 = cb.get("message") or {}
-    if m0.get("chat"):
-        txt, kb = topics_view(root)
-        try:
-            net.api("editMessageReplyMarkup", {"chat_id": m0["chat"]["id"], "message_id": m0["message_id"], "reply_markup": kb})
-        except (ApiError, NetError):
-            pass
+        n.update(o=1, s=ck["score"], x=ck["sample"], nn=ck["n"], u=ex.get("uniq"), r=ex.get("vr"))
+    _g_trim(g)
+    # 4) show the best of everything that is good and not shown yet
+    def rank(n):
+        return (n.get("s", 0) + (n["u"] if n.get("u") is not None else 0.5) + min(n.get("r") or 0, 0.5)
+                + min(n.get("v", 0), 5) * 0.3 - (n.get("d", 1) - 1) * 0.2)
+    good = sorted([n for n in g.values() if n.get("o") == 1 and usable(n["n"].lower())], key=lambda n: -rank(n))
+    out = []
+    for n in good[:want]:
+        out.append({"name": n["n"], "title": n.get("t") or n["n"], "members": n.get("m"), "why": n.get("w", ""), "seed": "",
+                    "score": n.get("s", 0), "sample": n.get("x", ""), "n": n.get("nn", 0), "uniq": n.get("u"),
+                    "vr": n.get("r"), "votes": n.get("v", 0)})
+    return out, None
 
 
 def find_suggestions(cfg, net, state, want=3, budget=75):
@@ -2276,8 +2251,8 @@ def send_suggestions(cfg, net, state, owner, want=3):
         if x.get("members"):
             lines.append("تعداد عضو: %s" % fa(x["members"]))
         lines.append(x["why"] if x.get("why") else "شبیه به منبع شما: %s" % x["seed"])
-        if x.get("topic"):
-            lines.append("موضوع: %s" % x["topic"])
+        if (x.get("votes") or 0) >= 2:
+            lines.append("از %s کانالِ مرتبط با منبع‌هایت پیشنهاد شده" % fa(str(x["votes"])))
         if x.get("uniq") is not None:
             lines.append("تازه‌بودن برای ما: %s از پست‌های متنی‌اش تکراری نیست" % fa("%d%%" % int(x["uniq"] * 100)))
         if x.get("vr"):
@@ -2409,8 +2384,6 @@ def manage_command(cfg, net, state, text):
         return t + "\n\n✏️ تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که همین‌جا بفرستید را «منبع» همین مقصد حساب می‌کنم.", kb
     if cmd == "/qtest":
         return qtest(cfg, net, state, arg), None
-    if cmd == "/topics":
-        return topics_view(hub_of(cfg, state)[1])
     if text == BTN_SUGG or cmd == "/suggest":
         return suggest_now(cfg, net, state)
     if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
@@ -3161,9 +3134,6 @@ def handle_update(cfg, net, state, u):
         act, _, pid = data.partition(":")
         if act in ("dp", "dd", "d2", "d3", "dc", "dx"):
             dest_button(cfg0, net, root, cb, act, pid)
-            return
-        if act == "tp":
-            topic_button(cfg0, net, root, cb, pid)
             return
         if act in ("sa", "sn"):
             suggest_button(cfg0, net, root, cb, act, pid)
