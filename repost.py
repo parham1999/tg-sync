@@ -2786,18 +2786,16 @@ def process_updates(cfg, net, state, state_path, wait=0):
         state["seed_tries"] = state.get("seed_tries", 0) + 1
         save_state(state_path, state)
         tell(net, ow, "📋 افزودن منبع‌های جدید:\n" + "\n".join(out) + "\n(از پست‌های قدیمی‌شان چیزی ارسال نمی‌شود؛ فقط پست‌های تازه.)")
-    if ow and state.get("kb_v") != 4:             # one time: the menu with the new "destinations" button
+    if ow and state.get("kb_v") != 5:             # one time: the lighter menu (3 rows); sent by itself, no command needed
         SHOW_KB[0] = True
         old = state.get("speed") in ("normal", "boost")
-        msg = ("⌨️ منوی ربات به‌روز شد.\n"
-               "• 🎯 مقصدها: چند کانال مقصد، هر کدام با منبع‌ها و تنظیمات جدا (ویماپرو همان که بود می‌ماند)\n"
-               "• 🎚 سرعت ارسال ← کم / متوسط / زیاد / دستی / خودکار\n• 🚨 بحران ← روشن / خاموش / خودکار\n"
-               "• ⚙️ بیشتر ← کلمات ممنوع، ساعت‌ها، بررسی مشکوک‌ها، راهنما\n"
-               "هر دکمه که بزنید، ربات به پیام شما ریپلای می‌کند و توضیح کامل می‌دهد چه حالتی روشن شد.")
+        msg = ("⌨️ منوی ربات به‌روز شد و سبک‌تر شد.\n"
+               "• 📋 منبع‌ها ← کنار هر منبع دکمه‌ی 📎 برای آی‌دیِ دوم\n"
+               "• ⚙️ بیشتر ← سرعت ارسال، بحران، پیشنهاد کانال، کلمات ممنوع، ساعت‌ها و بقیه")
         if old:
             msg += "\n\nℹ️ سرعت‌های قدیمی (نرمال/بوست) حذف شدند و الان روی «🤖 خودکار» هستید."
         if tell(net, ow, msg, MENU_KB) is not None:
-            state["kb_v"] = 4
+            state["kb_v"] = 5
             if old:
                 state["speed"] = "auto"
             save_state(state_path, state)
