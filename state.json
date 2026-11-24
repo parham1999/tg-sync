@@ -55,7 +55,7 @@
    "last_id": 35635
   }
  },
- "update_offset": 774952087,
+ "update_offset": 774952089,
  "owner_id": 138180578,
  "fp": [
   {
@@ -17190,9 +17190,10 @@
   "khartox": 1795499655,
   "sourceshit": 1795499655
  },
- "src_alias": {},
- "await_alias": {
-  "src": "FilmFarsiOrg",
-  "t": 1795502856
- }
+ "src_alias": {
+  "filmfarsiorg": [
+   "filmserialfarsi"
+  ]
+ },
+ "await_src": 1795502885
 }
