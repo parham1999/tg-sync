@@ -109,6 +109,7 @@ DEFAULTS = {
     "incomplete_post": "skip",     # "skip" or "text_only" when media cannot be copied
     "proxy": "",                   # e.g. "http://127.0.0.1:10809" (empty = system settings)
     "source_aliases": {},           # {"sourcechannel": ["theirsecondid"]}: a second ID that a source puts under its posts is treated as ITS OWN ID (removed, yours added)
+    "suggest_v2": True,             # wider channel suggestions (second-level, forwards/mentions, keyword search, topics, newness)
     "greeting_filter": True,       # empty "date + good-morning + wishes" posts: sure ones are skipped, unsure ones go to review
     "greeting_block_score": 5,     # score at/above this: skipped without asking
     "greeting_review_score": 2,    # score at/above this (but below the block score): sent to you with Send / Reject buttons
@@ -502,6 +503,9 @@ def alias_apply(posts, chan):
             p["text_html"] = re.sub(r"(?<![\w@./])@%s(?!\w)" % re.escape(a), "@" + chan, p["text_html"], flags=re.I)
             p["text_html"] = re.sub(r"(?<![\w.])((?:https?://)?(?:www\.)?(?:t|telegram)\.me/)%s(?![\w])" % re.escape(a),
                                     lambda m: m.group(1) + chan, p["text_html"], flags=re.I)
+            if a.startswith("+"):                      # an invite link: both spellings (t.me/+hash and t.me/joinchat/hash)
+                p["text_html"] = re.sub(r"(?<![\w.])((?:https?://)?(?:www\.)?(?:t|telegram)\.me/)joinchat/%s(?![\w-])" % re.escape(a[1:]),
+                                        lambda m: m.group(1) + chan, p["text_html"], flags=re.I)
 
 
 def parse_page(page):
@@ -1543,6 +1547,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
              "• 🌅 فیلتر پیام تبریک بی‌محتوا (تاریخ + دعا و صبح‌بخیر): قطعی‌ها رد می‌شوند، مرزی‌ها برای تأیید شما می‌آیند؛ روشن/خاموش: /greet\n"
              "• 📎 آی‌دیِ دومِ یک منبع: اگر کانالی زیر پست‌هایش آی‌دی دومی هم می‌گذارد: /alias کانال آیدی_دوم (لیست: /alias ، حذف: /alias del کانال آیدی_دوم)\n"
+             "• 🔭 پیشنهاد کانال: جست‌وجوی گسترده (مشابه‌ها، فورواردها، کلیدواژه) با فیلتر «تازه‌بودن»؛ موضوع‌های بیشتر: /topics\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
 
@@ -1726,6 +1731,7 @@ def more_menu(state):
                                 [{"text": "🔭 پیشنهاد کانال", "callback_data": "tx:sugg"}],
                                 [{"text": "🔍 بررسی مشکوک‌ها (روشن/خاموش)", "callback_data": "tx:review"}],
                                 [{"text": "🌅 فیلتر پیام تبریک (روشن/خاموش)", "callback_data": "tx:greet"}],
+                                [{"text": "🧭 موضوع‌های پیشنهاد کانال", "callback_data": "tx:topics"}],
                                 [{"text": "📖 راهنما و دستورها", "callback_data": "tx:help"}]]}
 
 
@@ -1733,6 +1739,7 @@ TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed hig
           "sp_manual": "/manual", "cr_on": BTN_CR_ON, "cr_off": BTN_CR_OFF, "cr_auto": BTN_CR_AUTO,
           "dest_add": "/dest add", "sugg": "🔭 پیشنهاد کانال", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 TX_MAP["greet"] = "/greet"
+TX_MAP["topics"] = "/topics"
 
 
 def hours_update(cfg, net, state, now):
@@ -1963,8 +1970,247 @@ def check_candidate(cfg, net, name, now):
     return {"score": score, "sample": sample, "n": len(good)}
 
 
+SUGG_TOPICS = [
+    ("فناوری و موبایل", ["تکنولوژی", "موبایل و گجت", "هوش مصنوعی"]),
+    ("فیلم و سریال", ["فیلم و سریال", "معرفی فیلم", "سینما"]),
+    ("ورزش و فوتبال", ["فوتبال", "اخبار ورزشی", "ورزش"]),
+    ("اقتصاد و بازار", ["اقتصاد", "بازار ارز و طلا", "کسب و کار"]),
+    ("بازی و گیم", ["گیم", "بازی کامپیوتری", "اخبار بازی"]),
+    ("علم و دانستنی", ["علمی", "دانستنی ها", "کیهان و فضا"]),
+    ("سرگرمی و طنز", ["طنز", "سرگرمی", "کلیپ خنده دار"]),
+    ("خودرو", ["خودرو", "ماشین", "اخبار خودرو"]),
+    ("سلامت و تغذیه", ["سلامت", "تغذیه", "پزشکی"]),
+    ("کتاب و ادبیات", ["کتاب", "شعر و ادب", "داستان کوتاه"]),
+    ("موسیقی", ["موسیقی", "آهنگ جدید"]),
+    ("سفر و طبیعت", ["سفر", "گردشگری", "طبیعت"]),
+    ("تاریخ", ["تاریخ", "تاریخ ایران"]),
+    ("روانشناسی", ["روانشناسی", "انگیزشی"]),
+    ("آشپزی", ["آشپزی", "دستور پخت"]),
+]
+SUGG_STOP = set("این برای است بود شود شده کرد کنید کنند باشد اینکه همچنین بعد قبل بیشتر کمتر خیلی بسیار همه هیچ چند چون "
+                "اما اگر هنوز فقط حتی دیگر روز امروز ایران تهران عضو کانال لینک".split())
+
+
+def sugg_auto_keywords(cfg, net, n=2):
+    """The most frequent real words of the sources' recent posts -> search phrases for the SAME theme."""
+    cnt = {}
+    names = list(cfg["sources"])
+    random.shuffle(names)
+    for nm in names[:3]:
+        try:
+            posts = parse_page(net.get(cfg["web_base"] + nm))
+        except NetError:
+            continue
+        for p in posts[-15:]:
+            for w in re.findall(r"[\u0600-\u06FF]{4,}", plain(p["text_html"]).replace("\u200c", "")):
+                if w.isalpha() and w not in SUGG_STOP:
+                    cnt[w] = cnt.get(w, 0) + 1
+    top = [w for w, c in sorted(cnt.items(), key=lambda kv: -kv[1]) if c >= 3][:10]
+    random.shuffle(top)
+    return top[:n]
+
+
+def sugg_from_pages(cfg, net, limit=4):
+    """Channels the sources forward from (strong hint) or mention: {username: weight}. Public pages only."""
+    found = {}
+    names = list(cfg["sources"])
+    random.shuffle(names)
+    for nm in names[:limit]:
+        try:
+            page = net.get(cfg["web_base"] + nm)
+        except NetError:
+            continue
+        for m in re.finditer(r'tgme_widget_message_forwarded_from_name"[^>]*href="https?://t\.me/([A-Za-z][A-Za-z0-9_]{3,31})', page):
+            found[m.group(1)] = found.get(m.group(1), 0) + 2
+        try:
+            for p in parse_page(page):
+                for u_ in other_channels(cfg, p):
+                    found[u_] = found.get(u_, 0) + 1
+        except Exception:
+            pass
+    return found
+
+
+def sugg_extras(cfg, net, state, name, members=None):
+    """{uniq: share of its recent texts that are NEW for us (not a copy of what we already post), vr: usual views / members}."""
+    try:
+        posts = parse_page(net.get(cfg["web_base"] + name))
+    except NetError:
+        return {}
+    last = posts[-12:]
+    fps = hub_of(cfg, state)[1].get("fp") or []
+    own = str(cfg.get("target_channel", ""))
+    ev = dup = 0
+    for p in last:
+        if len(plain(p["text_html"]).strip()) < 40:
+            continue
+        fp = text_fp(norm_for_dedupe(p["text_html"], own))
+        if not fp:
+            continue
+        ev += 1
+        if find_dup(fp, fps):
+            dup += 1
+    r = {}
+    if ev >= 3:
+        r["uniq"] = 1.0 - dup / float(ev)
+    vs = sorted(p["views"] for p in last if p.get("views"))
+    if vs and members:
+        r["vr"] = vs[len(vs) // 2] / float(members)
+    return r
+
+
+def find_suggestions_v2(cfg, net, state, want=3, budget=90):
+    """(list of suggestions, problem text or None). Wider than the first version: recommendations of the sources AND of
+    earlier suggestions, channels the sources forward from / mention, keyword search (topics you chose + the sources' own
+    main words). Every candidate passes the same quality check, and must bring posts that are new for us."""
+    sec = _hd_secret()
+    if not sec:
+        return [], "اکانت کمکی وصل نیست (TG_API_ID / TG_API_HASH / TG_SESSION)."
+    if not hd_enabled():
+        return [], "اکانت کمکی الان کنار گذاشته شده؛ پیشنهاد کانال فقط وقتی اکانت سالم است ممکن است."
+    root = hub_of(cfg, state)[1]
+    seen = root.setdefault("sugg", {})
+    topics = list(root.get("sugg_topics") or [])
+    known = {s_.lower() for s_ in cfg["sources"]}
+    for pid_, pcfg, _ in profiles(hub_of(cfg, state)[0], root):
+        known.add(str(pcfg["target_channel"]).lower().lstrip("@"))
+    t0 = time.time()
+    cands = {}
+
+    def add(un, info):
+        un = (un or "").strip()
+        if not un or un.lower() in known or un.lower().endswith("bot"):
+            return
+        sv = seen.get(un.lower()) or {}
+        if sv.get("st") in ("no", "added") or time.time() - sv.get("t", 0) < 30 * 86400:
+            return
+        cands.setdefault(un, info)
+
+    def guard(e):
+        nm = type(e).__name__
+        if any(k in nm for k in HD_DEAD_ERRORS) or "FloodWait" in nm:
+            raise e
+
+    try:
+        c = _hd_client()
+        from telethon.tl.functions.channels import GetChannelRecommendationsRequest
+        from telethon.tl.functions.contacts import SearchRequest
+
+        def take(chats, why, topic="", seed=""):
+            for ch in chats or []:
+                if getattr(ch, "megagroup", False) or getattr(ch, "broadcast", True) is False:
+                    continue
+                add(getattr(ch, "username", None),
+                    {"title": getattr(ch, "title", None) or getattr(ch, "username", ""),
+                     "members": getattr(ch, "participants_count", None), "seed": seed, "why": why, "topic": topic})
+
+        seeds = list(cfg["sources"])
+        random.shuffle(seeds)
+        later = [n for n, v in seen.items() if v.get("st") in ("added", "shown", "no")]
+        random.shuffle(later)
+        for sname, lvl in [(x_, 1) for x_ in seeds[:4]] + [(x_, 2) for x_ in later[:3]]:
+            if time.time() - t0 > budget * 0.35:
+                break
+            try:
+                res = c(GetChannelRecommendationsRequest(channel=c.get_entity(sname)))
+            except Exception as e:
+                guard(e)
+                continue
+            take(getattr(res, "chats", None),
+                 "شبیه به منبع شما: %s" % sname if lvl == 1 else "شبیه به کانالی که قبلاً پیشنهاد شده بود: @%s" % sname, seed=sname)
+        for un, w in sorted(sugg_from_pages(cfg, net).items(), key=lambda kv: -kv[1])[:8]:
+            add(un, {"title": un, "members": None, "seed": "",
+                     "why": "منبع‌های شما از آن فوروارد می‌کنند یا اسمش را می‌برند", "topic": ""})
+        queries = []
+        for tname, kws in SUGG_TOPICS:
+            if tname in topics:
+                queries += [(kw, tname) for kw in random.sample(kws, min(2, len(kws)))]
+        random.shuffle(queries)
+        queries = queries[:6] + [(kw, "") for kw in sugg_auto_keywords(cfg, net)]
+        for kw, tname in queries:
+            if time.time() - t0 > budget * 0.55:
+                break
+            try:
+                res = c(SearchRequest(q=kw, limit=15))
+            except Exception as e:
+                guard(e)
+                continue
+            take(getattr(res, "chats", None),
+                 "پیداشده با جستجوی «%s»" % kw, topic=tname)
+    except Exception as e:
+        _hd_fail(e)
+        return [], "ارتباط با اکانت کمکی خطا داد: %s" % type(e).__name__
+    out = []
+    now = time.time()
+    order = list(cands.items())
+    random.shuffle(order)
+    for un, info in order[:18]:
+        if time.time() - t0 > budget or len(out) >= want * 3:
+            break
+        ck = check_candidate(cfg, net, un, now)
+        if not ck:
+            continue
+        ex = sugg_extras(cfg, net, state, un, info.get("members"))
+        if ex.get("uniq") is not None and ex["uniq"] < 0.4:
+            continue                                   # mostly a copy of what we already post: nothing new
+        rank = ck["score"] + (ex["uniq"] if ex.get("uniq") is not None else 0.5) + min(ex.get("vr") or 0, 0.5)
+        out.append(dict(info, name=un, rank=rank, **dict(ck, **ex)))
+    out.sort(key=lambda x: -x["rank"])
+    res, per = [], {}
+    if topics:                                          # when topics are on, at least one suggestion is from them
+        first = next((x for x in out if x.get("topic")), None)
+        if first:
+            res.append(first)
+            per[first["topic"]] = 1
+    for x in out:
+        if x in res:
+            continue
+        k = x.get("topic") or ""
+        if per.get(k, 0) >= 2:
+            continue
+        per[k] = per.get(k, 0) + 1
+        res.append(x)
+    return res[:want], None
+
+
+def topics_view(root):
+    cur = set(root.get("sugg_topics") or [])
+    btns = [{"text": ("✅ " if n in cur else "⬜ ") + n, "callback_data": "tp:%d" % i} for i, (n, _) in enumerate(SUGG_TOPICS)]
+    txt = ("🧭 موضوع‌های پیشنهاد کانال\n"
+           "پیش‌فرض: فقط کانال‌های هم‌موضوع با منبع‌هایت. موضوعی که روشن کنی، ربات از همان موضوع هم کانال جدید پیشنهاد می‌دهد "
+           "(هر پیشنهاد برچسب موضوع و نمونه‌ی پست دارد). هر بار حداقل یکی از موضوع‌های روشن می‌آید.\n"
+           "با لمس هر موضوع روشن/خاموش می‌شود؛ بعد «🔭 پیشنهاد کانال» را بزن.")
+    return txt, {"inline_keyboard": [btns[i:i + 2] for i in range(0, len(btns), 2)]}
+
+
+def topic_button(cfg0, net, root, cb, idx):
+    try:
+        name = SUGG_TOPICS[int(idx)][0]
+        cur = list(root.get("sugg_topics") or [])
+        if name in cur:
+            cur.remove(name)
+        else:
+            cur.append(name)
+        root["sugg_topics"] = cur
+    except (ValueError, IndexError):
+        pass
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"]})
+    except (ApiError, NetError):
+        pass
+    m0 = cb.get("message") or {}
+    if m0.get("chat"):
+        txt, kb = topics_view(root)
+        try:
+            net.api("editMessageReplyMarkup", {"chat_id": m0["chat"]["id"], "message_id": m0["message_id"], "reply_markup": kb})
+        except (ApiError, NetError):
+            pass
+
+
 def find_suggestions(cfg, net, state, want=3, budget=75):
     """(list of suggestions, problem text or None)."""
+    if cfg.get("suggest_v2", True):
+        return find_suggestions_v2(cfg, net, state, want)
     sec = _hd_secret()
     if not sec:
         return [], "اکانت کمکی وصل نیست (TG_API_ID / TG_API_HASH / TG_SESSION)."
@@ -2029,7 +2275,13 @@ def send_suggestions(cfg, net, state, owner, want=3):
         lines = ["🔭 کانال پیشنهادی: @%s" % x["name"], "نام: %s" % x["title"]]
         if x.get("members"):
             lines.append("تعداد عضو: %s" % fa(x["members"]))
-        lines.append("شبیه به منبع شما: %s" % x["seed"])
+        lines.append(x["why"] if x.get("why") else "شبیه به منبع شما: %s" % x["seed"])
+        if x.get("topic"):
+            lines.append("موضوع: %s" % x["topic"])
+        if x.get("uniq") is not None:
+            lines.append("تازه‌بودن برای ما: %s از پست‌های متنی‌اش تکراری نیست" % fa("%d%%" % int(x["uniq"] * 100)))
+        if x.get("vr"):
+            lines.append("بازدید معمول هر پستش حدود %s اعضایش است" % fa("%d%%" % int(min(x["vr"], 9.99) * 100)))
         lines.append("از %d پست آخرش، %s به درد ما می‌خورد (بدون تبلیغ/لینک/ریپلای/فوروارد)" % (
             12, fa("%d%%" % int(x["score"] * 100))))
         if x.get("sample"):
@@ -2157,6 +2409,8 @@ def manage_command(cfg, net, state, text):
         return t + "\n\n✏️ تا ۱۰ دقیقه‌ی دیگر هر لینک یا آیدی که همین‌جا بفرستید را «منبع» همین مقصد حساب می‌کنم.", kb
     if cmd == "/qtest":
         return qtest(cfg, net, state, arg), None
+    if cmd == "/topics":
+        return topics_view(hub_of(cfg, state)[1])
     if text == BTN_SUGG or cmd == "/suggest":
         return suggest_now(cfg, net, state)
     if text in (BTN_HOURS, OLD_HOURS) or cmd == "/hours":
@@ -2215,6 +2469,9 @@ def manage_command(cfg, net, state, text):
         return r, None
     if cmd == "/alias":
         def _nm(x):
+            iv_ = re.search(r"(?:t|telegram)\.me/(?:\+|joinchat/)([A-Za-z0-9_-]{6,})", x or "")
+            if iv_:
+                return "+" + iv_.group(1)
             mm_ = re.search(r"(?:https?://)?(?:www\.)?(?:(?:t|telegram)\.me/)?@?([A-Za-z][A-Za-z0-9_]{3,31})", x or "")
             return mm_.group(1).lower() if mm_ else None
         al = state.setdefault("src_alias", {})
@@ -2228,7 +2485,7 @@ def manage_command(cfg, net, state, text):
                         "/alias کانال_منبع آیدی_دوم\nمثال: /alias besnr besnr_backup\n"
                         "از آن به بعد آیدی دوم هم مثل آیدی خودِ آن کانال حساب می‌شود: «مشکوک» نمی‌شود، حذف می‌شود و آیدی شما جایش می‌آید.\n"
                         "حذف: /alias del کانال_منبع آیدی_دوم"), None
-            return ("📎 آی‌دی‌های دومِ ثبت‌شده:\n" + "\n".join("• %s ← %s" % (k, "، ".join("@" + x for x in v)) for k, v in sorted(al.items()))
+            return ("📎 آی‌دی‌های دومِ ثبت‌شده:\n" + "\n".join("• %s ← %s" % (k, "، ".join((x if x.startswith("+") else "@" + x) for x in v)) for k, v in sorted(al.items()))
                     + "\n\nافزودن: /alias کانال آیدی_دوم\nحذف: /alias del کانال آیدی_دوم"), None
         src_ = _nm(parts[0])
         names = [x for x in (_nm(y) for y in parts[1:]) if x]
@@ -2250,7 +2507,7 @@ def manage_command(cfg, net, state, text):
         apply_overrides(cfg, state)
         return ("✅ ثبت شد: از این به بعد %s در پست‌های «%s» مثل آی‌دیِ خودِ همان کانال حساب می‌شود؛ "
                 "مشکوک نمی‌شود، حذف می‌شود و آی‌دیِ شما جایش می‌آید.\n(فقط برای همین کانال؛ کانال‌های دیگر بدون تغییر.)\n"
-                "لیست: /alias ، حذف: /alias del %s %s") % ("، ".join("@" + x for x in names), src_, src_, names[0]), None
+                "لیست: /alias ، حذف: /alias del %s %s") % ("، ".join((x if x.startswith("+") else "@" + x) for x in names), src_, src_, names[0]), None
     if cmd == "/greet":
         a = arg.strip().lower()
         if a in ("off", "خاموش"):
@@ -2904,6 +3161,9 @@ def handle_update(cfg, net, state, u):
         act, _, pid = data.partition(":")
         if act in ("dp", "dd", "d2", "d3", "dc", "dx"):
             dest_button(cfg0, net, root, cb, act, pid)
+            return
+        if act == "tp":
+            topic_button(cfg0, net, root, cb, pid)
             return
         if act in ("sa", "sn"):
             suggest_button(cfg0, net, root, cb, act, pid)
