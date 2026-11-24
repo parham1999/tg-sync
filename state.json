@@ -55,7 +55,7 @@
    "last_id": 35641
   }
  },
- "update_offset": 774952098,
+ "update_offset": 774952099,
  "owner_id": 138180578,
  "fp": [
   {
@@ -14397,11 +14397,8 @@
    "src": "https://t.me/CottageOrg/83590"
   }
  ],
- "approved": [],
- "next_run_ts": 1795510101.214942,
- "review_off": false,
- "pending": {
-  "fdccfc5c": {
+ "approved": [
+  {
    "text": "\u062f\u06cc\u062f\u0627\u0631 \u0633\u0641\u06cc\u0631 \u0631\u0648\u0633\u06cc\u0647 \u0628\u0627 \u0645\u0634\u0627\u0648\u0631 \u0627\u0645\u0646\u06cc\u062a\u06cc \u0631\u0626\u06cc\u0633\u200c\u062c\u0645\u0647\u0648\u0631 \u0633\u0648\u062f\u0627\u0646 \u062c\u0646\u0648\u0628\u06cc\n\n\u0645\u0648\u0636\u0648\u0639 \u062c\u0644\u0633\u0647: \u0627\u0645\u0646\u06cc\u062a \u063a\u0630\u0627\u06cc\u06cc \u062f\u0631 \u0633\u0648\u062f\u0627\u0646 \u062c\u0646\u0648\u0628\u06cc!!\n<b>\u200c</b><b>\u2796</b><b>\u2796</b><b>\u2796</b><b>\u2796</b><b>\u2796</b><b>\u2796</b><b>\u2796</b>\n\ud835\ude45\ud835\ude4a\ud835\ude44\ud835\ude49 \ud835\ude50\ud835\ude4e:\n\n@Wimapro",
    "media": [
     [
@@ -14409,7 +14406,7 @@
      "https://cdn4.telesco.pe/file/OVZYm6rKIXtcq6DVRZf0sPbVYSME8YyweA3FMerUkYkb1xrut0LKGdRq5_-FcAI9jXnpe2zAqoXJir2_-yvnSpN63p9IwroqtVN81QirpMoinm00POGknTyH5bxmAVDT7F384N7-x-8G69mIE6M0UUgbzsNsYo4vsbCr3P1hohsUn6amKI-o4SzahpYpJ1l7J3Z6F5sRIwJsIpwqF2FtAtQcOs-_CWQ8rjiPgUi1GT9H4CO5QIJaWEuN6tMjoB1MgeXPC38BZPJehzhQc68hAp6xgWtNI_Yq2Uf70sxPqOEWWL9NkOZE7F-GsbDCaFW5OU9Loz-mRZcYpTtX095b4w.jpg"
     ]
    ],
-   "t": 1795507726,
+   "t": 1795509450,
    "link": "https://t.me/Memwe_land/35641",
    "asrc": "Memwe_land",
    "aname": "bezhy",
@@ -14417,7 +14414,10 @@
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@bezhy)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 Memwe_land.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)\n\n\u0627\u06af\u0631 @bezhy \u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0648\u0645\u0650 \u062e\u0648\u062f\u0650 \u0647\u0645\u06cc\u0646 \u06a9\u0627\u0646\u0627\u0644 \u0627\u0633\u062a (\u0646\u0647 \u062a\u0628\u0644\u06cc\u063a)\u060c \u062f\u06a9\u0645\u0647\u200c\u06cc \ud83d\udcce \u0631\u0627 \u0628\u0632\u0646\u06cc\u062f."
   }
- },
+ ],
+ "next_run_ts": 1795510101.214942,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1795250602,
   1795252993,
@@ -14641,7 +14641,7 @@
   },
   "rounds": 11,
   "rev_exp": 6,
-  "rev_ok": 2,
+  "rev_ok": 3,
   "hd_web": 3,
   "hd_why": {
    "no_map": 3
@@ -14684,7 +14684,7 @@
   ]
  ],
  "last_scan_ts": 1795507708,
- "hv_ts": 1795497556,
+ "hv_ts": 1795508367,
  "hv": {
   "7": [
    400,
