@@ -108,6 +108,7 @@ DEFAULTS = {
     "blocked_domains": [],
     "incomplete_post": "skip",     # "skip" or "text_only" when media cannot be copied
     "proxy": "",                   # e.g. "http://127.0.0.1:10809" (empty = system settings)
+    "source_aliases": {},           # {"sourcechannel": ["theirsecondid"]}: a second ID that a source puts under its posts is treated as ITS OWN ID (removed, yours added)
     "greeting_filter": True,       # empty "date + good-morning + wishes" posts: sure ones are skipped, unsure ones go to review
     "greeting_block_score": 5,     # score at/above this: skipped without asking
     "greeting_review_score": 2,    # score at/above this (but below the block score): sent to you with Send / Reject buttons
@@ -486,6 +487,23 @@ def remember_videos(chunk):
             VIDEO_META[html.unescape(sm.group(1))] = meta
 
 
+SRC_ALIAS = {}          # source username (lower) -> {second IDs (lower)} that belong to the same source channel
+
+
+def alias_apply(posts, chan):
+    """Some channels sign their posts with a second ID. For those, the second ID is rewritten to the source's
+    own ID right after reading the page, so every later rule (other-channel check, ID removal, your footer)
+    treats it exactly like the source's main ID."""
+    chan = (chan or "").lstrip("@")
+    names = SRC_ALIAS.get(chan.lower()) or ()
+    for p in posts:
+        p["src"] = chan
+        for a in names:
+            p["text_html"] = re.sub(r"(?<![\w@./])@%s(?!\w)" % re.escape(a), "@" + chan, p["text_html"], flags=re.I)
+            p["text_html"] = re.sub(r"(?<![\w.])((?:https?://)?(?:www\.)?(?:t|telegram)\.me/)%s(?![\w])" % re.escape(a),
+                                    lambda m: m.group(1) + chan, p["text_html"], flags=re.I)
+
+
 def parse_page(page):
     posts = []
     for chunk in MSG_SPLIT.split(page)[1:]:
@@ -541,6 +559,8 @@ def parse_page(page):
                 or ("tgme_widget_message_photo_wrap" in chunk
                     and not any(k == "photo" for k, _ in uniq))),
         })
+    if posts:
+        alias_apply(posts, chan_)
     posts.sort(key=lambda p: p["id"])
     return posts
 
@@ -805,6 +825,10 @@ def explain_skip(reason, post):
     m = re.match(r"contains a link to a site/app \((.*)\)", reason)
     if m:
         return "آدرس سایت یا اپ دارد: %s (پست‌های دارای آدرس سایت ارسال نمی‌شوند)" % m.group(1)
+    m = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
+    if m and post.get("src"):
+        return ("به کانال یا ربات دیگری اشاره می‌کند: @%s (اگر این آی‌دیِ دومِ خودِ همین منبع است: /alias %s %s)"
+                % (m.group(1), post["src"], m.group(1)))
     m = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
     if m:
         return "به کانال یا ربات دیگری اشاره می‌کند: @%s" % m.group(1)
@@ -1518,6 +1542,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• ⚙️ بیشتر: کلمات ممنوع، ساعت‌های پربازدید، بررسی مشکوک‌ها\n"
              "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
              "• 🌅 فیلتر پیام تبریک بی‌محتوا (تاریخ + دعا و صبح‌بخیر): قطعی‌ها رد می‌شوند، مرزی‌ها برای تأیید شما می‌آیند؛ روشن/خاموش: /greet\n"
+             "• 📎 آی‌دیِ دومِ یک منبع: اگر کانالی زیر پست‌هایش آی‌دی دومی هم می‌گذارد: /alias کانال آیدی_دوم (لیست: /alias ، حذف: /alias del کانال آیدی_دوم)\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
 
@@ -1779,6 +1804,11 @@ def apply_overrides(cfg, state):
     cfg["ad_keywords"] = ads
     cfg.setdefault("_base_greet", bool(cfg.get("greeting_filter", True)))
     cfg["greeting_filter"] = cfg["_base_greet"] and not state.get("greet_off")
+    al = {}
+    for k_, v_ in list((cfg.get("source_aliases") or {}).items()) + list((state.get("src_alias") or {}).items()):
+        al.setdefault(str(k_).lstrip("@").lower(), set()).update(str(x).lstrip("@").lower() for x in (v_ or []))
+    SRC_ALIAS.clear()
+    SRC_ALIAS.update(al)
 
 
 def is_muted(state, name):
@@ -2183,6 +2213,44 @@ def manage_command(cfg, net, state, text):
             r = "✅ «%s» از کلمات ممنوع برداشته شد." % w
         apply_overrides(cfg, state)
         return r, None
+    if cmd == "/alias":
+        def _nm(x):
+            mm_ = re.search(r"(?:https?://)?(?:www\.)?(?:(?:t|telegram)\.me/)?@?([A-Za-z][A-Za-z0-9_]{3,31})", x or "")
+            return mm_.group(1).lower() if mm_ else None
+        al = state.setdefault("src_alias", {})
+        parts = [x for x in re.split(r"[\s,،]+", arg) if x]
+        delete = bool(parts) and parts[0].lower() in ("del", "rm", "remove", "حذف")
+        if delete:
+            parts = parts[1:]
+        if not parts:
+            if not al:
+                return ("هنوز آی‌دیِ دومی ثبت نشده.\n\nبرای کانالی که زیر پست‌هایش آی‌دیِ دومی هم می‌گذارد:\n"
+                        "/alias کانال_منبع آیدی_دوم\nمثال: /alias besnr besnr_backup\n"
+                        "از آن به بعد آیدی دوم هم مثل آیدی خودِ آن کانال حساب می‌شود: «مشکوک» نمی‌شود، حذف می‌شود و آیدی شما جایش می‌آید.\n"
+                        "حذف: /alias del کانال_منبع آیدی_دوم"), None
+            return ("📎 آی‌دی‌های دومِ ثبت‌شده:\n" + "\n".join("• %s ← %s" % (k, "، ".join("@" + x for x in v)) for k, v in sorted(al.items()))
+                    + "\n\nافزودن: /alias کانال آیدی_دوم\nحذف: /alias del کانال آیدی_دوم"), None
+        src_ = _nm(parts[0])
+        names = [x for x in (_nm(y) for y in parts[1:]) if x]
+        if not src_:
+            return "نام کانال منبع را درست نفهمیدم. مثال: /alias besnr besnr_backup", None
+        if delete:
+            cur = al.get(src_, [])
+            if not names:
+                al.pop(src_, None)
+            else:
+                al[src_] = [x for x in cur if x not in names]
+                if not al[src_]:
+                    al.pop(src_, None)
+            apply_overrides(cfg, state)
+            return "🗑 آی‌دی(های) دومِ %s حذف شد." % src_, None
+        if not names:
+            return "آی‌دیِ دوم را هم بنویسید. مثال: /alias %s آیدی_دوم" % src_, None
+        al[src_] = sorted(set(al.get(src_, [])) | set(names))
+        apply_overrides(cfg, state)
+        return ("✅ ثبت شد: از این به بعد %s در پست‌های «%s» مثل آی‌دیِ خودِ همان کانال حساب می‌شود؛ "
+                "مشکوک نمی‌شود، حذف می‌شود و آی‌دیِ شما جایش می‌آید.\n(فقط برای همین کانال؛ کانال‌های دیگر بدون تغییر.)\n"
+                "لیست: /alias ، حذف: /alias del %s %s") % ("، ".join("@" + x for x in names), src_, src_, names[0]), None
     if cmd == "/greet":
         a = arg.strip().lower()
         if a in ("off", "خاموش"):
@@ -2247,6 +2315,8 @@ def status_text(cfg, state):
     lines.append("🧐 بررسی پست‌های مشکوک: " + ("روشن" if not state.get("review_off") else "خاموش"))
     lines.append("")
     lines.append("🌅 فیلتر پیام‌های تبریک بی‌محتوا: " + ("🛑 خاموش" if state.get("greet_off") else "روشن"))
+    if state.get("src_alias"):
+        lines.append("📎 منبع‌های دارای آیدی دوم: " + "، ".join("%s(%d)" % (k, len(v)) for k, v in sorted(state["src_alias"].items())))
     lines += ["", SEP, ""]
     lines.append(speed_line(cfg, state))
     if speed_mode(state) == "auto":
@@ -3180,6 +3250,9 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
     if reason.startswith("greeting"):
         ask = ("☝️ این پست شبیه پیام تبریک/صبح‌بخیرِ بی‌محتوا بود (%s) از کانال %s.\nارسال شود؟\n"
                "(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)") % (reason.split("(", 1)[-1].rstrip(")"), src)
+    mm = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
+    if mm and (p.get("src") or src):
+        ask += "\n\nاگر @%s آی‌دیِ دومِ خودِ همین کانال است (نه تبلیغ): /alias %s %s" % (mm.group(1), p.get("src") or src, mm.group(1))
     r = tell(net, owner, ask, {
         "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
                              {"text": "❌ رد", "callback_data": "no:" + pid}]]})
