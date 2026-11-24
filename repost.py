@@ -2870,14 +2870,14 @@ def _handle_update(cfg, net, state, u):
     uid, text = m["from"]["id"], (m.get("text") or "").strip()
     owner = owner_of(cfg, state)
     if not owner:
-        if not text.startswith("/start"):
+        if not text.lower().startswith("/start"):
             return
         hub_of(cfg, state)[1]["owner_id"] = owner = uid          # the first person who presses Start is the owner
         log.info("owner registered")
     if uid != owner:
         return
     REPLY_TO[0] = m.get("message_id")             # every answer below quotes this message
-    SHOW_KB[0] = text.startswith("/start") or text.startswith("/menu")
+    SHOW_KB[0] = text.lower().startswith(("/start", "/menu"))
     if is_forward_or_media(m):                    # a post you forwarded / sent: process it and publish now
         gid = m.get("media_group_id")
         if gid:
@@ -2973,7 +2973,7 @@ def _handle_update(cfg, net, state, u):
         tell(net, owner, "🟢 ارسال روشن شد. فقط پست‌هایی که از حالا منتشر شوند بررسی می‌شوند.", MENU_KB)
     else:
         extra = ""
-        if text and text != BTN_STATUS and not text.startswith(("/start", "/status", "/help")):
+        if text and text != BTN_STATUS and not text.lower().startswith(("/start", "/status", "/help", "/menu")):
             extra = "متوجه این پیام نشدم. برای فرستادن یک پست به کانال، همان پست را برای من فوروارد کنید.\n\n" + "اضافه کردن منبع (هر کدام از این شکل‌ها درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr\n\nحذف: /del besnr\nبی‌صدا برای ۳ روز: /mute besnr 3   (برگرداندن: /unmute besnr)\nکلمه ممنوع: /ban کلمه   (برداشتن: /unban کلمه)" + "\n\n"
         tell(net, owner, extra + status_text(cfg, state), MENU_KB)
 
@@ -3289,7 +3289,7 @@ def handle_update(cfg, net, state, u):
     if m and (m.get("chat") or {}).get("type") == "private" and (m.get("from") or {}).get("id") == owner_of(cfg0, root) \
             and not is_forward_or_media(m):
         REPLY_TO[0] = m.get("message_id")
-        SHOW_KB[0] = (m.get("text") or "").startswith(("/start", "/menu"))
+        SHOW_KB[0] = (m.get("text") or "").lower().startswith(("/start", "/menu"))
         if dest_text(cfg0, net, root, (m.get("text") or "").strip()):
             return
     p = active_profile(cfg0, root)
