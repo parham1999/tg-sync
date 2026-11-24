@@ -55,7 +55,7 @@
    "last_id": 35633
   }
  },
- "update_offset": 774952048,
+ "update_offset": 774952049,
  "owner_id": 138180578,
  "fp": [
   {
@@ -14691,12 +14691,8 @@
     "man": true
    },
    "mid": 1200
-  }
- ],
- "next_run_ts": 1795493811.516949,
- "review_off": false,
- "pending": {
-  "ea4c80db": {
+  },
+  {
    "text": "\u0686\u0637\u0648\u0631 \u0647\u0645\u0686\u06cc\u0646 \u0686\u06cc\u0632\u06cc \u0645\u0645\u06a9\u0646\u0647 \u0622\u062e\u0647 \ud83d\ude10\n\n@Wimapro",
    "media": [
     [
@@ -14704,13 +14700,16 @@
      "https://cdn4.telesco.pe/file/765529c3d0.mp4?token=djICJeTeTx1iCr_yHNpej9gy2lPFiTaZMFBOLESSYtVJKi3Ab9x0n_PSpSFHmGk1K2EqxFDnEIUvLLvjYKYLnea_l-ClS1atgWS4TXI3zOTDRHIG2Gq-U1s6J9_VLyZbK-Ml1f70100LnmhDIhNRnPw7x-R_0B_iYGBm69S5gxo0KmkrHjZcnZIVEEaUnbhQ9sKA1FOnV2U-Fhy5Lev21L1FCQyzy1ifKZ0SPOfVKHiG4yLs-ieW6--RGDiXl5TOFpifpzVkhig-i5MxHbYGN3rsgNmRCZsIoEJm1KiYazT1EcLKeLoV8PakNs17UireYOsZQ8QsGO_3ImxAsDZDdg"
     ]
    ],
-   "t": 1795491594,
+   "t": 1795491877,
    "link": "https://t.me/CottageOrg/83589",
    "mid": 1199,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (mentions another channel/bot (@moviecottage)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 CottageOrg.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)"
   }
- },
+ ],
+ "next_run_ts": 1795493811.516949,
+ "review_off": false,
+ "pending": {},
  "posted_log": [
   1795234508,
   1795236372,
@@ -14924,7 +14923,8 @@
    "7": 1
   },
   "rounds": 4,
-  "rev_exp": 5
+  "rev_exp": 5,
+  "rev_ok": 1
  },
  "arrivals": [
   [
