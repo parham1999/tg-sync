@@ -1546,7 +1546,7 @@ HELP_TEXT = ("📖 راهنما\n"
              "• ⚙️ بیشتر: کلمات ممنوع، ساعت‌های پربازدید، بررسی مشکوک‌ها\n"
              "• 🎯 مقصدها: چند کانال مقصد با منبع‌ها و تنظیمات جدا؛ /dest add @channel ، /dest use 2\n"
              "• 🌅 فیلتر پیام تبریک بی‌محتوا (تاریخ + دعا و صبح‌بخیر): قطعی‌ها رد می‌شوند، مرزی‌ها برای تأیید شما می‌آیند؛ روشن/خاموش: /greet\n"
-             "• 📎 آی‌دیِ دومِ یک منبع: اگر کانالی زیر پست‌هایش آی‌دی دومی هم می‌گذارد: /alias کانال آیدی_دوم (لیست: /alias ، حذف: /alias del کانال آیدی_دوم)\n"
+             "• 📎 آی‌دیِ دومِ یک منبع: «📋 منبع‌ها» ← دکمه‌ی 📎 کنار نام کانال ← «افزودن آی‌دی دوم» (یا در پیامِ مشکوک دکمه‌ی 📎 را بزنید). نوشتنی: /alias کانال آیدی_دوم\n"
              "• 🔭 پیشنهاد کانال: هر بار کانال‌های تازه‌تری پیدا می‌کند (مشابه‌ها، مشابهِ مشابه‌ها، فورواردها)؛ فقط کانالِ تازه و بدون تبلیغ\n"
              "• هر پستی را برای ربات فوروارد کنید، همان لحظه در کانال گذاشته می‌شود.\n"
              "• دستورها: /speed low|mid|high|auto ، /manual 8-10 ، /menu")
@@ -1562,9 +1562,7 @@ def btn(t):
 
 MENU_KB = {"keyboard": [[btn(BTN_STATUS), btn(BTN_NOW)],
                         [btn(BTN_ON), btn(BTN_OFF)],
-                        [btn(BTN_SPEED), btn(BTN_CRMENU)],
-                        [btn(BTN_SRC), btn(BTN_DEST)],
-                        [btn(BTN_SUGG), btn(BTN_MORE)]],
+                        [btn(BTN_SRC), btn(BTN_DEST), btn(BTN_MORE)]],
            "resize_keyboard": True}      # not persistent: the keyboard icon next to the message box hides it
 
 
@@ -1727,9 +1725,10 @@ def crisis_menu():
 
 
 def more_menu(state):
-    return {"inline_keyboard": [[{"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}, {"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}],
-                                [{"text": "🔍 مرور مشکوک‌ها", "callback_data": "tx:review"}, {"text": "🌅 فیلتر پیام تبریک", "callback_data": "tx:greet"}],
-                                [{"text": "📎 آی‌دی دومِ منبع‌ها", "callback_data": "tx:alias"}, {"text": "📖 راهنما", "callback_data": "tx:help"}]]}
+    return {"inline_keyboard": [[{"text": "🎚 سرعت ارسال", "callback_data": "tx:speed"}, {"text": "🚨 بحران", "callback_data": "tx:crisis"}],
+                                [{"text": "🔭 پیشنهاد کانال", "callback_data": "tx:sugg"}, {"text": "🚫 کلمات ممنوع", "callback_data": "tx:ban"}],
+                                [{"text": "⏰ ساعت‌های پربازدید", "callback_data": "tx:hours"}, {"text": "🔍 مرور مشکوک‌ها", "callback_data": "tx:review"}],
+                                [{"text": "🌅 فیلتر پیام تبریک", "callback_data": "tx:greet"}, {"text": "📖 راهنما", "callback_data": "tx:help"}]]}
 
 
 TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed high", "sp_auto": "/speed auto",
@@ -1737,6 +1736,8 @@ TX_MAP = {"sp_low": "/speed low", "sp_mid": "/speed mid", "sp_high": "/speed hig
           "dest_add": "/dest add", "sugg": "🔭 پیشنهاد کانال", "ban": BTN_BAN, "hours": BTN_HOURS, "review": BTN_REVIEW, "help": "/help"}
 TX_MAP["greet"] = "/greet"
 TX_MAP["alias"] = "/alias"
+TX_MAP["speed"] = BTN_SPEED
+TX_MAP["crisis"] = BTN_CRMENU
 
 
 def hours_update(cfg, net, state, now):
@@ -1823,17 +1824,60 @@ def fmt_left(sec):
     return "%d ساعت" % max(1, round(sec / 3600)) if sec < 2 * 86400 else "%d روز" % round(sec / 86400)
 
 
+def alias_name(x):
+    """One token -> an alias: 'name' (lower case) or '+hash' for an invite link; None when it is neither."""
+    x = (x or "").strip()
+    iv = re.match(r"^(?:https?://)?(?:www\.)?(?:t|telegram)\.me/(?:\+|joinchat/)([A-Za-z0-9_-]{6,})/?$", x, re.I)
+    if iv:
+        return "+" + iv.group(1)
+    m = re.match(r"^(?:(?:https?://)?(?:www\.)?(?:t|telegram)\.me/)?@?([A-Za-z][A-Za-z0-9_]{3,31})/?(?:\?\S*)?$", x, re.I)
+    return m.group(1).lower() if m else None
+
+
+def alias_show(a):
+    return a if a.startswith("+") else "@" + a
+
+
+def alias_swap(text, name, target):
+    """After the owner confirms that @name is the source's second id: put OUR id in its place."""
+    t = str(target or "").lstrip("@")
+    if not text or not re.match(r"^[A-Za-z][A-Za-z0-9_]{3,31}$", t) or name.startswith("+"):
+        return text
+    nm = re.escape(name)
+    text = re.sub(r"(?i)(?:https?://)?(?:t|telegram)\.me/%s(?![A-Za-z0-9_])" % nm, "https://t.me/" + t, text)
+    return re.sub(r"(?i)@%s(?![A-Za-z0-9_])" % nm, "@" + t, text)
+
+
+def alias_panel(cfg, state, src, note=""):
+    pre = (cfg["_pid"] + "|") if cfg.get("_pid") else ""
+    al = (state.get("src_alias") or {}).get(src.lower(), [])
+    lines = [note] if note else []
+    lines.append("📎 آی‌دیِ دومِ «%s»" % src)
+    lines.append("")
+    lines.append("\n".join("• " + alias_show(a) for a in al) if al else "هنوز آی‌دیِ دومی ثبت نشده.")
+    lines.append("")
+    lines.append("اگر این کانال زیر پست‌هایش آی‌دی یا لینکِ دومی هم می‌گذارد، اینجا اضافه‌اش کنید تا «تبلیغ» حساب نشود: "
+                 "مثل آی‌دیِ خودِ کانال حذف می‌شود و آی‌دیِ شما جایش می‌آید.")
+    rows = [[{"text": "➕ افزودن آی‌دی دوم", "callback_data": "ad:" + pre + src}]]
+    for i, a in enumerate(al):
+        rows.append([{"text": "🗑 حذف " + alias_show(a), "callback_data": "ar:%s%s~%d" % (pre, src, i)}])
+    rows.append([{"text": "↩️ برگشت به منبع‌ها", "callback_data": "sv:" + pre + "x"}])
+    return "\n".join(lines), {"inline_keyboard": rows}
+
+
 def sources_view(cfg, state):
     rows, lines = [], ["📋 منبع‌های فعلی (%d):" % len(cfg["sources"])]
+    pre = (cfg["_pid"] + "|") if cfg.get("_pid") else ""
     for s in cfg["sources"]:
         left = (state.get("muted") or {}).get(s.lower(), 0) - time.time()
-        lines.append("• %s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else ""))
-        pre = (cfg["_pid"] + "|") if cfg.get("_pid") else ""
+        al = (state.get("src_alias") or {}).get(s.lower(), [])
+        lines.append("• %s%s%s" % (s, "  🔇 بی‌صدا، %s دیگر" % fmt_left(left) if left > 0 else "",
+                                   "  📎 " + "، ".join(alias_show(a) for a in al) if al else ""))
         rows.append([{"text": ("🔊 " if left > 0 else "🔇 ") + s, "callback_data": "mt:" + pre + s},
+                     {"text": "📎%s" % (" %d" % len(al) if al else ""), "callback_data": "ps:" + pre + s},
                      {"text": "🗑", "callback_data": "dl:" + pre + s}])
-    lines.append("\nاضافه کردن منبع (هر شکلی درست است):\n/add besnr\nadd besnr\nadd/besnr\nhttps://t.me/besnr")
-    lines.append("\nبی‌صدا برای چند روز: /mute besnr 3")
-    lines.append("دکمه‌ها: 🔇 لمسِ نام = یک روز بی‌صدا (یا 🔊 باز کردن) • 🗑 = حذف منبع")
+    lines.append("\n➕ منبع جدید: لینک یا آیدی‌اش را همین‌جا بفرستید.")
+    lines.append("🔇 بی‌صدا/باز کردن • 📎 آی‌دیِ دوم • 🗑 حذف")
     return "\n".join(lines), {"inline_keyboard": rows}
 
 
@@ -1892,6 +1936,8 @@ def del_source(cfg, state, raw):
 def source_button(cfg, net, state, cb):
     """Inline buttons under the sources list: mute / unmute (mt:) and delete (dl:)."""
     act, _, name = (cb.get("data") or "").partition(":")
+    if act in ("ps", "ad", "ar", "ax", "sv"):
+        return alias_button(cfg, net, state, cb, act, name)
     real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
     note = "این کانال در لیست نیست"
     if real:
@@ -1914,6 +1960,50 @@ def source_button(cfg, net, state, cb):
         pass
     try:
         net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note[:150]})
+    except (ApiError, NetError):
+        pass
+
+
+def alias_button(cfg, net, state, cb, act, name):
+    """📎 (ps:) panel of one source, ➕ (ad:) wait for the id, ❌ (ax:) cancel, 🗑 (ar:) remove one, ↩️ (sv:) back."""
+    idx = None
+    if act == "ar":
+        name, _, i_ = name.partition("~")
+        idx = int(i_) if i_.isdigit() else -1
+    real = next((s for s in cfg["sources"] if s.lower() == name.lower()), None)
+    note = ""
+    if act == "sv":
+        state.pop("await_alias", None)
+        text, kb = sources_view(cfg, state)
+        state["await_src"] = int(time.time())
+    elif not real:
+        note = "این کانال در لیست نیست"
+        text, kb = sources_view(cfg, state)
+    elif act == "ad":
+        state["await_alias"] = {"src": real, "t": int(time.time())}
+        state.pop("await_src", None)
+        text = ("✏️ آی‌دی یا لینکِ دومِ «%s» را همین‌جا بفرستید.\n\nمثال: @abc یا https://t.me/abc یا لینکِ دعوتِ کانال.\n"
+                "چند تا را هم می‌توانید پشت سر هم، با فاصله، بفرستید.") % real
+        kb = {"inline_keyboard": [[{"text": "❌ انصراف", "callback_data": "ax:" + ((cfg["_pid"] + "|") if cfg.get("_pid") else "") + real}]]}
+    else:
+        if act == "ax":
+            state.pop("await_alias", None)
+        elif act == "ar":
+            al = state.setdefault("src_alias", {})
+            cur = al.get(real.lower(), [])
+            if 0 <= idx < len(cur):
+                note = "🗑 %s حذف شد" % alias_show(cur.pop(idx))
+            if not cur:
+                al.pop(real.lower(), None)
+            apply_overrides(cfg, state)
+        text, kb = alias_panel(cfg, state, real)
+    m = cb.get("message") or {}
+    try:
+        net.api("editMessageText", {"chat_id": m["chat"]["id"], "message_id": m["message_id"], "text": text, "reply_markup": kb})
+    except (ApiError, NetError, KeyError):
+        pass
+    try:
+        net.api("answerCallbackQuery", {"callback_query_id": cb["id"], "text": note[:150]} if note else {"callback_query_id": cb["id"]})
     except (ApiError, NetError):
         pass
 
@@ -2377,7 +2467,27 @@ def manage_command(cfg, net, state, text):
     else:
         cmd, _, arg = text.partition(" ")
         cmd, arg = cmd.split("@")[0].lower(), arg.strip()
+    aw = state.get("await_alias")
+    if aw:
+        if time.time() - aw.get("t", 0) > 600 or text.startswith("/") or text in ALL_BTNS:
+            state.pop("await_alias", None)
+        else:
+            src_ = aw.get("src", "")
+            toks = [x for x in re.split(r"[\s,،]+", text) if x]
+            names = [alias_name(x) for x in toks]
+            kb_ = {"inline_keyboard": [[{"text": "❌ انصراف", "callback_data": "ax:" + ((cfg["_pid"] + "|") if cfg.get("_pid") else "") + src_}]]}
+            if not toks or not all(names):
+                return "❓ این را به‌عنوان آی‌دی یا لینکِ کانال نفهمیدم. فقط @آیدی یا لینکِ کانال را بفرستید (یا انصراف).", kb_
+            names = [n for n in names if n != src_.lower()]
+            if not names:
+                return "این همان آی‌دیِ خودِ منبع است؛ آی‌دیِ «دوم» را بفرستید (یا انصراف).", kb_
+            al = state.setdefault("src_alias", {})
+            al[src_.lower()] = sorted(set(al.get(src_.lower(), [])) | set(names))
+            state.pop("await_alias", None)
+            apply_overrides(cfg, state)
+            return alias_panel(cfg, state, src_, "✅ ثبت شد: %s" % "، ".join(alias_show(n) for n in names))
     if text == BTN_SRC or cmd == "/sources":
+        state.pop("await_alias", None)
         state["await_src"] = int(time.time())          # for 10 minutes a bare link / id sent here is a SOURCE
         hub_of(cfg, state)[1].pop("await_dest", None)
         t, kb = sources_view(cfg, state)
@@ -2713,7 +2823,7 @@ def _handle_update(cfg, net, state, u):
                 fake = {"message": {"message_id": m0.get("message_id"), "chat": m0["chat"], "from": cb["from"], "text": cmd}}
                 handle_update(cfg, net, state, fake)
             return
-        if act in ("mt", "dl"):
+        if act in ("mt", "dl", "ps", "ad", "ar", "ax", "sv"):
             source_button(cfg, net, state, cb)
             return
         if act in ("fw", "rm", "fn", "fq"):
@@ -2729,11 +2839,17 @@ def _handle_update(cfg, net, state, u):
             except (ApiError, NetError):
                 pass
             return
-        if act == "ok":
+        if act in ("ok", "oa"):
+            note = "✅ تایید شد؛ در دور بعدی ارسال می‌شود"
+            if act == "oa" and pend.get("asrc") and pend.get("aname"):
+                al = state.setdefault("src_alias", {})
+                al[pend["asrc"].lower()] = sorted(set(al.get(pend["asrc"].lower(), [])) | {pend["aname"]})
+                apply_overrides(cfg, state)
+                pend["text"] = alias_swap(pend.get("text"), pend["aname"], cfg.get("target_channel"))
+                note = "📎 @%s آی‌دیِ دومِ %s ثبت شد؛ پست ارسال می‌شود" % (pend["aname"], pend["asrc"])
             pend["t"] = int(time.time())
             state.setdefault("approved", []).append(pend)
             stat_add(state, cfg, "rev_ok")
-            note = "✅ تایید شد؛ در دور بعدی ارسال می‌شود"
         else:
             stat_add(state, cfg, "rev_no")
             note = "❌ رد شد"
@@ -3151,11 +3267,11 @@ def handle_update(cfg, net, state, u):
             return
         ps = profiles(cfg0, root)
         target = None
-        if act in ("mt", "dl") and "|" in pid:
+        if act in ("mt", "dl", "ps", "ad", "ar", "ax", "sv") and "|" in pid:
             want, _, name = pid.partition("|")
             target = next((p for p in ps if p[0] == want), None)
             cb = dict(cb, data="%s:%s" % (act, name))
-        elif act in ("ok", "no"):
+        elif act in ("ok", "no", "oa"):
             target = next((p for p in ps if pid in (p[2].get("pending") or {})), None)
         elif act == "fw":
             target = next((p for p in ps if pid in (p[2].get("fwd") or {})), None)
@@ -3482,10 +3598,13 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
                "(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)") % (reason.split("(", 1)[-1].rstrip(")"), src)
     mm = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
     if mm and (p.get("src") or src):
-        ask += "\n\nاگر @%s آی‌دیِ دومِ خودِ همین کانال است (نه تبلیغ): /alias %s %s" % (mm.group(1), p.get("src") or src, mm.group(1))
-    r = tell(net, owner, ask, {
-        "inline_keyboard": [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
-                             {"text": "❌ رد", "callback_data": "no:" + pid}]]})
+        ask += "\n\nاگر @%s آی‌دیِ دومِ خودِ همین کانال است (نه تبلیغ)، دکمه‌ی 📎 را بزنید." % mm.group(1)
+        state["pending"][pid].update(asrc=p.get("src") or src, aname=mm.group(1).lower())
+    kb_rev = [[{"text": "✅ ارسال", "callback_data": "ok:" + pid},
+               {"text": "❌ رد", "callback_data": "no:" + pid}]]
+    if mm and (p.get("src") or src):
+        kb_rev.append([{"text": "📎 آی‌دیِ دومِ همین منبع است (ثبت و ارسال)", "callback_data": "oa:" + pid}])
+    r = tell(net, owner, ask, {"inline_keyboard": kb_rev})
     if isinstance(r, dict) and r.get("message_id"):
         state["pending"][pid].update(mid=r["message_id"], chat=owner, ask=ask)
     stat_add(state, cfg, "rev_ask")
