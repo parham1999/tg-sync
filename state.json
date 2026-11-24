@@ -55,95 +55,9 @@
    "last_id": 35643
   }
  },
- "update_offset": 774952109,
+ "update_offset": 774952111,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "e60087ba0957",
-   "h": [
-    "01f9d22c",
-    "0670b0d5",
-    "0b1effd0",
-    "1177cfd0",
-    "21044102",
-    "24f8a291",
-    "494efb79",
-    "7cda5065",
-    "a74ab0c3",
-    "b1bb8c4e",
-    "be26a686",
-    "d485faf6",
-    "e4d50d15",
-    "f16c821b",
-    "f36127c8"
-   ],
-   "w": [
-    "0869a938",
-    "1a9bdb20",
-    "4a04c827",
-    "4c44653d",
-    "4d2bf769",
-    "5e9a733f",
-    "8a400de9",
-    "8e7b67a7",
-    "90db41cb",
-    "b9cffc58",
-    "bc02e7dd",
-    "d83169b1",
-    "faf93dd0"
-   ],
-   "m": [],
-   "t": 1795023633
-  },
-  {
-   "x": "2d24ed08b76c",
-   "h": [
-    "15c85488",
-    "26b59864",
-    "2eade7e0",
-    "44508852",
-    "5404844a",
-    "59a0f15d",
-    "638e7277",
-    "69acc654",
-    "6c9a4fd2",
-    "6e410f9d",
-    "7d4bdff8",
-    "87fa874b",
-    "916ee751",
-    "b4e675c4",
-    "be8eeab6",
-    "caa8a24f",
-    "d5c0f443",
-    "de6f63c8",
-    "e74c8eb6",
-    "edb1a73e",
-    "f9e78768"
-   ],
-   "w": [
-    "1e949447",
-    "400cd4c1",
-    "4940df84",
-    "4b2b5713",
-    "52b1e675",
-    "616e498a",
-    "682a31b1",
-    "79ba78bc",
-    "7de938f4",
-    "9be4fa4b",
-    "a74ecc3b",
-    "a7ce595f",
-    "fb4fb627",
-    "fc874786"
-   ],
-   "m": [
-    "8d6214f21205"
-   ],
-   "p": [
-    "98c0a4c19405acaa"
-   ],
-   "t": 1795025979
-  },
   {
    "x": "c33c1ac74141",
    "h": [
@@ -14635,7 +14549,85 @@
    "src": "https://t.me/MiowPhone/19076"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "\u0639\u06a9\u0633 \u0648\u0627\u06cc\u0631\u0627\u0644 \u0634\u062f\u0647 \u062c\u0646\u06cc\u0641\u0631 \u0644\u0648\u067e\u0632 \u062f\u0631 \u06f5\u06f7 \u0633\u0627\u0644\u06af\u06cc \u0628\u0627 \u0628\u0627\u0632\u0648\u0647\u0627\u06cc \u0639\u0636\u0644\u0627\u0646\u06cc \u0648 \u062e\u0648\u0634\u200c\u0641\u0631\u0645\u0634.\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "tgfile:AgACAgQAAxkBAAIFI2sFtgh3jEyIqxbySOAki9LWvxlYAAIQEmsbwrgwUFXo5dznjgg3AQADAgADeQADPQQ"
+    ]
+   ],
+   "t": 1795536392,
+   "fwd": true,
+   "pid": "e4be6725",
+   "fp": {
+    "x": "9597b55eb88c",
+    "h": [
+     "0ed84f0d",
+     "1bda5f58",
+     "20aff7d4",
+     "336a9667",
+     "4b816cc9",
+     "67ce9d94",
+     "87ebe9db",
+     "89828cfb",
+     "93cad619",
+     "9fd49c54",
+     "a30e248f",
+     "e39cd701"
+    ],
+    "w": [
+     "2d1b5f0a",
+     "4f4433a9",
+     "60aa1f31",
+     "69cec194",
+     "aedec7a9",
+     "c177f944",
+     "da49397f",
+     "e682d1ad",
+     "eb214217",
+     "f8a60791"
+    ],
+    "m": [
+     "1b952a247a39"
+    ],
+    "p": [
+     "7121294d6d8d4f8b"
+    ],
+    "man": true
+   },
+   "mid": 1315
+  },
+  {
+   "text": "\u0628\u0631\u06af\u0631\u0641\u062a\u0647 \u0627\u0632 \u06cc\u06a9 \u062f\u0627\u0633\u062a\u0627\u0646 \u0648\u0627\u0642\u0639\u06cc :\n\n- fatemeh_mood_29\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFJWsFtg_q4hPgUReAIgzvo_JYpiLPAAICHQAC8Ir4U0XE2AFSo-C2PQQ"
+    ]
+   ],
+   "t": 1795536399,
+   "fwd": true,
+   "pid": "07533c6a",
+   "fp": {
+    "x": "486303b33706",
+    "h": [
+     "29aefab3",
+     "2efd751b",
+     "3e5253f7",
+     "7e8b1ac7",
+     "90a4664b",
+     "e1a1af4b"
+    ],
+    "m": [
+     "1ee44f9bfe3a"
+    ],
+    "man": true
+   },
+   "mid": 1317
+  }
+ ],
  "next_run_ts": 1795537362.3236701,
  "review_off": false,
  "pending": {},
