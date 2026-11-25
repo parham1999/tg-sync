@@ -14530,7 +14530,7 @@
   }
  ],
  "approved": [],
- "next_run_ts": 1795573865.9008887,
+ "next_run_ts": 1795578051.1183581,
  "review_off": false,
  "pending": {},
  "posted_log": [
@@ -14753,7 +14753,7 @@
   "rev_exp": 4
  },
  "arrivals": [],
- "last_scan_ts": 1795573732,
+ "last_scan_ts": 1795573890,
  "hv_ts": 1795573268,
  "hv": {
   "7": [
@@ -15205,7 +15205,7 @@
   "CottageOrg"
  ],
  "last_round": {
-  "t": 1795570061,
+  "t": 1795573903,
   "found": 0,
   "considered": 0,
   "posted": 0,
@@ -15214,7 +15214,7 @@
   "rej": {},
   "src": {},
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 4: 0 \u062a\u0627 1 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 6: 0 \u062a\u0627 1 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 0,
   "why": [],
   "ign": {}
