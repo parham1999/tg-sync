@@ -3590,11 +3590,24 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
     state.setdefault("pending", {})[pid] = {
         "text": text, "media": [list(x) for x in p["media"]], "t": int(time.time()),
         "link": ("https://t.me/%s/%s" % (src, p["id"])) if src and p.get("id") else ""}
-    ask = "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟\n(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)" % (reason, src)
+    ask = "☝️ این پست مشکوک به تبلیغ بود (%s) از کانال %s.\nارسال شود؟\n(اگر تا ۲۴ ساعت جواب ندهید، خودکار رد می‌شود.)" % (explain_skip(reason, dict(p, src=None)), src)
     if reason.startswith("greeting"):
         ask = ("☝️ این پست شبیه پیام تبریک/صبح‌بخیرِ بی‌محتوا بود (%s) از کانال %s.\nارسال شود؟\n"
-               "(اگر تا ۲ ساعت جواب ندهید، خودکار رد می‌شود.)") % (reason.split("(", 1)[-1].rstrip(")"), src)
+               "(اگر تا ۲۴ ساعت جواب ندهید، خودکار رد می‌شود.)") % (reason.split("(", 1)[-1].rstrip(")"), src)
     mm = re.match(r"mentions another channel/bot \(@(.*)\)", reason)
+    seen_ = ""
+    if mm:
+        seen_ = "https://t.me/" + mm.group(1)
+    elif reason.startswith("contains a channel invite"):
+        iv_ = re.search(r"(?:https?://)?(?:t|telegram)\.me/(?:\+|joinchat/)[A-Za-z0-9_-]+", "%s %s" % (p.get("text_html") or "", text or ""))
+        seen_ = ("https://" + iv_.group(0).split("://")[-1]) if iv_ else ""
+    else:
+        ls_ = re.match(r"(?:contains a link to a site/app|link to blocked site) \(?(.*?)\)?$", reason)
+        seen_ = ls_.group(1) if ls_ else ""
+    if src and not reason.startswith("greeting"):
+        ask += "\n\n🔗 کانال مبدأ: https://t.me/%s" % (p.get("src") or src)
+        if seen_:
+            ask += "\n🔗 لینک/آی‌دیِ داخل پست: %s" % seen_
     if mm and (p.get("src") or src):
         ask += "\n\nاگر @%s آی‌دیِ دومِ خودِ همین کانال است (نه تبلیغ)، دکمه‌ی 📎 را بزنید." % mm.group(1)
         state["pending"][pid].update(asrc=p.get("src") or src, aname=mm.group(1).lower())
@@ -3609,7 +3622,7 @@ def send_for_review(net, cfg, state, tag, src, p, text, reason):
     return True
 
 
-PENDING_TTL = 2 * 3600
+PENDING_TTL = 24 * 3600
 CARRY_TTL = 2 * 3600                              # a leftover post waits at most 2 hours for a free place
 
 
@@ -3632,7 +3645,7 @@ def _expire_pending(cfg, net, state, now=None):
         if v.get("mid"):
             try:
                 net.api("editMessageText", {"chat_id": v["chat"], "message_id": v["mid"],
-                                            "text": v.get("ask", "") + "\n\n⏳ ۲ ساعت بدون جواب ماند؛ خودکار رد شد."})
+                                            "text": v.get("ask", "") + "\n\n⏳ ۲۴ ساعت بدون جواب ماند؛ خودکار رد شد."})
             except (ApiError, NetError):
                 pass
     return bool(old)
