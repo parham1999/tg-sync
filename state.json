@@ -58,7 +58,7 @@
    "last_id": 8092
   }
  },
- "update_offset": 774952122,
+ "update_offset": 774952123,
  "owner_id": 138180578,
  "fp": [
   {
@@ -14867,6 +14867,34 @@
     "man": true
    },
    "mid": 1359
+  },
+  {
+   "text": "\u0628\u0631\u0627\u06cc \u0628\u0632\u0631\u06af\u0633\u0627\u0644\u0627\u0646\u06cc \u06a9\u0647 \u0631\u0641\u06cc\u0642 \u062c\u062f\u06cc\u062f \u062e\u0648\u0628 \u0645\u06cc\u200c\u062e\u0648\u0627\u0646...\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFUWsG7oHHd80eNB0AAYWtegF-hmx3NwAC7SEAAjxyOVCgPAdA1Lf6ej0E"
+    ]
+   ],
+   "t": 1795616385,
+   "fwd": true,
+   "pid": "3287d880",
+   "fp": {
+    "x": "ec64789d6c29",
+    "h": [
+     "049668dd",
+     "74075b8b",
+     "cf3c35c3",
+     "cfdd3c91",
+     "d3eb72a9",
+     "fdf29118"
+    ],
+    "m": [
+     "0b701cf1fd4f"
+    ],
+    "man": true
+   },
+   "mid": 1361
   }
  ],
  "next_run_ts": 1795617520.009694,
