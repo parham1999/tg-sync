@@ -22,7 +22,7 @@
    "last_id": 19121
   },
   "f20a53f3a3": {
-   "last_id": 17525
+   "last_id": 17526
   },
   "a198fa18c9": {
    "last_id": 21020
@@ -40,10 +40,10 @@
    "last_id": 2
   },
   "6cf615e62c": {
-   "last_id": 97350
+   "last_id": 97351
   },
   "7aa4235d7c": {
-   "last_id": 2420
+   "last_id": 2421
   },
   "a7439bad46": {
    "last_id": 33683
@@ -61,63 +61,6 @@
  "update_offset": 774952152,
  "owner_id": 138180578,
  "fp": [
-  {
-   "m": [
-    "df07b6800cb6"
-   ],
-   "p": [
-    "fa6162668ad23606"
-   ],
-   "t": 1795193125
-  },
-  {
-   "m": [],
-   "t": 1795193807
-  },
-  {
-   "x": "22c01e5187fc",
-   "h": [
-    "002bf223",
-    "049cfb21",
-    "11837efc",
-    "1584a1c7",
-    "440006d1",
-    "6104db8a",
-    "877f0d0b",
-    "a9284753",
-    "afe057f4",
-    "b22e8667",
-    "b44326c6",
-    "b93e5f35",
-    "cc6c8124",
-    "d79ab7ec",
-    "dafb775e",
-    "e64b40dc",
-    "e7525530",
-    "e8be3ea7",
-    "efd18e27",
-    "fb891231"
-   ],
-   "w": [
-    "07e64721",
-    "1469b015",
-    "198f0b6b",
-    "1e9ff8aa",
-    "219777dd",
-    "2e6b39b3",
-    "60576fcf",
-    "6482615d",
-    "6cf23ea6",
-    "b1e2b7c5",
-    "d086f755",
-    "de4429ef",
-    "df0a1603",
-    "e0ee0c95",
-    "e7ac1ea6"
-   ],
-   "m": [],
-   "t": 1795193840
-  },
   {
    "x": "fd6c15b7e56f",
    "h": [
@@ -14958,16 +14901,83 @@
    ],
    "t": 1795727830,
    "src": "https://t.me/CottageOrg/83705"
+  },
+  {
+   "x": "935b578810d4",
+   "m": [
+    "b39893d030e1",
+    "43ec1699aed8"
+   ],
+   "p": [
+    "d93529c8f3b31393",
+    "2606efef27b7d5c5"
+   ],
+   "t": 1795730070,
+   "src": "https://t.me/CloseFriend3/17526"
+  },
+  {
+   "x": "d5d7c0318770",
+   "h": [
+    "04f86d9b",
+    "1996a2bb",
+    "21fe9bfb",
+    "2950ca99",
+    "32fcf0ad",
+    "339a6c06",
+    "43018182",
+    "4b6e448f",
+    "52c9b6eb",
+    "6037f881",
+    "660506fb",
+    "738d76f6",
+    "7a1bd531",
+    "882824a8",
+    "91d02f6d",
+    "b1e8b16b",
+    "b3f5ebb5",
+    "c1262606",
+    "d4efaa3c",
+    "d5339d89",
+    "ddd43259",
+    "e3582ef4",
+    "e8efa2f6",
+    "eca63a3e",
+    "ed3a0168"
+   ],
+   "w": [
+    "06b7a1b1",
+    "425eebb8",
+    "52ed1abe",
+    "53f0f8fa",
+    "65e450f8",
+    "7509cfcd",
+    "7c637809",
+    "88634b15",
+    "8931c9cf",
+    "8afff6e0",
+    "c9f90afc",
+    "cceb5ce7",
+    "e1115428",
+    "f474d430",
+    "f78072c7",
+    "f84b539b",
+    "fbf2c10a"
+   ],
+   "m": [],
+   "t": 1795730125,
+   "src": "https://t.me/stopirani/2421"
+  },
+  {
+   "m": [],
+   "t": 1795730170,
+   "src": "https://t.me/MiowPhone/19121"
   }
  ],
  "approved": [],
- "next_run_ts": 1795730028.620862,
+ "next_run_ts": 1795732497.4071178,
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1795469304,
-  1795469332,
-  1795469377,
   1795475616,
   1795491601,
   1795493850,
@@ -15164,17 +15174,20 @@
   1795725447,
   1795727746,
   1795727810,
-  1795727830
+  1795727830,
+  1795730070,
+  1795730125,
+  1795730170
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-27",
-  "posted": 7,
-  "found": 38,
-  "seen": 25,
+  "posted": 10,
+  "found": 41,
+  "seen": 28,
   "skip": {
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 2,
-   "\u0631\u06cc\u067e\u0644\u0627\u06cc": 4,
+   "\u0631\u06cc\u067e\u0644\u0627\u06cc": 5,
    "\u062a\u0628\u0644\u06cc\u063a": 2
   },
   "by_src": {
@@ -15182,35 +15195,21 @@
    "b2a6a8ff4b": 1,
    "3ea375f9c9": 1,
    "1b77124c19": 1,
-   "f20a53f3a3": 1,
+   "f20a53f3a3": 2,
    "d07f631318": 1,
-   "8514b98767": 1
+   "8514b98767": 1,
+   "7aa4235d7c": 1,
+   "ef680edcd0": 1
   },
   "by_hour": {
-   "0": 7
+   "0": 7,
+   "1": 3
   },
-  "hd_ok": 6,
-  "rounds": 2
+  "hd_ok": 9,
+  "rounds": 3,
+  "carried": 1
  },
  "arrivals": [
-  [
-   1795725276,
-   17,
-   {
-    "7f69010262": 1,
-    "b2a6a8ff4b": 1,
-    "7aa4235d7c": 1,
-    "1b77124c19": 1,
-    "6cf615e62c": 4,
-    "a7439bad46": 1,
-    "f20a53f3a3": 1,
-    "ef680edcd0": 1,
-    "d07f631318": 1,
-    "46bd0c92df": 2,
-    "8514b98767": 2,
-    "3ea375f9c9": 1
-   }
-  ],
   [
    1795727715,
    22,
@@ -15229,10 +15228,19 @@
     "ee6c8e519c": 2,
     "f20a53f3a3": 1
    }
+  ],
+  [
+   1795730046,
+   3,
+   {
+    "7aa4235d7c": 1,
+    "f20a53f3a3": 1,
+    "6cf615e62c": 1
+   }
   ]
  ],
- "last_scan_ts": 1795727715,
- "hv_ts": 1795717746,
+ "last_scan_ts": 1795730046,
+ "hv_ts": 1795728547,
  "hv": {
   "7": [
    400,
@@ -15665,148 +15673,59 @@
   "furuuqq"
  ],
  "last_round": {
-  "found": 23,
-  "considered": 13,
+  "found": 3,
+  "considered": 3,
   "posted": 3,
-  "over": 6,
+  "over": 0,
   "appr": 0,
   "rej": {
-   "\u0631\u06cc\u067e\u0644\u0627\u06cc": 2,
-   "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 1,
-   "\u062a\u0628\u0644\u06cc\u063a": 1
+   "\u0631\u06cc\u067e\u0644\u0627\u06cc": 1
   },
   "src": {
-   "8514b98767": [
-    3,
-    1
-   ],
-   "a198fa18c9": [
-    1,
-    0
-   ],
-   "1b77124c19": [
-    1,
-    0
-   ],
-   "d07f631318": [
-    1,
-    1
-   ],
-   "6cf615e62c": [
-    5,
-    0
-   ],
-   "ef680edcd0": [
-    1,
-    0
-   ],
    "7aa4235d7c": [
-    2,
-    0
-   ],
-   "46bd0c92df": [
     1,
-    0
-   ],
-   "1c1cb821b4": [
-    1,
-    0
-   ],
-   "7f69010262": [
-    1,
-    0
-   ],
-   "3ea375f9c9": [
-    2,
-    0
-   ],
-   "ee6c8e519c": [
-    3,
-    0
+    1
    ],
    "f20a53f3a3": [
     1,
     1
+   ],
+   "6cf615e62c": [
+    1,
+    0
+   ],
+   "ef680edcd0": [
+    0,
+    1
    ]
   },
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 0: 6 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u062a\u0639\u0637\u06cc\u0644\u06cc\u060c \u0633\u0627\u0639\u062a 1: 6 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 3,
   "why": [
    [
     "6cf615e62c",
-    97350,
+    97351,
     "\u0631\u06cc\u067e\u0644\u0627\u06cc \u0628\u0647 \u067e\u0633\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0633\u062a"
-   ],
-   [
-    "46bd0c92df",
-    123477,
-    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f\u06cc \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 \u062f\u06cc\u06af\u0631 \u0627\u0633\u062a"
-   ],
-   [
-    "3ea375f9c9",
-    18088,
-    "\u06a9\u0644\u0645\u0647\u200c\u06cc \u062a\u0628\u0644\u06cc\u063a\u0627\u062a\u06cc \u00ab\u062a\u062e\u0641\u06cc\u0641\u00bb \u062f\u0627\u0631\u062f (\u0627\u06af\u0631 \u0646\u0645\u06cc\u200c\u062e\u0648\u0627\u0647\u06cc \u062c\u0644\u0648\u06cc\u0634 \u0631\u0627 \u0628\u06af\u06cc\u0631\u062f: /unban \u062a\u062e\u0641\u06cc\u0641)"
-   ],
-   [
-    "ee6c8e519c",
-    9178,
-    "\u0631\u06cc\u067e\u0644\u0627\u06cc \u0628\u0647 \u067e\u0633\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0633\u062a"
-   ],
-   [
-    "ef680edcd0",
-    19121,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "1c1cb821b4",
-    14961,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "7f69010262",
-    10422,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "a198fa18c9",
-    21020,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "7aa4235d7c",
-    2420,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "1b77124c19",
-    26149,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
    ]
   ],
-  "ign": {
-   "8514b98767": 2,
-   "6cf615e62c": 4,
-   "7aa4235d7c": 1,
-   "3ea375f9c9": 1,
-   "ee6c8e519c": 2
-  },
-  "carry": 6,
+  "ign": {},
   "sent": [
    [
-    "t.me/CloseFriend3/17525",
+    "t.me/CloseFriend3/17526",
     ""
    ],
    [
-    "t.me/Radiokocsher/83514",
+    "t.me/stopirani/2421",
     ""
    ],
    [
-    "t.me/CottageOrg/83705",
-    ""
+    "t.me/MiowPhone/19121",
+    "\u0627\u0632 \u062f\u0648\u0631 \u0642\u0628\u0644 \u0645\u0627\u0646\u062f\u0647 \u0628\u0648\u062f"
    ]
   ],
-  "t": 1795727830
+  "carried": 1,
+  "t": 1795730170
  },
  "last_manual": {
   "found": 1,
@@ -15845,24 +15764,6 @@
  "dest_n": 4,
  "dests": [],
  "carry": [
-  {
-   "text": "\u0641\u06a9\u062a:\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/JSmpKy2tkxWCYJQ_AlUmJxzVDO4YHovH3Q8HSxo9rymuRgiyz7ljtIAd_VDL0rSU7VmicOCSBvz_GSSo4dGe3q-uusIqUv94uU7PSQ2U6vK8-XJ5eGe6R3F_O8vDsM1d810diq34JXqrHTgf72nTnZJjMQcCoc7x9tT6g_i6nzhl9KLYEX9MFUy-loM-Nm95CPhuvpoZBN2348zfp2ZzZfQ8qEKAO6rTC3x-V_CvbwjSakCCTHmJLib3Tjtz4hGUyViHO45ZVdJSe2Je7fmag5wIqxPqACTQziT7Nevj9YpVo0ZwoayrTztTSgxha6nbWokk5H7jCEvbBIJzzoDIkA.jpg"
-    ]
-   ],
-   "t": 1795727715,
-   "link": "t.me/MiowPhone/19121",
-   "key": "ef680edcd0",
-   "ps": {
-    "https://cdn4.telesco.pe/file/JSmpKy2tkxWCYJQ_AlUmJxzVDO4YHovH3Q8HSxo9rymuRgiyz7ljtIAd_VDL0rSU7VmicOCSBvz_GSSo4dGe3q-uusIqUv94uU7PSQ2U6vK8-XJ5eGe6R3F_O8vDsM1d810diq34JXqrHTgf72nTnZJjMQcCoc7x9tT6g_i6nzhl9KLYEX9MFUy-loM-Nm95CPhuvpoZBN2348zfp2ZzZfQ8qEKAO6rTC3x-V_CvbwjSakCCTHmJLib3Tjtz4hGUyViHO45ZVdJSe2Je7fmag5wIqxPqACTQziT7Nevj9YpVo0ZwoayrTztTSgxha6nbWokk5H7jCEvbBIJzzoDIkA.jpg": [
-     "MiowPhone",
-     19121
-    ]
-   }
-  },
   {
    "text": "\u0634\u0628 \u0628\u062e\u06cc\u0631\n\n@Wimapro",
    "media": [
@@ -18790,6 +18691,26 @@
   "5102": {
    "l": "https://t.me/CottageOrg/83705",
    "t": 1795727830,
+   "me": false
+  },
+  "5103": {
+   "l": "https://t.me/CloseFriend3/17526",
+   "t": 1795730070,
+   "me": false
+  },
+  "5104": {
+   "l": "https://t.me/CloseFriend3/17526",
+   "t": 1795730070,
+   "me": false
+  },
+  "5105": {
+   "l": "https://t.me/stopirani/2421",
+   "t": 1795730125,
+   "me": false
+  },
+  "5106": {
+   "l": "https://t.me/MiowPhone/19121",
+   "t": 1795730170,
    "me": false
   }
  },
