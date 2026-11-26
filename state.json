@@ -58,7 +58,7 @@
    "last_id": 8094
   }
  },
- "update_offset": 774952143,
+ "update_offset": 774952144,
  "owner_id": 138180578,
  "fp": [
   {
@@ -14816,13 +14816,31 @@
     "man": true
    },
    "mid": 1411
+  },
+  {
+   "text": "\u0646\u06cc\u0648\u06cc\u0648\u0631\u06a9 \ud83c\uddfa\ud83c\uddf8\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFhWsIAlsdnTBHCcyLA_Neawi84gyDAAJ6IgACeohBUHMIx3JvzjHAPQQ"
+    ]
+   ],
+   "t": 1795687003,
+   "fwd": true,
+   "pid": "652299e9",
+   "fp": {
+    "m": [
+     "27a5010bb9d7"
+    ],
+    "man": true
+   },
+   "mid": 1413
   }
  ],
  "next_run_ts": 1795688684.8049774,
  "review_off": false,
  "pending": {},
  "posted_log": [
-  1795427777,
   1795429963,
   1795429992,
   1795431895,
