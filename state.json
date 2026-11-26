@@ -58,48 +58,9 @@
    "last_id": 8094
   }
  },
- "update_offset": 774952133,
+ "update_offset": 774952134,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "abc115967e8f",
-   "h": [
-    "032e4aab",
-    "0865f303",
-    "0a042e91",
-    "1ac1f89d",
-    "393316e2",
-    "48d8d9f3",
-    "579cab9a",
-    "62eaf810",
-    "7105b03f",
-    "7f338bd2",
-    "83c40559",
-    "a3f549a2",
-    "aa123b43",
-    "c22c7ddd",
-    "c24fe465",
-    "e78ed4cf",
-    "f7802a93"
-   ],
-   "w": [
-    "125810ca",
-    "30c57d01",
-    "32f0ba5a",
-    "5db2f96e",
-    "72a133db",
-    "7cdd1287",
-    "90db41cb",
-    "a3587559",
-    "a9d4a1e0",
-    "abd4aa88",
-    "dbfb0b09",
-    "f1a136dc",
-    "fa388522"
-   ],
-   "m": [],
-   "t": 1795119782
-  },
   {
    "x": "c732b72c310e",
    "h": [
@@ -14915,7 +14876,36 @@
    "src": "https://t.me/stopirani/2404"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "\u067e\u0634\u0645\u0627\u06cc \u0622\u062f\u0645 \u0645\u06cc\u200c\u0631\u06cc\u0632\u0647 \u0627\u0632 \u0627\u06cc\u0646 \u0647\u0645\u0647 \u0645\u0647\u0627\u0631\u062a\n\n@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFbmsHlIhHZ1oCOi7liiL305kF7qNbAAKrFQACgxlIU_ZNNqDCcdjGPQQ"
+    ]
+   ],
+   "t": 1795658889,
+   "fwd": true,
+   "pid": "88b253c4",
+   "fp": {
+    "x": "9503805816b2",
+    "h": [
+     "1481a53c",
+     "26115fd2",
+     "92e419ae",
+     "c43299e1",
+     "d44bf860",
+     "f2333377"
+    ],
+    "m": [
+     "8171ab53c3a6"
+    ],
+    "man": true
+   },
+   "mid": 1390
+  }
+ ],
  "next_run_ts": 1795659724.9577234,
  "review_off": false,
  "pending": {},
