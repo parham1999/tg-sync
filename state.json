@@ -58,86 +58,9 @@
    "last_id": 8097
   }
  },
- "update_offset": 774952170,
+ "update_offset": 774952171,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "5f4d433763bd",
-   "h": [
-    "36265943",
-    "64e19ee5",
-    "7cf8c686",
-    "84900265",
-    "94ab3219",
-    "a6d06c6c",
-    "b6f2ddb3",
-    "e1b784b7",
-    "ea83e7bc",
-    "f18715cc"
-   ],
-   "w": [
-    "07e64721",
-    "14c43130",
-    "934750dc",
-    "aee65577",
-    "b28c892d",
-    "c63342b5",
-    "d8166725",
-    "db7144e6",
-    "e028f997"
-   ],
-   "m": [],
-   "t": 1795279062,
-   "src": "https://t.me/CottageOrg/83510"
-  },
-  {
-   "m": [],
-   "t": 1795281450,
-   "src": "https://t.me/FilmFarsiOrg/26067"
-  },
-  {
-   "x": "898a79eae5c2",
-   "h": [
-    "0bc90cd5",
-    "0e8314fb",
-    "102c84f3",
-    "1ac8beeb",
-    "24d64fbb",
-    "25ed16fd",
-    "3ea65301",
-    "4583b419",
-    "4658fde0",
-    "49c367dc",
-    "5d74f6b2",
-    "64eb5441",
-    "7d123ee3",
-    "940b81d4",
-    "97b29f8f",
-    "97b38966",
-    "d72220f8",
-    "ef185d12",
-    "f791c983"
-   ],
-   "w": [
-    "03ca6389",
-    "09349fdd",
-    "246fce66",
-    "3eb74b7c",
-    "443e6851",
-    "476c154d",
-    "5e3fe458",
-    "6a7723a1",
-    "bd1e5be1",
-    "bd34c2d0",
-    "c6502fcc",
-    "e4d341f9",
-    "e5ffe5ba",
-    "f44c79ae"
-   ],
-   "m": [],
-   "t": 1795281497,
-   "src": "https://t.me/MiowPhone/18923"
-  },
   {
    "x": "8c5a24efad5b",
    "h": [
@@ -14904,7 +14827,27 @@
    "src": "https://t.me/ParsTwt/18101"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFwmsJz-6nH5yAuw9GZcFkDiShRWZjAAI-DAAC3k89UDHY6UC-pUIKPQQ"
+    ]
+   ],
+   "t": 1795805166,
+   "fwd": true,
+   "pid": "1b69ce93",
+   "fp": {
+    "m": [
+     "0f155f6a75aa"
+    ],
+    "man": true
+   },
+   "mid": 1474
+  }
+ ],
  "next_run_ts": 1795806579.7928264,
  "review_off": false,
  "pending": {
