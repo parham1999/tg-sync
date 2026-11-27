@@ -58,49 +58,9 @@
    "last_id": 8096
   }
  },
- "update_offset": 774952169,
+ "update_offset": 774952170,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "d103150cf7f2",
-   "h": [
-    "1acbb82a",
-    "2680f787",
-    "6db610fe",
-    "b16a42b1",
-    "c785eeef",
-    "e118e4e1",
-    "f32ced81",
-    "fc2c70cb"
-   ],
-   "w": [
-    "18430fec",
-    "1f3034ca",
-    "8520967a",
-    "90db41cb",
-    "a81fd8fa",
-    "ea116511",
-    "ffa29407"
-   ],
-   "m": [],
-   "t": 1795270202,
-   "src": "https://t.me/CottageOrg/83503"
-  },
-  {
-   "x": "1de4d72bc878",
-   "m": [
-    "37ddff10803c",
-    "21dd0215d7bf",
-    "00a9e056abc4"
-   ],
-   "p": [
-    "c3939626323a3499",
-    "67d3c4d4d8c96939",
-    "366c4ccc8e8fcd4c"
-   ],
-   "t": 1795270247,
-   "src": "https://t.me/SporteHub/14758"
-  },
   {
    "x": "2fbcc32d68cd",
    "h": [
@@ -14698,7 +14658,27 @@
    "src": "https://t.me/MiowPhone/19133"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIFvGsJrFl4AqP-z49tCfb-wPSlLkmSAAJVDAACl1RFUH7T8Btd5J0XPQQ"
+    ]
+   ],
+   "t": 1795796057,
+   "fwd": true,
+   "pid": "18da1dd4",
+   "fp": {
+    "m": [
+     "cb278183be6c"
+    ],
+    "man": true
+   },
+   "mid": 1468
+  }
+ ],
  "next_run_ts": 1795797244.7271569,
  "review_off": false,
  "pending": {},
