@@ -58,7 +58,7 @@
    "last_id": 8097
   }
  },
- "update_offset": 774952171,
+ "update_offset": 774952172,
  "owner_id": 138180578,
  "fp": [
   {
@@ -14825,29 +14825,19 @@
    "m": [],
    "t": 1795804301,
    "src": "https://t.me/ParsTwt/18101"
-  }
- ],
- "approved": [
+  },
   {
-   "text": "@Wimapro",
-   "media": [
-    [
-     "video",
-     "tgfile:BAACAgQAAxkBAAIFwmsJz-6nH5yAuw9GZcFkDiShRWZjAAI-DAAC3k89UDHY6UC-pUIKPQQ"
-    ]
+   "m": [
+    "0f155f6a75aa"
    ],
-   "t": 1795805166,
-   "fwd": true,
+   "man": true,
+   "t": 1795805176,
    "pid": "1b69ce93",
-   "fp": {
-    "m": [
-     "0f155f6a75aa"
-    ],
-    "man": true
-   },
-   "mid": 1474
+   "me": true,
+   "src": ""
   }
  ],
+ "approved": [],
  "next_run_ts": 1795806579.7928264,
  "review_off": false,
  "pending": {
@@ -15085,12 +15075,13 @@
   1795802108,
   1795804223,
   1795804246,
-  1795804301
+  1795804301,
+  1795805176
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-27",
-  "posted": 70,
+  "posted": 71,
   "found": 338,
   "seen": 231,
   "skip": {
@@ -15139,14 +15130,14 @@
    "19": 3,
    "20": 6,
    "21": 2,
-   "22": 3
+   "22": 4
   },
   "hd_ok": 68,
   "rounds": 28,
   "carried": 2,
   "rev_ask": 5,
   "rev_no": 4,
-  "fwd": 3
+  "fwd": 4
  },
  "arrivals": [
   [
@@ -15474,15 +15465,6 @@
   }
  },
  "undo": {
-  "04531177": {
-   "ids": [
-    [
-     "@Wimapro",
-     4984
-    ]
-   ],
-   "t": 1795623746
-  },
   "37578faf": {
    "ids": [
     [
@@ -15571,6 +15553,10 @@
   "18da1dd4": {
    "ids": [],
    "t": 1795797272
+  },
+  "1b69ce93": {
+   "ids": [],
+   "t": 1795805176
   }
  },
  "src_del": [
@@ -15978,24 +15964,9 @@
    "st": "no"
   }
  },
- "last_kind": "text",
+ "last_kind": "media",
  "sugg_ts": 1795764611,
  "origins": {
-  "4557": {
-   "l": "https://t.me/Krolejudg/96974",
-   "t": 1795199972,
-   "me": false
-  },
-  "4558": {
-   "l": "https://t.me/Krolejudg/96974",
-   "t": 1795199972,
-   "me": false
-  },
-  "4559": {
-   "l": "https://t.me/dodollism/20838",
-   "t": 1795200028,
-   "me": false
-  },
   "4560": {
    "l": "https://t.me/FilmFarsiOrg/26055",
    "t": 1795202313,
