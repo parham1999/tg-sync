@@ -58,97 +58,9 @@
    "last_id": 8096
   }
  },
- "update_offset": 774952166,
+ "update_offset": 774952169,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "d0ba52e24988",
-   "h": [
-    "061ff85d",
-    "223e2e50",
-    "2456d319",
-    "27317a09",
-    "284885ff",
-    "474b7d5e",
-    "49fe2ede",
-    "51e8da9d",
-    "588610a2",
-    "5da3b427",
-    "5e3b4bb5",
-    "630f0f71",
-    "83f6ee08",
-    "8a9b5cb5",
-    "8e3ef639",
-    "a46e9672",
-    "ae7558ed",
-    "d1d336f5",
-    "e7ca6500",
-    "fedb3dbc"
-   ],
-   "w": [
-    "01e77e7a",
-    "02b5eefc",
-    "17e121e6",
-    "2ffae35b",
-    "30d0cfc2",
-    "52bbd5c3",
-    "5860228e",
-    "75e154d0",
-    "95c9264d",
-    "97b68e7b",
-    "a57856b3",
-    "b95821ef",
-    "c6768651",
-    "d7de59ff",
-    "f8a60791"
-   ],
-   "m": [],
-   "t": 1795265861,
-   "src": "https://t.me/stopirani/2312"
-  },
-  {
-   "x": "97184b4f2baf",
-   "h": [
-    "04b8e83c",
-    "04e6e2a3",
-    "06753c20",
-    "2bfc5e1e",
-    "6e41111a",
-    "a08d2da7",
-    "de29dd7c",
-    "e2951d45",
-    "e2e38dd4",
-    "ef6dea89",
-    "f9776098"
-   ],
-   "w": [
-    "295f51a5",
-    "58d51b12",
-    "66a22886",
-    "91e6006c",
-    "e7ac1ea6",
-    "f2e5afac",
-    "fb530c93"
-   ],
-   "m": [],
-   "t": 1795267729,
-   "src": "https://t.me/FilmFarsiOrg/26062"
-  },
-  {
-   "x": "2e9cfb4fce57",
-   "w": [
-    "395731c9",
-    "3b9e49d3",
-    "4b5597bd",
-    "6b75eca3",
-    "98ad7442",
-    "a9d10bf2",
-    "b3bd802d"
-   ],
-   "m": [],
-   "t": 1795267773,
-   "src": "https://t.me/MiowPhone/18918"
-  },
   {
    "x": "708512731119",
    "m": [],
@@ -14699,43 +14611,22 @@
    ],
    "t": 1795793020,
    "src": "https://t.me/dodollism/21051"
+  },
+  {
+   "m": [
+    "f06f8b74cd12"
+   ],
+   "man": true,
+   "t": 1795793685,
+   "pid": "1f791ef0",
+   "me": true,
+   "src": ""
   }
  ],
  "approved": [],
  "next_run_ts": 1795795309.9596806,
  "review_off": false,
- "pending": {
-  "34bafda8": {
-   "text": "\u0628\u0627\u0646\u0648 \u062a\u0627\u0645\u06cc\u06a9\u0627 \u0627\u0632 \u062f\u0627\u0641\u0627\u06cc \u0646\u0627\u0628 \u0648 \u062a\u0648 \u067e\u0631 \u0627\u0648\u0646\u0644\u06cc \u0641\u0646\u0632\ud83d\udd25\ud83d\ude0d\n\n\ud83d\udfe5 <a href=\"https://www.instagram.com/tameekaakerr?lqvp=MXhsMHRxeTBwdTll\">\u0627\u06cc\u0646\u0633\u062a\u0627\u06af\u0631\u0627\u0645 \u0628\u0627\u0646\u0648 </a>\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/QC_h948SiPZhbzzr8Eq2hiOcvesSOWncFwnwHeo-fl6k8qR6PjeGYuryXPnnVsrfA1rcCxp4IaYcPMTucPvN2keIMM31bUq-XlatJABrOrR3OpUoyIaeaTe2MCmGgiSMLCp_-SfXqDmIfcqYuHNVxI6LM4530x3Rf4Lt755RTD1FgAYgw-UGNAdcrT1hSpQ0oHX6swdaJ8u0exIRIHfX2qCKx6hXj6rR38ZJTl7MdgnWK8H8ersC56kg0sHnFyxc8lc_H4PKsmss5geXkDTwuNkLyB19eUb9pf7R8BUC1Ps0VGZ5MLxpAkJdoiiDGAwgKN-8zNV3R3TZsnGHmifl4w.jpg"
-    ],
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/CusuOXpP1cvTx1nn7MRK30uI45Nlp1yGACHdgTeV14KseHm0iNleH1Qv3X3hp6q2FbDXe4ftBLA9j-aRose6ctmWz08usTibq1wTxwJJ99eWPu2aDYL-ItSyO7YBDEpk62J2t2uCaBn7EkPJZtP-1rJPmrugB_RiPcyeDLy3eEIWDqsnBQG9W3gckvLOaobsXOTXMyw4lgBOABdwMSaQ-dec6OgcEuB3i6CrYr1_5z5YxeewoVGfzCMyoKcKyAis7DxFTLAFDgmgvHwvDYTCiflNr91qnkXQnRA6k9Zg_qNcyCX5ZefwO2jTIdiw3Y6hxJP9S_KSKzeBAmeAwlHQ8g.jpg"
-    ],
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/kSc7AiB6TCDjIEB_xOWzletp9SniVVyxUgzk5ukHMfQEVNIwlaQnwE8QC06rziWTjpXRBmTxBG8R7R7mXhi0y2w1S-bsUnVyuQFT2ZYb37d-fpmBarvtgeASsKdsSFd2__UWY5eS-SHUCcC5Cm73M4pZz0xUGogt5cDupJKSqG-AxLqK9VsPrHPvzNUj2-EJzrAbadschzi0sF-mouIYTBCU-D5HLUBf16OV58UTh-zD-Kt1iLyyuTXVINgoa7s-5DufSgU5f7y7o16x_9zfnBfhtMRvukfOmGCYJtjRTVgYlTg_Zazx-XeWLXf0WAq1SbuKA2okKShXjDYlRlDaGg.jpg"
-    ],
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/EJFMflkFYLa32f6z4OMWLFAandeg3UYaGyEfJzV35csoT6Zz_5eAZZ3Lc2Jw5cz1JW3DYnw_NhfRbp34kKnt7zhA57GkFoVGo2CUe27jorOVqg1-klGGbMpbJhHhUvuS0gwzB2Zi0ImBZkl0rRhPwb0m75254KYFdRQdjJxk30lF3dsdm6MzKtoTOlsML_B91xkKHpaySVfW84BNh1c82GbfexFpTqzKZgsLUWLIOrFcZkb8ZiUSYbvsKwKVDvoaOB_vGpZQTIN7XH_VS843ADlf20RJUZgBsXiZRmCTj88nySTufqIdyEcCltrDyLRfFCIMd22PCDV6bmojjFmbsw.jpg"
-    ],
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/bcdUPTLYUXrbC1k3Zp43C_lPy2rVtFVmScN1miXVdN7rf2nMCTULAuBmFd88QQjFcOaX1IFKLvh75AuRicwq8TvaDcUf7-v8UG-Txn2GTFA4I3KadDadA4Lwafper69i6GClrSVbAVF1o1rvCYrDiwL9_554wSmsva2tcybVA_jqVj2ic9LZYoRwubKs7AyqoGcEpki7uxUfZDOMKKQXsH9UzdGPFMCzRSR4jBCkCmc7JnAkOXdm5PHqVrWymAzecqic-PlDrtmDFib4tAE6XlA0-qLV5JmA1U1uXssVPf-_J3AlaobyF7Ntb1M7TASbHO1ixK2RVljkdz8TPn0kiA.jpg"
-    ]
-   ],
-   "t": 1795792914,
-   "link": "https://t.me/SporteHub/14984",
-   "mid": 1464,
-   "chat": 138180578,
-   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (\u0622\u062f\u0631\u0633 \u0633\u0627\u06cc\u062a \u06cc\u0627 \u0627\u067e \u062f\u0627\u0631\u062f: instagram.com (\u067e\u0633\u062a\u200c\u0647\u0627\u06cc \u062f\u0627\u0631\u0627\u06cc \u0622\u062f\u0631\u0633 \u0633\u0627\u06cc\u062a \u0627\u0631\u0633\u0627\u0644 \u0646\u0645\u06cc\u200c\u0634\u0648\u0646\u062f)) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 SporteHub.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2\u06f4 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)\n\n\ud83d\udd17 \u06a9\u0627\u0646\u0627\u0644 \u0645\u0628\u062f\u0623: https://t.me/SporteHub\n\ud83d\udd17 \u0644\u06cc\u0646\u06a9/\u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0627\u062e\u0644 \u067e\u0633\u062a: instagram.com"
-  }
- },
+ "pending": {},
  "posted_log": [
   1795535536,
   1795535555,
@@ -14947,12 +14838,13 @@
   1795791944,
   1795792929,
   1795792974,
-  1795793020
+  1795793020,
+  1795793685
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-27",
-  "posted": 56,
+  "posted": 57,
   "found": 264,
   "seen": 182,
   "skip": {
@@ -14997,14 +14889,15 @@
    "15": 5,
    "16": 5,
    "17": 3,
-   "18": 7
+   "18": 7,
+   "19": 1
   },
   "hd_ok": 59,
   "rounds": 23,
   "carried": 2,
   "rev_ask": 4,
-  "rev_no": 3,
-  "fwd": 1
+  "rev_no": 4,
+  "fwd": 2
  },
  "arrivals": [
   [
@@ -15041,7 +14934,7 @@
   ]
  ],
  "last_scan_ts": 1795792892,
- "hv_ts": 1795782590,
+ "hv_ts": 1795793391,
  "hv": {
   "7": [
    400,
@@ -15423,6 +15316,10 @@
     ]
    ],
    "t": 1795791944
+  },
+  "1f791ef0": {
+   "ids": [],
+   "t": 1795793685
   }
  },
  "src_del": [
