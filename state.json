@@ -58,49 +58,9 @@
    "last_id": 8099
   }
  },
- "update_offset": 774952185,
+ "update_offset": 774952186,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "90c330082f58",
-   "m": [],
-   "t": 1795366802,
-   "src": "https://t.me/FilmFarsiOrg/26082"
-  },
-  {
-   "m": [
-    "c45481aa11c4",
-    "9a410bbd94c8"
-   ],
-   "p": [
-    "0c4e0b1f0f0f0f16",
-    "060f0f1b0d0f0b1b"
-   ],
-   "t": 1795366828,
-   "src": "https://t.me/SporteHub/14804"
-  },
-  {
-   "x": "c52725984e3e",
-   "h": [
-    "25388f3a",
-    "308f9542",
-    "372c4e69",
-    "4eae15f4",
-    "50d498e2",
-    "83763d99"
-   ],
-   "m": [
-    "b5ba60665664"
-   ],
-   "v": [
-    [
-     "0701606501213240",
-     24
-    ]
-   ],
-   "t": 1795366890,
-   "src": "https://t.me/Khartox/9068"
-  },
   {
    "x": "62b9a5fce16f",
    "h": [
@@ -15288,7 +15248,27 @@
    "src": "https://t.me/stopirani/2449"
   }
  ],
- "approved": [],
+ "approved": [
+  {
+   "text": "@Wimapro",
+   "media": [
+    [
+     "video",
+     "tgfile:BAACAgQAAxkBAAIF6GsLGrht7aai3syAFauSZx8VU_IFAAJCDAACcg1cUJjuSCSR_bnRPQQ"
+    ]
+   ],
+   "t": 1795889848,
+   "fwd": true,
+   "pid": "59ddc283",
+   "fp": {
+    "m": [
+     "bfa9a8436e8f"
+    ],
+    "man": true
+   },
+   "mid": 1512
+  }
+ ],
  "next_run_ts": 1795889987.5259168,
  "review_off": false,
  "pending": {
@@ -15330,9 +15310,6 @@
   }
  },
  "posted_log": [
-  1795630037,
-  1795630067,
-  1795630131,
   1795632535,
   1795632579,
   1795634588,
