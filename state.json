@@ -1,16 +1,16 @@
 {
  "channels": {
   "ee6c8e519c": {
-   "last_id": 9223
+   "last_id": 9224
   },
   "1c1cb821b4": {
-   "last_id": 15032
+   "last_id": 15035
   },
   "7f69010262": {
-   "last_id": 10465
+   "last_id": 10466
   },
   "46bd0c92df": {
-   "last_id": 123557
+   "last_id": 123560
   },
   "2201e87742": {
    "last_id": 72956
@@ -19,16 +19,16 @@
    "last_id": 33460
   },
   "ef680edcd0": {
-   "last_id": 19158
+   "last_id": 19159
   },
   "f20a53f3a3": {
-   "last_id": 17633
+   "last_id": 17634
   },
   "a198fa18c9": {
    "last_id": 21081
   },
   "3ea375f9c9": {
-   "last_id": 18113
+   "last_id": 18114
   },
   "1b77124c19": {
    "last_id": 26191
@@ -49,7 +49,7 @@
    "last_id": 33718
   },
   "8514b98767": {
-   "last_id": 83803
+   "last_id": 83805
   },
   "f028afb1b3": {
    "last_id": 35643
@@ -61,125 +61,6 @@
  "update_offset": 774952186,
  "owner_id": 138180578,
  "fp": [
-  {
-   "x": "645336202f45",
-   "h": [
-    "32d6543d",
-    "4550b82a",
-    "57c513a4",
-    "7c3e090b",
-    "7c50c083",
-    "7e56518a",
-    "8fccc33d",
-    "ad8c1363",
-    "d0b7a1d3",
-    "d638966e",
-    "e2a50bda",
-    "f2731c10"
-   ],
-   "w": [
-    "175b0c2c",
-    "24b2c625",
-    "250e8597",
-    "75b8f24b",
-    "83c620f7",
-    "c48a4b44",
-    "d3d7f0cb",
-    "ea6791bb",
-    "edc8f403",
-    "f6a0cbae"
-   ],
-   "m": [],
-   "t": 1795371045,
-   "src": "https://t.me/FilmFarsiOrg/26084"
-  },
-  {
-   "x": "9c2076b59da2",
-   "h": [
-    "1c223166",
-    "23c7a657",
-    "2a0b7d4e",
-    "5932bc58",
-    "5d685ff9",
-    "68a20553",
-    "85827df1",
-    "95778fec",
-    "a6f07315",
-    "b24b4a6c",
-    "d7cc7dc6",
-    "d8c84ed1",
-    "e82cf97f",
-    "f9978f42",
-    "ff14a3c0"
-   ],
-   "w": [
-    "00d78425",
-    "04fc6878",
-    "0da2aada",
-    "11c0e271",
-    "17ee2f5d",
-    "3c2e028c",
-    "75ee8106",
-    "8b6a58a4",
-    "a08bb728",
-    "a58db041",
-    "af7d11be",
-    "e5ffe5ba"
-   ],
-   "m": [],
-   "t": 1795371065,
-   "src": "https://t.me/CottageOrg/83549"
-  },
-  {
-   "x": "e6b3d2d53e95",
-   "h": [
-    "0c304b8c",
-    "15affe1f",
-    "4dfca259",
-    "54abd12a",
-    "563f111b",
-    "58342315",
-    "5cfda5c4",
-    "72cafeba",
-    "7f390da5",
-    "932c8d2e",
-    "a76ce346",
-    "ac375d3d",
-    "dbcf9a68",
-    "e544a4b3",
-    "e856adb0",
-    "e9db337c",
-    "ed286d0d",
-    "ef5c0f63"
-   ],
-   "w": [
-    "203556a2",
-    "246fce66",
-    "3b9e49d3",
-    "4086a71c",
-    "42652052",
-    "46d1e6c3",
-    "4f4433a9",
-    "5cbb3a6f",
-    "bf855c71",
-    "c2b60832",
-    "c48a4b44",
-    "cde58b21",
-    "e8eb8abb",
-    "fa8a444d"
-   ],
-   "m": [
-    "62fe457fbb82"
-   ],
-   "v": [
-    [
-     "8c0c2424a60e99b9",
-     47
-    ]
-   ],
-   "t": 1795373456,
-   "src": "https://t.me/Khartox/9070"
-  },
   {
    "x": "86da7d46046b",
    "h": [
@@ -15367,10 +15248,93 @@
    ],
    "t": 1795892297,
    "src": "https://t.me/Krolejudg/97453"
+  },
+  {
+   "m": [
+    "14c512ef58f9"
+   ],
+   "v": [
+    [
+     "01404d81112b2b2b",
+     19
+    ]
+   ],
+   "t": 1795894450,
+   "src": "https://t.me/Khartox/9224"
+  },
+  {
+   "x": "d43f47160010",
+   "h": [
+    "1d054884",
+    "397e9b45",
+    "3db801f5",
+    "407fc1c4",
+    "4441b088",
+    "4bcdb189",
+    "4fabcaa0",
+    "7272bf0a",
+    "77f1deec",
+    "7ee0c48b",
+    "827663d0",
+    "89974b2a",
+    "97e46d87",
+    "9c0de2c5",
+    "a1bf2956",
+    "b03c8988",
+    "bd7b3008",
+    "d48e0d44",
+    "e5afd140",
+    "eb57423b"
+   ],
+   "w": [
+    "1dc17892",
+    "3b9e49d3",
+    "41ace9e7",
+    "43eb232f",
+    "4ba3e969",
+    "4dbe762d",
+    "64e69cd8",
+    "7501fb67",
+    "885d5923",
+    "9a862a96",
+    "ac163ad8",
+    "bd1e5be1",
+    "ca3e88ea",
+    "da49397f",
+    "ef3c392d",
+    "ef44aee8",
+    "f29fb610"
+   ],
+   "m": [
+    "fbe261694683"
+   ],
+   "v": [
+    [
+     "3c2a6f466ebcf0f3",
+     13
+    ]
+   ],
+   "t": 1795894511,
+   "src": "https://t.me/CloseFriend3/17634"
+  },
+  {
+   "x": "3c1d9e3976fd",
+   "m": [
+    "460761360e85",
+    "7ad35bf783c4",
+    "facbd6d708f0"
+   ],
+   "p": [
+    "f4c8c9d1c5ac8f05",
+    "3787b3b63bbf9f1f",
+    "af5bf9796c47f3c7"
+   ],
+   "t": 1795894558,
+   "src": "https://t.me/SporteHub/15035"
   }
  ],
  "approved": [],
- "next_run_ts": 1795894404.3164854,
+ "next_run_ts": 1795896385.54256,
  "review_off": false,
  "pending": {
   "5576f55b": {
@@ -15388,12 +15352,25 @@
    "mid": 1511,
    "chat": 138180578,
    "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (\u0628\u0647 \u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0634\u0627\u0631\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f: @amozeshgahsadr1) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 ParsTwt.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2\u06f4 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)\n\n\ud83d\udd17 \u06a9\u0627\u0646\u0627\u0644 \u0645\u0628\u062f\u0623: https://t.me/ParsTwt\n\ud83d\udd17 \u0644\u06cc\u0646\u06a9/\u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0627\u062e\u0644 \u067e\u0633\u062a: https://t.me/amozeshgahsadr1\n\n\u0627\u06af\u0631 @amozeshgahsadr1 \u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0648\u0645\u0650 \u062e\u0648\u062f\u0650 \u0647\u0645\u06cc\u0646 \u06a9\u0627\u0646\u0627\u0644 \u0627\u0633\u062a (\u0646\u0647 \u062a\u0628\u0644\u06cc\u063a)\u060c \u062f\u06a9\u0645\u0647\u200c\u06cc \ud83d\udcce \u0631\u0627 \u0628\u0632\u0646\u06cc\u062f."
+  },
+  "6bd7f4ab": {
+   "text": "\u0627\u06cc\u0646\u062c\u0627 \u0641\u0642\u0637 \u0633\u06cc\u0646\u06af\u0644\u0627 \u0639\u0636\u0648\u0646\n\u067e\u06cc\u0634\u0646\u0647\u0627\u062f\u0647\u0627\u06cc\u06cc \u06a9\u0647 \u0633\u06cc\u0646\u06af\u0644\u0627 \u0628\u0647\u062a \u0627\u0646\u0642\u062f\u0631 \u062e\u0641\u0646\u0647 \u06a9\u0647 \u0647\u06cc\u0686\u0648\u0642\u062a \u062f\u0644\u062a \u0646\u0645\u06cc\u062e\u0627\u062f \u0645\u062a\u0627\u0647\u0644 \u0628\u0634\u06cc :)))\n\ud83d\udc47\ud83c\udffb\n\u200c\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/rkoLWGbHhzwevk7qPNITA8gmLsIaKZt1SkCcfRFTT406J1W5uY-fSVBhz8Z-ksd5tEHBkgGKfNONlcNtLDgJBiFw08pRmrDT6j2qjSOFk2Wzfg6qGG5Ifg2uN9b7WBlSag67bD7YXRrDHzhAitGHT1IzyTYLkMzrngHkchA9tIzhOpXWb-v_BHY6hnE7Zw8e0TSDYjQPpUgAmF5QW3ZNUc9yt4x5IThDBV11nihTskCU-0g30xHFICvvPQ5pFrqQo_TDzBjYUeuXxKE9Ax-ON-eq7svHGU7ZZVPWleBZw64BfcTiuGre7k_lph1ojJH_lgvuoIaHUI3u_O5bMctoxQ.jpg"
+    ]
+   ],
+   "t": 1795894437,
+   "link": "https://t.me/Daneshjoo/123560",
+   "asrc": "Daneshjoo",
+   "aname": "singlhaa",
+   "mid": 1516,
+   "chat": 138180578,
+   "ask": "\u261d\ufe0f \u0627\u06cc\u0646 \u067e\u0633\u062a \u0645\u0634\u06a9\u0648\u06a9 \u0628\u0647 \u062a\u0628\u0644\u06cc\u063a \u0628\u0648\u062f (\u0628\u0647 \u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0634\u0627\u0631\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f: @singlhaa) \u0627\u0632 \u06a9\u0627\u0646\u0627\u0644 Daneshjoo.\n\u0627\u0631\u0633\u0627\u0644 \u0634\u0648\u062f\u061f\n(\u0627\u06af\u0631 \u062a\u0627 \u06f2\u06f4 \u0633\u0627\u0639\u062a \u062c\u0648\u0627\u0628 \u0646\u062f\u0647\u06cc\u062f\u060c \u062e\u0648\u062f\u06a9\u0627\u0631 \u0631\u062f \u0645\u06cc\u200c\u0634\u0648\u062f.)\n\n\ud83d\udd17 \u06a9\u0627\u0646\u0627\u0644 \u0645\u0628\u062f\u0623: https://t.me/Daneshjoo\n\ud83d\udd17 \u0644\u06cc\u0646\u06a9/\u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0627\u062e\u0644 \u067e\u0633\u062a: https://t.me/singlhaa\n\n\u0627\u06af\u0631 @singlhaa \u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0648\u0645\u0650 \u062e\u0648\u062f\u0650 \u0647\u0645\u06cc\u0646 \u06a9\u0627\u0646\u0627\u0644 \u0627\u0633\u062a (\u0646\u0647 \u062a\u0628\u0644\u06cc\u063a)\u060c \u062f\u06a9\u0645\u0647\u200c\u06cc \ud83d\udcce \u0631\u0627 \u0628\u0632\u0646\u06cc\u062f."
   }
  },
  "posted_log": [
-  1795634588,
-  1795634636,
-  1795634699,
   1795636741,
   1795636765,
   1795636811,
@@ -15601,24 +15578,27 @@
   1795890080,
   1795892224,
   1795892257,
-  1795892297
+  1795892297,
+  1795894450,
+  1795894511,
+  1795894558
  ],
  "hb_day": "2026-11-15",
  "stats": {
   "day": "2026-11-28",
-  "posted": 55,
-  "found": 295,
-  "seen": 214,
+  "posted": 58,
+  "found": 306,
+  "seen": 222,
   "skip": {
    "\u0641\u0648\u0631\u0648\u0627\u0631\u062f": 4,
    "\u0631\u06cc\u067e\u0644\u0627\u06cc": 19,
    "\u062a\u0628\u0644\u06cc\u063a": 14,
-   "\u062a\u06a9\u0631\u0627\u0631\u06cc": 15,
+   "\u062a\u06a9\u0631\u0627\u0631\u06cc": 16,
    "\u067e\u06cc\u0627\u0645 \u062a\u0628\u0631\u06cc\u06a9 \u0648 \u0635\u0628\u062d\u200c\u0628\u062e\u06cc\u0631": 1,
    "\u0644\u06cc\u0646\u06a9/\u0633\u0627\u06cc\u062a": 4,
-   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 1
+   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 2
   },
-  "hd_ok": 45,
+  "hd_ok": 49,
   "by_src": {
    "ef680edcd0": 4,
    "1b77124c19": 3,
@@ -15627,12 +15607,12 @@
    "8514b98767": 2,
    "d07f631318": 2,
    "a7439bad46": 4,
-   "f20a53f3a3": 5,
+   "f20a53f3a3": 6,
    "46bd0c92df": 4,
    "b2a6a8ff4b": 2,
    "3ea375f9c9": 2,
-   "ee6c8e519c": 3,
-   "1c1cb821b4": 2,
+   "ee6c8e519c": 4,
+   "1c1cb821b4": 3,
    "7aa4235d7c": 3,
    "6cf615e62c": 2
   },
@@ -15655,10 +15635,11 @@
    "19": 2,
    "20": 5,
    "21": 6,
-   "22": 3
+   "22": 3,
+   "23": 3
   },
-  "rounds": 29,
-  "rev_ask": 5,
+  "rounds": 30,
+  "rev_ask": 6,
   "rev_no": 3,
   "rev_ok": 1,
   "appr": 1,
@@ -15667,19 +15648,6 @@
   "rev_exp": 1
  },
  "arrivals": [
-  [
-   1795889999,
-   7,
-   {
-    "1c1cb821b4": 1,
-    "3ea375f9c9": 1,
-    "ef680edcd0": 1,
-    "7f69010262": 1,
-    "46bd0c92df": 1,
-    "ee6c8e519c": 1,
-    "8514b98767": 1
-   }
-  ],
   [
    1795892201,
    14,
@@ -15697,9 +15665,23 @@
     "b2a6a8ff4b": 1,
     "a7439bad46": 1
    }
+  ],
+  [
+   1795894420,
+   11,
+   {
+    "8514b98767": 2,
+    "ee6c8e519c": 1,
+    "ef680edcd0": 1,
+    "1c1cb821b4": 1,
+    "46bd0c92df": 3,
+    "3ea375f9c9": 1,
+    "f20a53f3a3": 1,
+    "7f69010262": 1
+   }
   ]
  ],
- "last_scan_ts": 1795892201,
+ "last_scan_ts": 1795894420,
  "hv_ts": 1795890786,
  "hv": {
   "7": [
@@ -16139,34 +16121,21 @@
   "furuuqq"
  ],
  "last_round": {
-  "found": 14,
-  "considered": 12,
+  "found": 11,
+  "considered": 8,
   "posted": 3,
-  "over": 9,
+  "over": 3,
   "appr": 0,
-  "rej": {},
+  "rej": {
+   "\u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631": 1,
+   "\u062a\u06a9\u0631\u0627\u0631\u06cc": 1
+  },
   "src": {
-   "a198fa18c9": [
-    1,
-    0
-   ],
-   "d07f631318": [
-    1,
-    0
-   ],
-   "fb5b00388d": [
-    1,
-    0
-   ],
-   "3ea375f9c9": [
-    1,
-    0
-   ],
-   "46bd0c92df": [
+   "8514b98767": [
     2,
     0
    ],
-   "f20a53f3a3": [
+   "ee6c8e519c": [
     1,
     1
    ],
@@ -16174,97 +16143,77 @@
     1,
     0
    ],
-   "8514b98767": [
-    1,
-    0
-   ],
-   "7aa4235d7c": [
-    1,
-    0
-   ],
-   "6cf615e62c": [
-    2,
-    1
-   ],
-   "b2a6a8ff4b": [
-    1,
-    0
-   ],
-   "a7439bad46": [
+   "1c1cb821b4": [
     1,
     1
+   ],
+   "46bd0c92df": [
+    3,
+    0
+   ],
+   "3ea375f9c9": [
+    1,
+    0
+   ],
+   "f20a53f3a3": [
+    1,
+    1
+   ],
+   "7f69010262": [
+    1,
+    0
    ]
   },
   "crisis": false,
-  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 22: 4 \u062a\u0627 5 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
+  "mode": "\u062e\u0648\u062f\u06a9\u0627\u0631 (\u0631\u0648\u0632 \u0639\u0627\u062f\u06cc\u060c \u0633\u0627\u0639\u062a 23: 4 \u062a\u0627 5 \u067e\u0633\u062a \u062f\u0631 \u0633\u0627\u0639\u062a)",
   "target": 3,
   "why": [
    [
-    "a198fa18c9",
-    21081,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "b2a6a8ff4b",
-    33460,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "fb5b00388d",
-    8100,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
     "46bd0c92df",
-    123557,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+    123560,
+    "\u0628\u0647 \u06a9\u0627\u0646\u0627\u0644 \u06cc\u0627 \u0631\u0628\u0627\u062a \u062f\u06cc\u06af\u0631\u06cc \u0627\u0634\u0627\u0631\u0647 \u0645\u06cc\u200c\u06a9\u0646\u062f: @singlhaa (\u0627\u06af\u0631 \u0627\u06cc\u0646 \u0622\u06cc\u200c\u062f\u06cc\u0650 \u062f\u0648\u0645\u0650 \u062e\u0648\u062f\u0650 \u0647\u0645\u06cc\u0646 \u0645\u0646\u0628\u0639 \u0627\u0633\u062a: /alias Daneshjoo singlhaa) \u2190 \u0628\u0631\u0627\u06cc \u062a\u0623\u06cc\u06cc\u062f \u0634\u0645\u0627 \u0641\u0631\u0633\u062a\u0627\u062f\u0647 \u0634\u062f (\u067e\u06cc\u0627\u0645 \u062c\u062f\u0627 \u0628\u0627 \u062f\u06a9\u0645\u0647\u200c\u06cc \u0627\u0631\u0633\u0627\u0644/\u0631\u062f)"
+   ],
+   [
+    "7f69010262",
+    10466,
+    "\u062a\u06a9\u0631\u0627\u0631\u06cc: \u0645\u062a\u0646 \u062f\u0642\u06cc\u0642\u0627\u064b \u06cc\u06a9\u0633\u0627\u0646 \u0627\u0633\u062a\u061b \u0645\u0634\u0627\u0628\u0647\u0634 \u062d\u062f\u0648\u062f 15 \u0633\u0627\u0639\u062a \u067e\u06cc\u0634 \u062f\u0631 \u06a9\u0627\u0646\u0627\u0644 \u06af\u0630\u0627\u0634\u062a\u0647 \u0634\u062f\u0647 \u0628\u0648\u062f"
    ],
    [
     "3ea375f9c9",
-    18113,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "d07f631318",
-    83551,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "7aa4235d7c",
-    2450,
-    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
-   ],
-   [
-    "8514b98767",
-    83803,
+    18114,
     "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
    ],
    [
     "ef680edcd0",
-    19158,
+    19159,
+    "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
+   ],
+   [
+    "8514b98767",
+    83805,
     "\u062c\u0627 \u0646\u0634\u062f: \u0633\u0642\u0641 3 \u067e\u0633\u062a \u062f\u0631 \u0627\u06cc\u0646 \u062f\u0648\u0631 \u067e\u0631 \u0634\u062f\u0647 \u0628\u0648\u062f"
    ]
   ],
   "ign": {
-   "46bd0c92df": 1,
-   "6cf615e62c": 1
+   "8514b98767": 1,
+   "46bd0c92df": 2
   },
-  "carry": 9,
+  "carry": 3,
   "sent": [
    [
-    "t.me/CloseFriend3/17633",
+    "t.me/Khartox/9224",
     ""
    ],
    [
-    "t.me/Pastwrize/33718",
+    "t.me/CloseFriend3/17634",
     ""
    ],
    [
-    "t.me/Krolejudg/97453",
+    "t.me/SporteHub/15035",
     ""
    ]
   ],
-  "t": 1795892297
+  "t": 1795894558
  },
  "last_manual": {
   "found": 3,
@@ -16328,6 +16277,64 @@
  "dest_n": 4,
  "dests": [],
  "carry": [
+  {
+   "text": "\u06cc\u0647 \u0641\u0627\u0645\u06cc\u0644 \u062f\u0627\u0631\u06cc\u0645 \u06a9\u0647 \u0645\u06cc\u06af\u0647 \u0628\u0631\u0627\u06cc \u062a\u0631\u0628\u06cc\u062a \u067e\u0633\u0631\u0627\u0634 \u0648 \u062a\u062d\u0644\u06cc\u0644 \u0631\u0641\u062a\u0627\u0631\u0627\u0634\u0648\u0646 \u06a9\u062a\u0627\u0628 \u0645\u06cc\u062e\u0648\u0646\u0647 \u0648 \u062a\u0635\u0645\u06cc\u0645 \u0645\u06cc\u06af\u06cc\u0631\u0647 \u062a\u0648 \u0647\u0631 \u0634\u0631\u0627\u06cc\u0637\u06cc \u0686\u062c\u0648\u0631\u06cc \u0631\u0641\u062a\u0627\u0631 \u06a9\u0646\u0647 \u0628\u0627\u0647\u0627\u0634\u0648\u0646.\n\u067e\u0631\u06cc\u0634\u0628 \u0627\u06cc\u0646\u062c\u0627 \u0628\u0648\u062f\u0646 \u0628\u0686\u0647\u200c\u0634 \u062f\u0633\u062a\u06af\u06cc\u0631\u0647 \u062f\u0631 \u0631\u0648 \u0627\u0632 \u062c\u0627 \u06a9\u0646\u062f.\n\n\u270d \u0639\u0627\u0626\u0634\u0629\n\n@Wimapro",
+   "media": [],
+   "t": 1795894420,
+   "link": "t.me/ParsTwt/18114",
+   "key": "3ea375f9c9",
+   "ps": {}
+  },
+  {
+   "text": "\u0628\u0686\u0647 \u0628\u0648\u062f\u0645 \u0622\u0631\u0632\u0648\u0645 \u0628\u0648\u062f \u062a\u0627\u0645\u060c \u062c\u0631\u06cc \u0631\u0648 \u0628\u062e\u0648\u0631\u0647 \u0648 \u0627\u0648\u0646 \u06af\u0631\u06af\u0647 \u0645\u06cc\u06af \u0645\u06cc\u06af \u0631\u0648 \u067e\u0627\u0631\u0647 \u06a9\u0646\u0647. \u0645\u0646 \u0647\u0645\u06cc\u0634\u0647 \u0633\u0645\u062a \u0634\u0631 \u0628\u0648\u062f\u0645.\n\n@Wimapro",
+   "media": [],
+   "t": 1795894420,
+   "link": "t.me/MiowPhone/19159",
+   "key": "ef680edcd0",
+   "ps": {}
+  },
+  {
+   "text": "\u0639\u06a9\u0633\u200c\u0647\u0627\u06cc \u062c\u062f\u06cc\u062f\u06cc \u06a9\u0647 \u0633\u0644\u0646\u0627 \u06af\u0648\u0645\u0632 \u0627\u0632 \u062e\u0648\u062f\u0634 \u067e\u0633\u062a \u06a9\u0631\u062f\u0647\n\n@Wimapro",
+   "media": [
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/UihUzkJJZFD-wvtjHM9R5ByqvnxAxhhMPzgaOhVeIecH5rh28gfociFa-uwyV1xWV6QHLN7HWyWVmwS5Od26DqVXfTNQfVZgKikSnAWUMP8l13QTt4rA0WVh5QdhqLgB-coYfEt8yXor6M2AgCvXOFh_HDclyllFAKjrq2NpJKm1fzpk-jhE1ocNGQuwx6Ak5QVegv89n4a-udqHk2HHcn73qU2bKOTcJqpI0bN3yKht7voFM5lzy4wnj0OQhyiTNNNUeTfmZg-Sp3OJ_svJuq69N00fugCZKelSRuCyrUduANIpBfPxuKNnz4y7S3J2aI6-7ccZaBRFQIu7W-CFgg.jpg"
+    ],
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/JfXFStb_Z1lg0zdDhwgQN4q3bFkoHnGqqumEwhe3aAa7ONxCy7GZLkNkte7gND3E8uBsAElA-BbXEgbyUsXD-TRZEk-hY9HkmDL61ly2EMIMZIAiMZolyPk7X3dgTyPmKxwvKVfWtfRInzJtPrGD1uo0OhItIbMpTjCzpCrwiZjv7feUQmdWh-hKqzki9QzbmcXCIAjPjEtsFOqTuKhQVsZciX3j0MoT6RXK_9iJI0XRrA_kGJPVkNG2kQAaQDDLxQni0WFkB9YudrKqZciG6zS57_JdO3s4j9EwcW1RKXzgxuYZNb0Y53igBWTY85F5Hx_k9mJS--y0b7Ua3whuTQ.jpg"
+    ],
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/ibl4IQirsgjBavYTtlNg1918XtRvGBt74UvuA6ro-Strt1gDFbUr6Vjk34_gV1LidqfcVKGyi08TtnvBFRbWM4C3ykZbIAk_zAQiogEjpZxkK57ZdrgTpvJBKuh51hXN5MT5WKCKawgGHLMMZBt3d3C6IFSoYKHOBPyd0qwDCC65goIS9BQRcYYnnZgT7g1ufu4vpk2I3X3kqWyfvfJPpqejsG3iKFurOw6rfnzVwGGfs6ObaE5Vah6IR344pxUFL6iqelTBZHPR1ezq1pNCEgExhLjK9OccpyrGE-AGC0yrtfGnwyGQISbmEfW62poZW7eyfZGRKaoI2hhsRSWvKg.jpg"
+    ],
+    [
+     "photo",
+     "https://cdn4.telesco.pe/file/FbnKao7CeKOjpKNHqqBBFxLQchVrzVzgumA9X_S30UK792qqIlUiTXEhEZb1zZO34ReDG4yIFKmngImsf36vttw49gIF8ThZ7OOI4GS1KIwQHJIDPdJB2WatQydtG-FYde2fxeDCYtBx6etrWJtIbC_OhUVy6dIZf64GhFgaKLn8UmvQEw6LAM1NP1yG07_w6mp1FGzTpUY39ksmnGBkQUmcYGnsLDhwwV-2StaQ6Vfy1d_V3Hv62wl0e3O6BxAfebt9tXhya8uy6PAGmW-A0-xkMezvcTrDJnYL8_SsNs7OMwYugMWzlO-LexCV2M8FcL-TTNktWHA4IP2FbTJ7nw.jpg"
+    ]
+   ],
+   "t": 1795894420,
+   "link": "t.me/CottageOrg/83805",
+   "key": "8514b98767",
+   "ps": {
+    "https://cdn4.telesco.pe/file/UihUzkJJZFD-wvtjHM9R5ByqvnxAxhhMPzgaOhVeIecH5rh28gfociFa-uwyV1xWV6QHLN7HWyWVmwS5Od26DqVXfTNQfVZgKikSnAWUMP8l13QTt4rA0WVh5QdhqLgB-coYfEt8yXor6M2AgCvXOFh_HDclyllFAKjrq2NpJKm1fzpk-jhE1ocNGQuwx6Ak5QVegv89n4a-udqHk2HHcn73qU2bKOTcJqpI0bN3yKht7voFM5lzy4wnj0OQhyiTNNNUeTfmZg-Sp3OJ_svJuq69N00fugCZKelSRuCyrUduANIpBfPxuKNnz4y7S3J2aI6-7ccZaBRFQIu7W-CFgg.jpg": [
+     "CottageOrg",
+     83805
+    ],
+    "https://cdn4.telesco.pe/file/JfXFStb_Z1lg0zdDhwgQN4q3bFkoHnGqqumEwhe3aAa7ONxCy7GZLkNkte7gND3E8uBsAElA-BbXEgbyUsXD-TRZEk-hY9HkmDL61ly2EMIMZIAiMZolyPk7X3dgTyPmKxwvKVfWtfRInzJtPrGD1uo0OhItIbMpTjCzpCrwiZjv7feUQmdWh-hKqzki9QzbmcXCIAjPjEtsFOqTuKhQVsZciX3j0MoT6RXK_9iJI0XRrA_kGJPVkNG2kQAaQDDLxQni0WFkB9YudrKqZciG6zS57_JdO3s4j9EwcW1RKXzgxuYZNb0Y53igBWTY85F5Hx_k9mJS--y0b7Ua3whuTQ.jpg": [
+     "CottageOrg",
+     83806
+    ],
+    "https://cdn4.telesco.pe/file/ibl4IQirsgjBavYTtlNg1918XtRvGBt74UvuA6ro-Strt1gDFbUr6Vjk34_gV1LidqfcVKGyi08TtnvBFRbWM4C3ykZbIAk_zAQiogEjpZxkK57ZdrgTpvJBKuh51hXN5MT5WKCKawgGHLMMZBt3d3C6IFSoYKHOBPyd0qwDCC65goIS9BQRcYYnnZgT7g1ufu4vpk2I3X3kqWyfvfJPpqejsG3iKFurOw6rfnzVwGGfs6ObaE5Vah6IR344pxUFL6iqelTBZHPR1ezq1pNCEgExhLjK9OccpyrGE-AGC0yrtfGnwyGQISbmEfW62poZW7eyfZGRKaoI2hhsRSWvKg.jpg": [
+     "CottageOrg",
+     83807
+    ],
+    "https://cdn4.telesco.pe/file/FbnKao7CeKOjpKNHqqBBFxLQchVrzVzgumA9X_S30UK792qqIlUiTXEhEZb1zZO34ReDG4yIFKmngImsf36vttw49gIF8ThZ7OOI4GS1KIwQHJIDPdJB2WatQydtG-FYde2fxeDCYtBx6etrWJtIbC_OhUVy6dIZf64GhFgaKLn8UmvQEw6LAM1NP1yG07_w6mp1FGzTpUY39ksmnGBkQUmcYGnsLDhwwV-2StaQ6Vfy1d_V3Hv62wl0e3O6BxAfebt9tXhya8uy6PAGmW-A0-xkMezvcTrDJnYL8_SsNs7OMwYugMWzlO-LexCV2M8FcL-TTNktWHA4IP2FbTJ7nw.jpg": [
+     "CottageOrg",
+     83808
+    ]
+   }
+  },
   {
    "text": "\u06cc\u0647 \u062f\u062e\u062a\u0631 \u0622\u0645\u0648\u0632\u0634 \u0639\u0648\u0636 \u06a9\u0631\u062f\u0646 \u0644\u0628\u0627\u0633 \u0628\u0639\u062f \u0627\u0632 \u0628\u0627\u0634\u06af\u0627\u0647 \u0631\u0648 \u062a\u0648 \u0645\u0627\u0634\u06cc\u0646 \u06af\u0630\u0627\u0634\u062a\u0647 \u06a9\u0647 \u0648\u06cc\u0648 \u0645\u06cc\u0644\u06cc\u0648\u0646\u06cc \u062e\u0648\u0631\u062f\u0647.\n\n@Wimapro",
    "media": [
@@ -16459,50 +16466,6 @@
    "link": "t.me/MiowPhone/19158",
    "key": "ef680edcd0",
    "ps": {}
-  },
-  {
-   "text": "\u062a\u0631\u0645 \u0627\u0648\u0644\u06cc \u0647\u0627\u06cc \u0639\u0632\u06cc\u0632 \u06a9\u0644\u0627\u0633\u0627 \u0631\u0648 \u067e\u06cc\u062f\u0627 \u0646\u0645\u06cc\u06a9\u0646\u06cc\u062f \u0644\u0637\u0641\u0627 \u06af\u0631\u06cc\u0647 \u0646\u06a9\u0646\u06cc\u062f\n\u0627\u0632 \u0635\u0628\u062d \u062f\u0627\u0631\u0645 \u062f\u0627\u0646\u0634\u062c\u0648 \u0645\u06cc\u0628\u0631\u0645 \u0633\u0631\u06a9\u0644\u0627\u0633 \ud83d\ude2d\n\n\u270d \u062a\u06cc\u0646 \u062a\u06cc\u0646\n\n@Wimapro",
-   "media": [],
-   "t": 1795889999,
-   "link": "t.me/ParsTwt/18112",
-   "key": "3ea375f9c9",
-   "ps": {}
-  },
-  {
-   "text": "\u0641\u06cc\u0644\u0645 \"Crime 101\" \u067e\u0631\u0628\u06cc\u0646\u0646\u062f\u0647\u200c\u062a\u0631\u06cc\u0646 \u0641\u06cc\u0644\u0645 \u0627\u0648\u0631\u062c\u06cc\u0646\u0627\u0644 \u0622\u0645\u0627\u0632\u0648\u0646 \u062f\u0631 \u0633\u0627\u0644 2026 \u0634\u062f.\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/uoF_VMCrK67UwnYcjJSgwg_syBx0inMhy39YHNrzAq1-LuUr3x043lYg8g8EA6pgnhi_2fdrBnVefeQXlvk1wzNvny5NdVBmWDaYm-EM9FL1g4GK5BLYJz1JGkO4OUvRVcdFt7akBuGFu8ObX2HfWarzID-9era7CLRiGAxwlbc1ggEFmFY7brhubudBuyfArNynvfax-_1CYPwnFEZzKvOz4Ub-mAeETwsNEJ9oBlhi4eMBLRfyU4RS57I7JK8B5tiuF0SRnkLHI0WrdWUy01d2DPukSpOifC94Xr8Vlm81PW8iv5FU70Q14WEpU0I0jIyPX3Ga7ctjwqm2M-nuuQ.jpg"
-    ]
-   ],
-   "t": 1795889999,
-   "link": "t.me/CottageOrg/83802",
-   "key": "8514b98767",
-   "ps": {
-    "https://cdn4.telesco.pe/file/uoF_VMCrK67UwnYcjJSgwg_syBx0inMhy39YHNrzAq1-LuUr3x043lYg8g8EA6pgnhi_2fdrBnVefeQXlvk1wzNvny5NdVBmWDaYm-EM9FL1g4GK5BLYJz1JGkO4OUvRVcdFt7akBuGFu8ObX2HfWarzID-9era7CLRiGAxwlbc1ggEFmFY7brhubudBuyfArNynvfax-_1CYPwnFEZzKvOz4Ub-mAeETwsNEJ9oBlhi4eMBLRfyU4RS57I7JK8B5tiuF0SRnkLHI0WrdWUy01d2DPukSpOifC94Xr8Vlm81PW8iv5FU70Q14WEpU0I0jIyPX3Ga7ctjwqm2M-nuuQ.jpg": [
-     "CottageOrg",
-     83802
-    ]
-   }
-  },
-  {
-   "text": "\u0646\u0647 \u062d\u0627\u062c\u06cc \u06a9\u0635\u062e\u0644\u0645 \u062f\u0627\u0631\u0645 \u0622\u0645\u0631\u06cc\u06a9\u0627 \u0632\u0646\u062f\u06af\u06cc \u0645\u06cc\u06a9\u0646\u0645 \u062a\u0648\u06cc \u0628\u0631\u0648\u06a9\u0631 exness \u0646\u0631\u0641\u062a\u0645 \u0627\u0648\u0645\u062f\u0645 \u067e\u06cc\u0634 \u062a\u0648 .\n\n@Wimapro",
-   "media": [
-    [
-     "photo",
-     "https://cdn4.telesco.pe/file/tR6GdWdZeYt1m1qtOGHCwG5eHGMjikn5J7j1UddeQmy8Ha7-dii2IoYQ-A30_mqzVraHzEDobN37PSuh8AipzxXDj26AAYQXZBTtuzpGYphy3FpDKyGuCN4hjedo5dxLPT270ax9WJWle_W_YUGNtpQ2fWRp3vKTASkUYN_fwUGNo_2evPZ3vprrEkcf_7VYhwrZ855zMowa_aeUfz3xIuC2dyNrIHzxViSqUM8_neSIAJJyFBtipGJ1AGxRXdmAgmd2hWD4mLRa1o0pRlpYc3kj8VTI1Xf75Kc_5Zou6nyB5uy6a58kSJuoobKZcu8YltlWv07GcqVqaGcEKnq9KA.jpg"
-    ]
-   ],
-   "t": 1795889999,
-   "link": "t.me/besnr/10465",
-   "key": "7f69010262",
-   "ps": {
-    "https://cdn4.telesco.pe/file/tR6GdWdZeYt1m1qtOGHCwG5eHGMjikn5J7j1UddeQmy8Ha7-dii2IoYQ-A30_mqzVraHzEDobN37PSuh8AipzxXDj26AAYQXZBTtuzpGYphy3FpDKyGuCN4hjedo5dxLPT270ax9WJWle_W_YUGNtpQ2fWRp3vKTASkUYN_fwUGNo_2evPZ3vprrEkcf_7VYhwrZ855zMowa_aeUfz3xIuC2dyNrIHzxViSqUM8_neSIAJJyFBtipGJ1AGxRXdmAgmd2hWD4mLRa1o0pRlpYc3kj8VTI1Xf75Kc_5Zou6nyB5uy6a58kSJuoobKZcu8YltlWv07GcqVqaGcEKnq9KA.jpg": [
-     "besnr",
-     10465
-    ]
-   }
   }
  ],
  "sugg": {
@@ -16606,26 +16569,6 @@
  "last_kind": "media",
  "sugg_ts": 1795851014,
  "origins": {
-  "4652": {
-   "l": "https://t.me/CottageOrg/83517",
-   "t": 1795288273,
-   "me": false
-  },
-  "4653": {
-   "l": "https://t.me/FilmFarsiOrg/26070",
-   "t": 1795288303,
-   "me": false
-  },
-  "4654": {
-   "l": "https://t.me/besnr/10062",
-   "t": 1795288343,
-   "me": false
-  },
-  "4655": {
-   "l": "https://t.me/besnr/10062",
-   "t": 1795288343,
-   "me": false
-  },
   "4656": {
    "l": "https://t.me/CottageOrg/83519",
    "t": 1795290749,
@@ -19534,6 +19477,31 @@
   "5270": {
    "l": "https://t.me/Krolejudg/97453",
    "t": 1795892297,
+   "me": false
+  },
+  "5271": {
+   "l": "https://t.me/Khartox/9224",
+   "t": 1795894450,
+   "me": false
+  },
+  "5272": {
+   "l": "https://t.me/CloseFriend3/17634",
+   "t": 1795894511,
+   "me": false
+  },
+  "5273": {
+   "l": "https://t.me/SporteHub/15035",
+   "t": 1795894558,
+   "me": false
+  },
+  "5274": {
+   "l": "https://t.me/SporteHub/15035",
+   "t": 1795894558,
+   "me": false
+  },
+  "5275": {
+   "l": "https://t.me/SporteHub/15035",
+   "t": 1795894558,
    "me": false
   }
  },
